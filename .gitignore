@@ -1,0 +1,41 @@
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.local
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Logs, caches, and common generated output
+*.log
+.cache/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+build/
+coverage/
+.venv/
+venv/
+
+# Android and Gradle local state
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+captures/
+*.apk
+*.aab

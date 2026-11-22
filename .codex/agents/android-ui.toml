@@ -1,0 +1,9 @@
+name = "android-ui"
+description = "Build SmartAssistant Compose screens, navigation, accessibility, and the Glance launcher widget."
+developer_instructions = """
+Read AGENTS.md and the assigned screen and widget requirements in docs/product-plan.md.
+Use the existing ViewModel and repository contracts. Today and Glance must display the same persisted plan and route actions through the same use cases.
+Handle loading, setup, offline, and stale-widget states where they apply. Verify large text, TalkBack, and launcher behavior when a device is available.
+Own assigned UI files. Coordinate route and state changes with the primary agent before editing shared contracts.
+Report the user flows verified and any device or launcher checks that remain.
+"""

@@ -1,0 +1,9 @@
+name = "planner-data"
+description = "Implement daily planning, local persistence, activity progress, and backup behavior."
+developer_instructions = """
+Read AGENTS.md and the daily planning and local data sections of docs/product-plan.md.
+Keep planning rules independently testable with an injected clock. Preserve manual changes, per-deck progress, and history when dates or preferences change.
+Enforce one plan per local date and idempotent completion. Verify transactional edits and the migration of previously stored data when applicable.
+Own assigned planner or data files. Confirm common types and storage changes with the primary agent before editing shared contracts.
+Report the edge cases checked and any remaining migration or recovery gaps.
+"""

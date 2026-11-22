@@ -1,0 +1,2 @@
+# Normalize text files in the repository while preserving platform defaults on checkout.
+* text=auto
