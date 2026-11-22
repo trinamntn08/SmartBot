@@ -1,22 +1,22 @@
 # SmartBot product and development plan
 
-SmartBot helps you decide what to do today for the personal goals you care about. It suggests an editable 15–30 minute plan that fits into your day. Start from your phone’s home screen, choose an article to read, pick up your current book, or learn five words in the language you want to practice. On a busy day, shorten the plan or skip an activity without losing your progress.
+SmartBot is a personal, mobile-first workspace for reading books and news, asking questions, and keeping up with the activities you care about. Open a book or the assistant directly when you need it. Today suggests an editable 15–30 minute routine for the times you want a plan.
 
 ## First release
 
-Build a mobile-first web app for your own phone. The first release includes the daily plan, three built-in activities, and a simple progress history. During onboarding, preselect the three activities and suggest 25 minutes. You can change the budget, turn individual activities on or off, and choose which language to practice. Your plan and progress live in your browser and work without a SmartBot account. The [first web slice](plans/first-web-slice.md) implements the reading workflow with a minimal interface.
+Build a mobile-first web app for your own phone. The [first web slice](plans/first-web-slice.md) implements reading sessions and progress with a minimal interface. The [personal workspace plan](plans/personal-workspace.md) adds an in-app reader, a GPT assistant with text and voice input, and news. Keep the daily plan and the standalone tools available side by side.
 
 | Activity | Default | What you do |
 | --- | --- | --- |
-| Read news | 5 minutes | Pick one article from a shortlist and open it at the publisher. Mark it as read when you return. |
-| Read a book | 10 minutes | Continue your current book, then save your page, percentage, or chapter. |
+| Read news | 5 minutes | Browse fresh headlines and read an article in SmartBot when the source permits that use. Open the publisher's page for other articles. |
+| Read a book | 10 minutes | Resume an imported book in SmartBot or log a session for a book you read elsewhere. |
 | Learn vocabulary | 10 minutes | Work through up to five new words in French B2/C1, English B2/C1, or Japanese A1. Switch between all three decks and keep separate progress in each. |
 
 One day might look like 5 minutes of news, 10 minutes of reading, and 10 minutes of Japanese. The next day you might swap Japanese for French and keep the other activities. You can add a one-off item such as a walk, using only a title and an estimated duration. Ideas for later include a podcast episode, a journal prompt, and a watchlist item. These can reuse the same planning and progress behavior.
 
 ## What the app feels like
 
-Use three main destinations: **Today**, **Activities**, and **Progress**. Settings are accessible from the app bar. The app opens on Today after setup.
+The app opens on **Today** after setup. **Activities** and **Progress** manage the routine. Books, news, and the assistant can be opened without starting a planned session. Keep the controls minimal as those tools are added.
 
 | Screen | What you see and do |
 | --- | --- |
@@ -24,6 +24,8 @@ Use three main destinations: **Today**, **Activities**, and **Progress**. Settin
 | Today | See the planned time, completion count, and ordered activity cards. Start the next item in one tap. Use **Edit plan** to reorder, swap, change an estimate, or add an item, and **Shorten today** when time is tight. |
 | Activities | Enable or pause activities, change defaults for future plans, choose a vocabulary deck, maintain your current book, and manage your news sources. |
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
+| Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
+| Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |
 | Progress | Review a seven-day history and simple totals such as articles read, book sessions, and new words studied. Show skipped or unfinished items neutrally. |
 | Settings | Change the daily budget, reminder time, and display preferences. Provide local export, restore, and data deletion controls. Add a connections area when the first account integration ships. |
 
@@ -71,15 +73,23 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 ### News
 
 - Present three to five recent headlines from sources you enable, where available. Show title, publisher, and publish date when supplied. Sort by freshness, deduplicate links, and favor a mix of enabled publishers when possible.
+- Make the news list available outside Today. Display the article in SmartBot when the provider permits it, with attribution and a link to the original. Where only headlines or excerpts are available, link to the publisher for the full text.
 - Fetch from publisher RSS or Atom feeds whose terms permit the intended use. Keep the news provider replaceable so a licensed API can later supply the same headline records. A publisher such as The Guardian is a candidate to evaluate for the private pilot if it fits your preferences. [The Guardian’s RSS guidance](https://www.theguardian.com/help/feeds)
-- Open articles on the publisher's website. Save only permitted metadata, with a bounded cache and a visible last-updated time. Let you refresh without losing saved progress. If sources fail or the phone is offline, show available cached headlines with their age and offer a swap when the list is empty. Marking an article as read is a separate action from opening it.
+- Cache permitted headlines, excerpts, or articles with a visible last-updated time. Let you refresh without losing saved progress. If sources fail or the phone is offline, show available cached items with their age and offer a swap when the list is empty. Marking an article as read is a separate action from opening it.
 - Start with configured source toggles, a shortlist, and manual completion. Topic filters, saved articles, and Android Share capture are follow-up options. A keyed API goes behind a server adapter if provider credentials must be kept secret. Confirm rights, coverage, limits, and cost before opting in. News API’s Developer tier is limited to development and testing, which matters even for an internal release. [News API terms](https://newsapi.org/terms)
 
 ### Books
 
+- Import your own readable ebook files into a local library. Open a book directly or from the Today plan and save a position that survives closing the app. Start with the format used by the pilot books.
 - Add a title, optional author, and optional reading link or current position. Choose a current book. The daily card suggests picking up from your saved position and shows a time target you can change.
 - Log a session with a page, percentage, or chapter in the same unit the book already uses. Allow completion with just minutes read. Support a book in paper, reader app, or audiobook; for an audiobook, you can use the chapter field initially.
 - Keep elapsed reading optional in the first build. Add a timer or Google Books/Open Library metadata lookup only if manual entry or timing becomes a friction point. When a book is finished, offer to pick the next book while preserving its sessions.
+
+### Assistant
+
+- Use GPT through the OpenAI API for general questions and questions about a chosen book or news excerpt. Provide the same question flow from Ask and from the reader. Show the excerpt being attached before the question is sent.
+- Add text questions first, followed by microphone input with a reviewable transcript. Show the answer in text and offer playback for spoken answers.
+- Keep API credentials on the backend. Imported books, reading history, and other personal data stay local unless you choose what to include in a request. Keep the reader usable when the assistant is offline or unavailable.
 
 ### Languages
 
@@ -108,6 +118,7 @@ If cross-device access becomes useful, start with routine settings and completio
 | `activities` | Activity registration, shared actions, and feature packages for news, books, vocabulary, and simple one-off items. Each feature owns its own configuration and completion details. |
 | Repository | IndexedDB records and schema versions. Applies plan edits and completions transactionally. |
 | Web interface | Setup, Today, Activities, and Progress. Reads through the repository and calls the planner for plan changes. |
+| Assistant backend | Calls OpenAI with the submitted question and any chosen context. Holds credentials and applies access and request limits. |
 | Native widget, if added | Launcher layouts and actions that use the same plan and completion rules as the app. |
 | `integrations` | Provider adapters as needed, including news feeds and optional future availability, link, or import adapters. Maps provider responses to app-owned records. |
 
@@ -148,10 +159,11 @@ A link, a data provider, and an account connector have different responsibilitie
 | --- | --- | --- |
 | 1. Validate the daily flow | Sketch Today, Activities, and a vocabulary session. Walk through a normal day, a 10-minute day, and a day with no news connection. Pick initial sources and confirm the pilot phone. | You can explain how to start, edit, and shorten today’s plan from the sketch. |
 | 2. Build a first working slice | Initialize the mobile web app and build one local activity from onboarding to completion and history. Add unit tests for dates, budgets, and duplicate actions. | A phone browser can start and finish a local activity offline after its first load, and progress survives reopening the app. |
-| 3. Deliver the three activities | Add the shortlist, current book and reading log, and the three switchable vocabulary decks. Complete today-only editing, one-off items, shortening, and progress views. | You can plan, start, finish, and review all three activities. Each deck maintains its own state. A dead feed leaves the rest of the plan available. |
-| 4. Finish pilot readiness | Add accessibility improvements and local export and restore. Evaluate reminders and home-screen installation. | The daily workflow is usable with large text and a screen reader, and restore reproduces history. |
-| 5. Run a seven-day personal pilot | Use the web app on your phone through a normal week and verify that an app update preserves data. Record interruptions or steps that felt slow. | You can identify what saved time, what made the plan harder to use, and which enhancement is worth doing next. |
-| 6. Expand one use case at a time | Choose calendar availability, richer news sources, cross-device access, a native launcher widget, or another activity based on the pilot. | The chosen addition demonstrates its benefit while the daily plan still works with that addition disabled or unavailable. |
+| 3. Read in SmartBot | Import a book and resume from a saved position. | The same book and position reopen offline in the browser and phone app. |
+| 4. Ask by text or voice | Connect a GPT backend. Add general questions, chosen reading context, voice input, and optional spoken playback. | A typed or spoken question produces an answer. The reader remains usable when the assistant cannot connect. |
+| 5. Add news and vocabulary | Add publisher-backed news and three switchable vocabulary decks. Complete today-only editing, one-off items, and shortening. | You can use the tools from Today or directly. Each deck maintains its own state. An unavailable feed leaves the rest of the app usable. |
+| 6. Finish pilot readiness | Add accessibility improvements and local export and restore, then use the app on your phone through a normal week. | The app works with large text and a screen reader, restores personal data, and preserves progress across an update. |
+| 7. Expand one use case at a time | Choose calendar availability, richer sources, cross-device access, a native launcher widget, or another activity based on the pilot. | The chosen addition demonstrates its benefit while the core app works with it disabled or unavailable. |
 
 ## Testing and pilot measures
 

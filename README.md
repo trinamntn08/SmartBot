@@ -1,8 +1,8 @@
 # SmartBot
 
-SmartBot helps you decide what to do today for your personal goals. Each morning, it suggests a short plan you can edit to fit the 15–30 minutes you want to spend. You can choose a news article from a shortlist, make progress on a book, and learn five words in French, English, or Japanese.
+SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-SmartBot starts as a mobile-first web app. The first working slice covers the daily reading routine and saves progress in the browser. News, vocabulary, and other activities are planned.
+The current app covers the daily reading routine and saves progress locally. An in-app book reader, a GPT assistant with text and voice input, news, and vocabulary are described in the [personal workspace plan](docs/plans/personal-workspace.md).
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 

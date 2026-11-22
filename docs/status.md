@@ -8,7 +8,7 @@ Last updated November 22, 2026.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two reusable skills. The [setup guide](codex-setup.md) explains how to discover and use them.
 - The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
-- The [product plan](product-plan.md) keeps news and vocabulary as planned activities and a native Android launcher widget as a possible follow-up.
+- The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
 
@@ -28,4 +28,4 @@ Local validation for the SmartBot rename covered Markdown links and section anch
 
 ## Handoff
 
-The [first web slice](plans/first-web-slice.md) records the implementation and verification. Install the debug APK on the pilot phone to verify the reading routine offline. Use the same planner and repository boundaries for news and vocabulary. Calendar, Gmail, Netflix, and SmartLingo remain later options.
+Start with the in-app book reader, then build the text assistant and add voice input. The [first web slice](plans/first-web-slice.md) records the existing reading log. Install the debug APK on the pilot phone to verify that baseline offline.
