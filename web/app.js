@@ -32,16 +32,30 @@ function numberField(label, name, value, min, max, required = true) {
 
 function preferences() {
   const book = routine.book;
-  return `<h1 tabindex="-1">${routine.settings ? 'Activities' : 'Set up SmartBot'}</h1>
-    <form data-action="preferences" class="card">
-      ${numberField('Daily budget (minutes)', 'budget', routine.settings?.budget ?? defaultBudget, 5, 120)}
-      ${routine.settings ? '<p>Budget changes apply to future plans.</p>' : ''}
-      <label>Book title (optional)
-        <input name="title" maxlength="160" value="${escapeHtml(book?.title ?? '')}">
-      </label>
-      ${book?.page != null ? `<p>Current page ${book.page}</p>` : ''}
-      ${numberField(book ? 'Update current page (optional)' : 'Current page (optional)', 'page', null, 0, 100000, false)}
-      <button type="submit">${routine.settings ? 'Save changes' : 'Start my routine'}</button>
+  const readingLog = `<label>Book title (optional)
+      <input name="title" maxlength="160" value="${escapeHtml(book?.title ?? '')}">
+    </label>
+    ${book?.page != null ? `<p class="muted">Current page ${book.page}</p>` : ''}
+    ${numberField(book ? 'Update current page (optional)' : 'Current page (optional)', 'page', null, 0, 100000, false)}`;
+
+  return `<header class="page-heading">
+      <h1 tabindex="-1">${routine.settings ? 'Activities' : 'Set up SmartBot'}</h1>
+      <p>${routine.settings ? 'Manage your daily budget and reading log.' : 'Choose how much time to set aside for your daily routine.'}</p>
+    </header>
+    <form data-action="preferences" class="panel settings">
+      <fieldset>
+        <legend>Daily routine</legend>
+        ${numberField('Daily budget (minutes)', 'budget', routine.settings?.budget ?? defaultBudget, 5, 120)}
+        ${routine.settings ? '<p class="muted">Budget changes apply to future plans.</p>' : ''}
+      </fieldset>
+      ${routine.settings ? `<fieldset>
+        <legend>Reading log</legend>
+        ${readingLog}
+      </fieldset>` : `<details class="setup-reading">
+        <summary>Add a book to your reading log</summary>
+        ${readingLog}
+      </details>`}
+      <button class="button primary" type="submit">${routine.settings ? 'Save changes' : 'Start my routine'}</button>
     </form>`;
 }
 
@@ -53,50 +67,66 @@ function today(plan) {
   let primaryAction = '';
 
   if (reading.status === 'pending') {
-    primaryAction = book ? '<button data-action="start">Start reading</button>' : '<a class="add-book" href="#activities">Add a book</a>';
+    primaryAction = book
+      ? '<button class="button primary" data-action="start">Start reading</button>'
+      : '<a class="button primary" href="#activities">Add a book</a>';
   } else if (reading.status === 'started') {
     primaryAction = `<form data-action="finish">
       ${numberField('Minutes read', 'minutes', reading.minutes, 1, 120)}
       ${numberField('Page reached (optional)', 'page', null, 0, 100000, false)}
-      <button type="submit">Finish reading</button>
+      <button class="button primary" type="submit">Finish reading</button>
     </form>`;
   }
 
-  return `<h1 tabindex="-1">Today</h1>
-    <p><time datetime="${plan.date}">${formatDate(plan.date)}</time></p>
-    <p>${reading.status === 'skipped' ? 0 : reading.minutes} min planned · ${plan.budget} min budget</p>
-    <section class="card" aria-labelledby="reading-title">
-      <h2 id="reading-title">Read a book</h2>
-      ${book ? `<p>${escapeHtml(book.title)}</p>` : ''}
-      <p><a href="#books">Read an imported book</a></p>
-      <p>${statusLabels[reading.status]}${reading.outcome ? ` · ${reading.outcome.minutes} min read` : ''}</p>
-      ${open && page != null ? `<p>Current page ${page}</p>` : ''}
-      ${reading.outcome?.page != null ? `<p>Reached page ${reading.outcome.page}</p>` : ''}
-      ${primaryAction}
+  return `<header class="page-heading">
+      <h1 tabindex="-1">Today</h1>
+      <p><time datetime="${plan.date}">${formatDate(plan.date)}</time></p>
+    </header>
+    <div class="plan-summary">
+      <h2>Daily plan</h2>
+      <p><strong>${reading.status === 'skipped' ? 0 : reading.minutes} min</strong> planned <span>·</span> ${plan.budget} min budget</p>
+    </div>
+    <section class="reading-panel" aria-labelledby="reading-title">
+      <div class="reading-session">
+        <div class="reading-heading">
+          <h2 id="reading-title">Read a book</h2>
+          <span class="session-status" data-status="${reading.status}">${statusLabels[reading.status]}</span>
+        </div>
+        ${book ? `<p class="session-book">${escapeHtml(book.title)}</p>` : ''}
+        ${open && page != null ? `<p class="muted">Current page ${page}</p>` : ''}
+        ${reading.outcome ? `<p class="muted">${reading.outcome.minutes} min read${reading.outcome.page != null ? ` · Reached page ${reading.outcome.page}` : ''}</p>` : ''}
+        ${primaryAction || '<button class="button" data-action="undo">Undo</button>'}
+      </div>
       ${open ? `<details>
         <summary>Edit plan</summary>
         <form data-action="estimate">
           ${numberField('Planned minutes', 'minutes', reading.minutes, 1, 120)}
           <div class="actions">
-            <button type="submit">Save time</button>
-            <button type="button" data-action="skip">Skip today</button>
+            <button class="button" type="submit">Save time</button>
+            <button class="button quiet" type="button" data-action="skip">Skip today</button>
           </div>
         </form>
-      </details>` : '<button data-action="undo">Undo</button>'}
-    </section>`;
+      </details>` : ''}
+    </section>
+    <a class="button quiet library-link" href="#books">Read an imported book</a>`;
 }
 
 function progress() {
   const plans = recentPlans(routine, displayedDate);
   const completed = plans.filter(({ reading }) => reading.status === 'completed').length;
-  return `<h1 tabindex="-1">Progress</h1>
-    <p>${completed} reading ${completed === 1 ? 'session' : 'sessions'} in the last 7 days</p>
-    <ul class="history" role="list">${plans.map(({ date, reading }) => {
+  return `<header class="page-heading">
+      <h1 tabindex="-1">Progress</h1>
+      <p>${completed} reading ${completed === 1 ? 'session' : 'sessions'} in the last 7 days</p>
+    </header>
+    <ul class="record-list" role="list">${plans.map(({ date, reading }) => {
       const { book, outcome } = reading;
-      return `<li class="card">
-        <time datetime="${date}"><strong>${formatDate(date)}</strong></time>
-        <p>${book ? escapeHtml(book.title) : 'Reading'} · ${statusLabels[reading.status]}</p>
-        ${outcome ? `<p>${outcome.minutes} min read${outcome.page != null ? ` · Page ${outcome.page}` : ''}</p>` : ''}
+      return `<li class="history-row">
+        <div>
+          <time class="muted" datetime="${date}">${formatDate(date)}</time>
+          <p><strong>${book ? escapeHtml(book.title) : 'Reading'}</strong></p>
+          ${outcome ? `<p class="muted">${outcome.minutes} min read${outcome.page != null ? ` · Page ${outcome.page}` : ''}</p>` : ''}
+        </div>
+        <span class="session-status" data-status="${reading.status}">${statusLabels[reading.status]}</span>
       </li>`;
     }).join('')}</ul>`;
 }
@@ -106,6 +136,7 @@ function render(focusHeading = false) {
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
   const page = isLibrary ? 'books' : ['activities', 'progress'].includes(route) ? route : 'today';
+  if (focusHeading) window.scrollTo(0, 0);
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
     link.hidden = !routine.settings && ['#activities', '#progress'].includes(link.hash);

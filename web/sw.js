@@ -1,6 +1,6 @@
 // Bump the version when changing any of these files so they update together.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}v2`;
+const cacheName = `${cachePrefix}v3`;
 const files = [
   'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'books.js', 'library-repository.js', 'text-book.js',

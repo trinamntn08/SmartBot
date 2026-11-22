@@ -8,13 +8,20 @@ function showError(panel, message) {
 }
 
 async function showLibrary(panel) {
-  panel.innerHTML = `<h1 tabindex="-1">Books</h1>
-    <form>
-      <label>Choose a text file <input type="file" name="book" accept=".txt,text/plain" required></label>
-      <button type="submit">Import book</button>
+  panel.innerHTML = `<header class="page-heading">
+      <h1 tabindex="-1">Books</h1>
+      <p>Import a book and pick up where you left off, even offline.</p>
+    </header>
+    <ul class="record-list" role="list" aria-label="Imported books" hidden></ul>
+    <form class="panel import-form" aria-labelledby="import-title">
+      <h2 id="import-title">Import a book</h2>
+      <label>Text file (.txt)
+        <input type="file" name="book" accept=".txt,text/plain" required>
+      </label>
+      <button class="button primary" type="submit">Import book</button>
+      <p role="alert" hidden></p>
     </form>
-    <p role="alert" hidden></p>
-    <ul class="history" role="list" aria-label="Imported books"></ul>`;
+    <p class="library-error" role="alert" hidden></p>`;
 
   const form = panel.querySelector('form');
   const button = form.querySelector('button');
@@ -23,13 +30,13 @@ async function showLibrary(panel) {
     if (button.disabled) return;
     button.disabled = true;
     button.textContent = 'Importing…';
-    showError(panel, '');
+    showError(form, '');
     try {
       const book = await readTextBook(form.elements.book.files[0]);
       const id = await addBook(book);
       if (panel.isConnected) location.hash = `book=${id}`;
     } catch (error) {
-      showError(panel, error instanceof BookImportError ? error.message : 'Could not import this book.');
+      showError(form, error instanceof BookImportError ? error.message : 'Could not import this book.');
     } finally {
       button.disabled = false;
       button.textContent = 'Import book';
@@ -41,28 +48,36 @@ async function showLibrary(panel) {
     const list = panel.querySelector('ul');
     for (const book of books) {
       const item = document.createElement('li');
-      item.className = 'card';
       const link = document.createElement('a');
+      link.className = 'book-link';
       link.href = `#book=${book.id}`;
       link.textContent = book.title;
+      const position = document.createElement('span');
+      position.textContent = `Section ${book.position + 1} of ${book.count}`;
+      link.append(position);
       item.append(link);
       list.append(item);
     }
+    list.hidden = books.length === 0;
   } catch {
-    showError(panel, 'Could not open your book library.');
+    const error = panel.querySelector('.library-error');
+    error.textContent = 'Could not open your book library.';
+    error.hidden = false;
   }
 }
 
 async function showReader(panel, id) {
-  panel.innerHTML = `<h1 tabindex="-1">Book</h1>
-    <p><a href="#books">Back to books</a></p>
+  panel.innerHTML = `<a class="button quiet reader-back" href="#books">Back to books</a>
+    <header class="page-heading">
+      <h1 tabindex="-1">Book</h1>
+    </header>
     <p role="alert" hidden></p>
-    <section hidden aria-label="Book text">
-      <p class="book-position" role="status"></p>
+    <section class="reader" hidden aria-label="Book text">
+      <p class="book-position muted" role="status"></p>
       <p class="book-content"></p>
-      <div class="actions">
-        <button type="button" data-step="-1">Previous section</button>
-        <button type="button" data-step="1">Next section</button>
+      <div class="actions reader-actions">
+        <button class="button" type="button" data-step="-1">Previous section</button>
+        <button class="button primary" type="button" data-step="1">Next section</button>
       </div>
     </section>`;
 

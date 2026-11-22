@@ -6,6 +6,7 @@ Last updated November 22, 2026.
 
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
+- The first UI pass gives the web app and Android preview a shared light and dark layout. Phones have bottom navigation and wider screens have a sidebar. Today brings the reading action forward, Books shows each saved position, and Progress uses the same session labels as Today.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two reusable skills. The [setup guide](codex-setup.md) explains how to discover and use them.
 - The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
@@ -19,9 +20,11 @@ The [browser preview](../README.md#browser-preview) uses port 8000 on the local 
 
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
+The UI pass passed all eight Node tests and a Chrome walkthrough at 320 CSS pixels in light mode and 1280 CSS pixels in dark mode. The walkthrough covered setup, plan edits, skip and undo, reading completion, history, invalid-file recovery, and offline reader resume. At 320 CSS pixels, navigation and route focus also passed with the root font size doubled. The Impeccable detector reported no findings in the changed files.
+
 ## Android APK verification
 
-The 0.2.0 debug build passed in the main checkout. Lint reported zero errors and six warnings. The APK signature and all nine bundled web assets were verified. The machine had no connected Android device or configured emulator for runtime testing. See the [APK verification record](plans/android-apk-preview.md) and the [phone installation steps](../README.md#install-on-android).
+The 0.2.0 debug build passed with the refreshed UI. Lint reported zero errors and seven warnings in the Android manifest and build configuration. The APK signature and all nine bundled web assets were verified. The machine had no connected Android device or configured emulator for runtime testing. See the [APK verification record](plans/android-apk-preview.md) and the [phone installation steps](../README.md#install-on-android).
 
 ## Setup verification
 
@@ -31,4 +34,4 @@ Local validation for the SmartBot rename covered Markdown links and section anch
 
 ## Handoff
 
-Verify the plain-text picker and reader on the pilot phone. Then build the GPT text assistant and add voice input using the [personal workspace plan](plans/personal-workspace.md).
+Verify the refreshed layout, plain-text picker, and offline reader on the pilot phone. Then build the GPT text assistant and add voice input using the [personal workspace plan](plans/personal-workspace.md).
