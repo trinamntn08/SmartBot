@@ -1,0 +1,71 @@
+let connection;
+
+function openLibrary() {
+  if (!connection) {
+    connection = new Promise((resolve, reject) => {
+      const request = indexedDB.open('smartbot-library', 1);
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
+        request.result.createObjectStore('sections');
+      };
+      request.onsuccess = () => {
+        const database = request.result;
+        database.onversionchange = () => {
+          database.close();
+          connection = null;
+        };
+        resolve(database);
+      };
+      request.onerror = () => reject(request.error);
+    }).catch((error) => {
+      connection = null;
+      throw error;
+    });
+  }
+  return connection;
+}
+
+async function runTransaction(stores, mode, operation) {
+  const database = await openLibrary();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(stores, mode);
+    const result = operation(transaction);
+    transaction.oncomplete = () => resolve(result());
+    transaction.onabort = () => reject(transaction.error ?? new Error('Library transaction aborted'));
+  });
+}
+
+export function listBooks() {
+  return runTransaction('books', 'readonly', (transaction) => {
+    const request = transaction.objectStore('books').getAll();
+    return () => request.result.reverse();
+  });
+}
+
+export function addBook({ title, sections }) {
+  return runTransaction(['books', 'sections'], 'readwrite', (transaction) => {
+    const request = transaction.objectStore('books').add({ title, position: 0, count: sections.length });
+    request.onsuccess = () => transaction.objectStore('sections').add(sections, request.result);
+    return () => request.result;
+  });
+}
+
+export function getBook(id) {
+  return runTransaction(['books', 'sections'], 'readonly', (transaction) => {
+    const book = transaction.objectStore('books').get(id);
+    const sections = transaction.objectStore('sections').get(id);
+    return () => book.result ? { ...book.result, sections: sections.result } : null;
+  });
+}
+
+export function saveBookPosition(id, position) {
+  return runTransaction('books', 'readwrite', (transaction) => {
+    const store = transaction.objectStore('books');
+    const request = store.get(id);
+    request.onsuccess = () => {
+      const book = request.result;
+      if (book && position >= 0 && position < book.count) store.put({ ...book, position });
+    };
+    return () => undefined;
+  });
+}

@@ -1,13 +1,19 @@
 package io.github.trinamntn08.smartbot;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Process;
 import android.view.WindowInsets;
 import android.webkit.ServiceWorkerClient;
 import android.webkit.ServiceWorkerController;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -22,11 +28,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 public final class MainActivity extends Activity {
+    private static final int OPEN_BOOK = 1;
     private static final String ASSET_PATH = "/assets/";
     private static final String APP_URL = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN
             + ASSET_PATH + "index.html";
 
     private WebView webView;
+    private ValueCallback<Uri[]> selectedBook;
 
     @Override
     @SuppressWarnings("SetJavaScriptEnabled") // SmartBot only loads its own bundled web app.
@@ -61,6 +69,13 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
+                    FileChooserParams parameters) {
+                return chooseBook(callback);
+            }
+        });
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
@@ -79,6 +94,38 @@ public final class MainActivity extends Activity {
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
             webView.loadUrl(APP_URL);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean chooseBook(ValueCallback<Uri[]> callback) {
+        if (selectedBook != null) return false;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("text/plain")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            selectedBook = callback;
+            startActivityForResult(intent, OPEN_BOOK);
+            return true;
+        } catch (ActivityNotFoundException error) {
+            selectedBook = null;
+            return false;
+        }
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != OPEN_BOOK || selectedBook == null) return;
+
+        ValueCallback<Uri[]> callback = selectedBook;
+        selectedBook = null;
+        Uri file = resultCode == RESULT_OK && data != null ? data.getData() : null;
+        boolean readable = file != null && "content".equals(file.getScheme())
+                && checkUriPermission(file, Process.myPid(), Process.myUid(),
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION) == PackageManager.PERMISSION_GRANTED;
+        callback.onReceiveValue(readable ? new Uri[]{file} : null);
     }
 
     private static boolean isAppAsset(Uri uri) {
@@ -120,6 +167,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (selectedBook != null) selectedBook.onReceiveValue(null);
         ((FrameLayout) webView.getParent()).removeView(webView);
         webView.destroy();
         super.onDestroy();

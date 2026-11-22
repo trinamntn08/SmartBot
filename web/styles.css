@@ -20,7 +20,7 @@ nav, .actions {
   gap: 0.5rem 1rem;
 }
 
-nav[hidden] { display: none; }
+nav[hidden], nav > [hidden] { display: none; }
 
 nav > a, .add-book {
   display: inline-flex;
@@ -36,7 +36,7 @@ nav > [aria-current="page"] {
 }
 
 main { padding-block: 1rem; }
-h1 { font-size: 1.65rem; margin: 0 0 0.5rem; }
+h1 { font-size: 1.65rem; margin: 0 0 0.5rem; overflow-wrap: anywhere; }
 h2 { font-size: 1.2rem; margin: 0; }
 
 .card {
@@ -70,4 +70,5 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 }
 
 .history p { margin: 0.35rem 0 0; }
+.book-content { white-space: pre-wrap; overflow-wrap: anywhere; }
 #error { border-inline-start: 3px solid currentColor; padding-inline-start: 0.75rem; }

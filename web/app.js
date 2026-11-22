@@ -1,5 +1,6 @@
 import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, updateReading } from './planner.js';
 import { openRepository } from './repository.js';
+import { renderBooks } from './books.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -67,6 +68,7 @@ function today(plan) {
     <section class="card" aria-labelledby="reading-title">
       <h2 id="reading-title">Read a book</h2>
       ${book ? `<p>${escapeHtml(book.title)}</p>` : ''}
+      <p><a href="#books">Read an imported book</a></p>
       <p>${statusLabels[reading.status]}${reading.outcome ? ` · ${reading.outcome.minutes} min read` : ''}</p>
       ${open && page != null ? `<p>Current page ${page}</p>` : ''}
       ${reading.outcome?.page != null ? `<p>Reached page ${reading.outcome.page}</p>` : ''}
@@ -101,13 +103,20 @@ function progress() {
 
 function render(focusHeading = false) {
   const route = location.hash.slice(1);
-  const page = route === 'activities' || route === 'progress' ? route : 'today';
-  nav.hidden = !routine.settings;
+  const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
+  const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
+  const page = isLibrary ? 'books' : ['activities', 'progress'].includes(route) ? route : 'today';
+  nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
+    link.hidden = !routine.settings && ['#activities', '#progress'].includes(link.hash);
     if (link.hash === `#${page}`) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
 
+  if (isLibrary) {
+    renderBooks(view, bookId, focusHeading);
+    return;
+  }
   if (!routine.settings || page === 'activities') view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
   else view.innerHTML = today(routine.plans[displayedDate]);
@@ -144,9 +153,10 @@ async function refresh(change, { focus = false, openToday = false } = {}) {
 }
 
 view.addEventListener('submit', (event) => {
-  event.preventDefault();
   const form = event.target;
   const type = form.dataset.action;
+  if (!type) return;
+  event.preventDefault();
   const page = form.elements.page?.valueAsNumber;
   if (type === 'preferences') {
     const title = form.elements.title.value.trim();

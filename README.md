@@ -2,7 +2,7 @@
 
 SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-The current app covers the daily reading routine and saves progress locally. An in-app book reader, a GPT assistant with text and voice input, news, and vocabulary are described in the [personal workspace plan](docs/plans/personal-workspace.md).
+The current app includes a plain-text book reader and a daily reading routine. A GPT assistant with text and voice input, news, and vocabulary are described in the [personal workspace plan](docs/plans/personal-workspace.md).
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 
@@ -14,11 +14,15 @@ On Windows, double-click [preview.cmd](preview.cmd) in File Explorer to start th
 
 The web app needs an initial online load at a given address to cache its files for offline use. Routine data is local to each browser and address.
 
+## Read a book
+
+Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot displays the text in sections and saves the last section you opened. Use a UTF-8 file or a UTF-16 file with a byte order mark, up to 8 MB. The book and its position are stored on the device and are available offline.
+
 ## Install on Android
 
 The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`. Copy it to a phone running Android 8.0 or newer, tap the file, and follow the installation prompt. If Android asks for permission to install the APK, follow the phone's prompt for the app that opened it. [Android installation help](https://support.google.com/pixelphone/answer/7391672)
 
-Open SmartBot from the launcher. To check offline use, turn on airplane mode, add a book, finish a reading session, then close and reopen SmartBot to check that the page and completion are saved. The APK bundles the web app and keeps its own local progress.
+Open SmartBot from the launcher. To check offline use, turn on airplane mode, import a `.txt` book, move to the next section, then close and reopen SmartBot to check that it resumes there. The APK bundles the web app and keeps its own local progress.
 
 ## Development
 
@@ -28,10 +32,10 @@ To serve the preview without opening a browser automatically, run this from the 
 python -m http.server 8000 --bind 127.0.0.1 --directory web
 ```
 
-Run the planner tests with Node.js 22 or newer.
+Run the planner and text import tests with Node.js 22 or newer.
 
 ```sh
-node --test tests/planner.test.mjs
+node --test tests/planner.test.mjs tests/text-book.test.mjs
 ```
 
 To rebuild the Android debug APK, use a JDK 17 or 21 and install Android SDK Platform 35 and Build Tools 35.0.0. Point `JAVA_HOME` to the JDK and `ANDROID_HOME` to the SDK for the build shell. Run the wrapper from the repository root on Windows.

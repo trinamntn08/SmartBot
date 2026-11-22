@@ -1,7 +1,10 @@
 // Bump the version when changing any of these files so they update together.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}v1`;
-const files = ['index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js'];
+const cacheName = `${cachePrefix}v2`;
+const files = [
+  'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
+  'books.js', 'library-repository.js', 'text-book.js',
+];
 const urls = files.map((file) => new URL(file, self.registration.scope).href);
 
 self.addEventListener('install', (event) => {
