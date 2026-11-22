@@ -1,6 +1,7 @@
 import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, updateReading } from './planner.js';
 import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
+import { findSection, sectionPreview, workspace } from './workspace.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -105,11 +106,14 @@ function render(focusHeading = false) {
   const route = location.hash.slice(1);
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
-  const page = isLibrary ? 'books' : ['activities', 'progress'].includes(route) ? route : 'today';
+  const section = findSection(route);
+  const routinePage = ['today', 'activities', 'progress'].includes(route);
+  const page = isLibrary ? 'books' : section?.id ?? (routinePage ? route : 'workspace');
+  view.dataset.page = page;
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
     link.hidden = !routine.settings && ['#activities', '#progress'].includes(link.hash);
-    if (link.hash === `#${page}`) link.setAttribute('aria-current', 'page');
+    if (link.hash === `#${section ? 'workspace' : page}`) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
 
@@ -117,7 +121,9 @@ function render(focusHeading = false) {
     renderBooks(view, bookId, focusHeading);
     return;
   }
-  if (!routine.settings || page === 'activities') view.innerHTML = preferences();
+  if (section) view.innerHTML = sectionPreview(section);
+  else if (page === 'workspace') view.innerHTML = workspace();
+  else if (!routine.settings || page === 'activities') view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
   else view.innerHTML = today(routine.plans[displayedDate]);
 
