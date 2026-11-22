@@ -4,7 +4,7 @@ Status: planned.
 
 ## Outcome
 
-Open SmartAssistant, confirm a time budget, and see a suggested reading activity. Complete it and see the result in Today and Progress. Close and reopen the app in airplane mode and see the same plan, book position, and completion. This is the first end-to-end build for the [product plan](../product-plan.md).
+Open SmartBot, confirm a time budget, and see a suggested reading activity. Complete it and see the result in Today and Progress. Close and reopen the app in airplane mode and see the same plan, book position, and completion. This is the first end-to-end build for the [product plan](../product-plan.md).
 
 ## Steps
 

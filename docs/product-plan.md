@@ -1,10 +1,10 @@
-# SmartAssistant product and development plan
+# SmartBot product and development plan
 
-SmartAssistant helps you decide what to do today for the personal goals you care about. It suggests an editable 15–30 minute plan that fits into your day. Start from your phone’s home screen, choose an article to read, pick up your current book, or learn five words in the language you want to practice. On a busy day, shorten the plan or skip an activity without losing your progress.
+SmartBot helps you decide what to do today for the personal goals you care about. It suggests an editable 15–30 minute plan that fits into your day. Start from your phone’s home screen, choose an article to read, pick up your current book, or learn five words in the language you want to practice. On a busy day, shorten the plan or skip an activity without losing your progress.
 
 ## First release
 
-Build for your own Android phone first. The first release includes the daily plan, a home-screen widget that shows the whole default plan at a glance, three built-in activities, and a simple progress history. During onboarding, preselect the three activities and suggest 25 minutes. You can change the budget, turn individual activities on or off, and choose which language to practice. Your plan and progress live on your phone and work without a SmartAssistant account.
+Build for your own Android phone first. The first release includes the daily plan, a home-screen widget that shows the whole default plan at a glance, three built-in activities, and a simple progress history. During onboarding, preselect the three activities and suggest 25 minutes. You can change the budget, turn individual activities on or off, and choose which language to practice. Your plan and progress live on your phone and work without a SmartBot account.
 
 | Activity | Default | What you do |
 | --- | --- | --- |

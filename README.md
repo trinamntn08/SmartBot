@@ -1,6 +1,6 @@
-# SmartAssistant
+# SmartBot
 
-SmartAssistant helps you decide what to do today for your personal goals. Each morning, it suggests a short plan you can edit to fit the 15–30 minutes you want to spend. You can choose a news article from a shortlist, make progress on a book, and learn five words in French, English, or Japanese.
+SmartBot helps you decide what to do today for your personal goals. Each morning, it suggests a short plan you can edit to fit the 15–30 minutes you want to spend. You can choose a news article from a shortlist, make progress on a book, and learn five words in French, English, or Japanese.
 
 The first release is a personal Android app with a home-screen widget that shows your plan at a glance. The app is designed so new activities and services can be added over time. A web companion, Google Calendar, Gmail, Netflix, and SmartLingo are possible extensions.
 

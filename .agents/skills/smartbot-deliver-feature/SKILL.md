@@ -1,9 +1,9 @@
 ---
-name: sa-deliver-feature
-description: Implement a SmartAssistant Android feature or bug fix across the daily plan, activities, storage, widget, or history. Use for an end-to-end change to user behavior.
+name: smartbot-deliver-feature
+description: Implement a SmartBot Android feature or bug fix across the daily plan, activities, storage, widget, or history. Use for an end-to-end change to user behavior.
 ---
 
-# Deliver a SmartAssistant feature
+# Deliver a SmartBot feature
 
 1. Read the root `AGENTS.md`, `docs/status.md`, and the relevant part of `docs/product-plan.md`. Find the normal entry point and define the smallest observable user outcome.
 2. Trace any affected saved plan, activity progress, widget action, or provider data. Agree on one owner of common types and schemas before any authorized parallel work. Use `docs/templates/implementation-plan.md` when steps or owners have dependencies.

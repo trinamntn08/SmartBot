@@ -1,8 +1,8 @@
-# SmartAssistant agent instructions
+# SmartBot agent instructions
 
 ## Project context
 
-SmartAssistant is a personal Android app that suggests an editable 15–30 minute daily plan. Start with news, book reading, three vocabulary decks, and a launcher widget. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. The Kotlin and Compose foundation described there is planned until the app project exists.
+SmartBot is a personal Android app that suggests an editable 15–30 minute daily plan. Start with news, book reading, three vocabulary decks, and a launcher widget. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. The Kotlin and Compose foundation described there is planned until the app project exists.
 
 ## Working practices
 

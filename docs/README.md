@@ -1,4 +1,4 @@
-# SmartAssistant documentation
+# SmartBot documentation
 
 | Document | Use it for |
 | --- | --- |

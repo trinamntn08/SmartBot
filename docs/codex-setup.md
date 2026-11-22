@@ -1,6 +1,6 @@
-# SmartAssistant Codex setup
+# SmartBot Codex setup
 
-Open the SmartAssistant repository root in Codex. Project instructions, custom agents, and skills live in the checkout, using the same layout as SmartLingo. A Codex client that supports these features can discover them from this project when its trust settings allow. Start a fresh session if your current one still reflects the older checkout. [Project instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md) · [Agent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents) · [Skill discovery](https://learn.chatgpt.com/docs/build-skills)
+Open the SmartBot repository root in Codex. Project instructions, custom agents, and skills live in the checkout, using the same layout as SmartLingo. A Codex client that supports these features can discover them from this project when its trust settings allow. Start a fresh session if your current one still reflects the older checkout. [Project instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md) · [Agent configuration](https://learn.chatgpt.com/docs/agent-configuration/subagents) · [Skill discovery](https://learn.chatgpt.com/docs/build-skills)
 
 | File | Purpose |
 | --- | --- |
@@ -19,10 +19,10 @@ Open the SmartAssistant repository root in Codex. Project instructions, custom a
 | [`vocabulary-author`](../.codex/agents/vocabulary-author.toml) | Original deck content for French B2/C1, English B2/C1, and Japanese A1. |
 | [`change-reviewer`](../.codex/agents/change-reviewer.toml) | Independent review of completed changes. Review is read-only by instruction. |
 
-- [`$sa-deliver-feature`](../.agents/skills/sa-deliver-feature/SKILL.md) supports an end-to-end change to the Android experience.
-- [`$sa-review-change`](../.agents/skills/sa-review-change/SKILL.md) checks a diff and its validation evidence.
+- [`$smartbot-deliver-feature`](../.agents/skills/smartbot-deliver-feature/SKILL.md) supports an end-to-end change to the Android experience.
+- [`$smartbot-review-change`](../.agents/skills/smartbot-review-change/SKILL.md) checks a diff and its validation evidence.
 
-Example request: “Use `$sa-deliver-feature` to build the first Android slice. Delegate the Compose screens and planner implementation after agreeing on their shared states.” Give each agent the outcome, exclusive file paths, and expected checks. The primary agent owns shared types, Gradle files, integration, and final validation. If a client cannot select named roles, the primary agent can read the role and use its instructions directly or pass them to a supported worker for authorized delegation.
+Example request: “Use `$smartbot-deliver-feature` to build the first Android slice. Delegate the Compose screens and planner implementation after agreeing on their shared states.” Give each agent the outcome, exclusive file paths, and expected checks. The primary agent owns shared types, Gradle files, integration, and final validation. If a client cannot select named roles, the primary agent can read the role and use its instructions directly or pass them to a supported worker for authorized delegation.
 
 ## Session workflow
 
@@ -35,5 +35,5 @@ Example request: “Use `$sa-deliver-feature` to build the first Android slice. 
 ## Verification
 
 - Check `git status --short --branch` and `git diff --check` during a review. Check untracked files directly since they are outside the ordinary diff until staged.
-- Parse the TOML files and validate the skill frontmatter after configuration changes. To verify discovery in a supported client, open a fresh SmartAssistant session and check the project skill list. During authorized delegation, ask for a named role and check that the runtime selects it. A file-format check alone cannot establish client discovery or role selection.
+- Parse the TOML files and validate the skill frontmatter after configuration changes. To verify discovery in a supported client, open a fresh SmartBot session and check the project skill list. During authorized delegation, ask for a named role and check that the runtime selects it. A file-format check alone cannot establish client discovery or role selection.
 - Android build and device verification begin with the [first Android slice](plans/first-android-slice.md). Document the real commands in the root README once the Gradle wrapper is available.
