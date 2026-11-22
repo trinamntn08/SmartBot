@@ -2,7 +2,7 @@
 
 ## Project context
 
-SmartBot is a personal, mobile-first web app that suggests an editable 15–30 minute daily plan. Start with the reading routine, then add news and three vocabulary decks. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. Native Android and its launcher widget are follow-up options.
+SmartBot is a personal, mobile-first web app that suggests an editable 15–30 minute daily plan. Start with the reading routine, then add news and three vocabulary decks. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. The Android test APK bundles the web app. A native interface and launcher widget are follow-up options.
 
 ## Working practices
 
@@ -29,4 +29,4 @@ SmartBot is a personal, mobile-first web app that suggests an editable 15–30 m
 
 ## Project-specific commands
 
-Web app run and test commands are in [README.md](README.md). Codex setup checks are in the [Codex setup guide](docs/codex-setup.md#verification).
+Browser preview, planner tests, and Android APK build commands are in [README.md](README.md). Codex setup checks are in the [Codex setup guide](docs/codex-setup.md#verification).

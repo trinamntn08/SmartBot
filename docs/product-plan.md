@@ -94,6 +94,8 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 Start with a static web app using HTML, CSS, and JavaScript modules. Store routine data in IndexedDB through a repository. Cache the app shell with a service worker so it can reopen offline after a successful first load. Separate the planner from the browser interface and keep provider responses behind adapters. The responsive layout serves both phone and desktop widths.
 
+A debug Android package bundles the web files for phone testing. Its WebView loads the packaged app offline and stores progress independently of the browser preview. See the [APK setup](../README.md#install-on-android).
+
 Evaluate installability and reminders during the pilot. The [original Android slice](plans/first-android-slice.md) remains a reference if a native Android build or launcher widget becomes useful. Use shared data contracts and planner tests if a second client is built.
 
 If cross-device access becomes useful, start with routine settings and completions, with explicit conflict handling and local changes queued while offline. Choose a backend when the synchronization and account requirements are clear.
