@@ -31,6 +31,15 @@ coverage/
 .venv/
 venv/
 
+# Project-local downloads from scripts/install-design-skills.py
+/.agents/.install-design-skills-*/
+/.agents/skills/animate/
+/.agents/skills/animate-expo/
+/.agents/skills/design-taste-frontend/
+/.agents/skills/impeccable/
+/.agents/skills/pick-ui-library/
+/.agents/skills/review-animations/
+
 # Android and Gradle local state
 .gradle/
 .kotlin/
