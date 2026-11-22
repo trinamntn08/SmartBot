@@ -4,7 +4,7 @@ SmartBot helps you decide what to do today for the personal goals you care about
 
 ## First release
 
-Build for your own Android phone first. The first release includes the daily plan, a home-screen widget that shows the whole default plan at a glance, three built-in activities, and a simple progress history. During onboarding, preselect the three activities and suggest 25 minutes. You can change the budget, turn individual activities on or off, and choose which language to practice. Your plan and progress live on your phone and work without a SmartBot account.
+Build a mobile-first web app for your own phone. The first release includes the daily plan, three built-in activities, and a simple progress history. During onboarding, preselect the three activities and suggest 25 minutes. You can change the budget, turn individual activities on or off, and choose which language to practice. Your plan and progress live in your browser and work without a SmartBot account. The [first web slice](plans/first-web-slice.md) implements the reading workflow with a minimal interface.
 
 | Activity | Default | What you do |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Use three main destinations: **Today**, **Activities**, and **Progress**. Settin
 
 | Screen | What you see and do |
 | --- | --- |
-| First run | Confirm your time budget and enabled activities, select a starting deck, and go straight to Today. Add a book or news preferences when you first open those activities. Offer a reminder and widget setup after you have seen a plan. |
+| First run | Confirm your time budget and enabled activities, select a starting deck, and go straight to Today. Add a book or news preferences when you first open those activities. |
 | Today | See the planned time, completion count, and ordered activity cards. Start the next item in one tap. Use **Edit plan** to reorder, swap, change an estimate, or add an item, and **Shorten today** when time is tight. |
 | Activities | Enable or pause activities, change defaults for future plans, choose a vocabulary deck, maintain your current book, and manage your news sources. |
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
@@ -45,11 +45,11 @@ Learn 5 words · Japanese A1             10 min
 Today            Activities            Progress
 ```
 
-Use large tap targets, readable text sizes, plain action labels, and text alongside color for states. Support dark mode, Android font scaling, and TalkBack. Give each activity one primary action and put occasional actions in its menu. Provide accessible move-up and move-down controls alongside any drag gesture. Give empty states an immediate action, such as **Add a book** or **Turn on an activity**.
+Use large tap targets, readable text sizes, plain action labels, and text alongside color for states. Support dark mode, browser zoom, keyboard navigation, and screen readers. Give each activity one primary action and put occasional actions in its menu. Provide accessible move-up and move-down controls alongside any drag gesture. Give empty states an immediate action, such as **Add a book** or **Turn on an activity**.
 
-### Android home-screen widget
+### Possible Android home-screen widget
 
-The primary widget shows the date, completion count, and all three default activity rows with short labels and completion states. Tap a row to open that activity and tap the header to open Today. A smaller size shows the next activity and completion count. At larger sizes, use available space for extra rows and a remaining-item count when a custom plan exceeds capacity. Show a useful rest-day or all-done state. Test the default plan at normal and larger font sizes on your launcher and adjust the recommended widget size to fit it.
+If native Android work begins, the primary widget shows the date, completion count, and all three default activity rows with short labels and completion states. Tap a row to open that activity and tap the header to open Today. A smaller size shows the next activity and completion count. At larger sizes, use available space for extra rows and a remaining-item count when a custom plan exceeds capacity. Show a useful rest-day or all-done state. Test the default plan at normal and larger font sizes on your launcher and adjust the recommended widget size to fit it.
 
 Render the widget from the same local plan as Today. Refresh it after edits and completions, and row links open the current plan when a launcher still shows an older day. Use background refresh for turnover and reconcile the date whenever the app or widget action runs. Android controls the timing of background updates. [Android Glance widget updates](https://developer.android.com/develop/ui/compose/glance/glance-app-widget)
 
@@ -72,7 +72,7 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 - Present three to five recent headlines from sources you enable, where available. Show title, publisher, and publish date when supplied. Sort by freshness, deduplicate links, and favor a mix of enabled publishers when possible.
 - Fetch from publisher RSS or Atom feeds whose terms permit the intended use. Keep the news provider replaceable so a licensed API can later supply the same headline records. A publisher such as The Guardian is a candidate to evaluate for the private pilot if it fits your preferences. [The Guardian’s RSS guidance](https://www.theguardian.com/help/feeds)
-- Open articles at the publisher via an Android browser or Custom Tab. Save only permitted metadata, with a bounded cache and a visible last-updated time. Let you refresh without losing saved progress. If sources fail or the phone is offline, show available cached headlines with their age and offer a swap when the list is empty. Marking an article as read is a separate action from opening it.
+- Open articles on the publisher's website. Save only permitted metadata, with a bounded cache and a visible last-updated time. Let you refresh without losing saved progress. If sources fail or the phone is offline, show available cached headlines with their age and offer a swap when the list is empty. Marking an article as read is a separate action from opening it.
 - Start with configured source toggles, a shortlist, and manual completion. Topic filters, saved articles, and Android Share capture are follow-up options. A keyed API goes behind a server adapter if provider credentials must be kept secret. Confirm rights, coverage, limits, and cost before opting in. News API’s Developer tier is limited to development and testing, which matters even for an internal release. [News API terms](https://newsapi.org/terms)
 
 ### Books
@@ -90,23 +90,23 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 ## Architecture
 
-### Android and web
+### Mobile web and native options
 
-Start with native Android using Kotlin, Jetpack Compose and Material 3 for screens, a single activity with navigation, and Jetpack Glance for the launcher widget. Use Room for structured local data, DataStore for lightweight preferences, and WorkManager for deferrable work such as refreshing feeds and reconciling the widget. Compose ViewModels read through repositories. Use an Android notification channel and request the system notification permission when the user enables reminders on supported versions. Start with one optional reminder around the chosen time, with timing subject to Android background scheduling and battery controls. [Android architecture recommendations](https://developer.android.com/topic/architecture/recommendations) · [Room](https://developer.android.com/training/data-storage/room) · [Android notification permission](https://developer.android.com/develop/ui/compose/notifications/notification-permission) · [Android alarm scheduling](https://developer.android.com/develop/background-work/services/alarms)
+Start with a static web app using HTML, CSS, and JavaScript modules. Store routine data in IndexedDB through a repository. Cache the app shell with a service worker so it can reopen offline after a successful first load. Separate the planner from the browser interface and keep provider responses behind adapters. The responsive layout serves both phone and desktop widths.
 
-Begin with one Android Gradle app module and clearly separated Kotlin packages. Move the planner or a feature into its own Gradle module when it has a concrete need for reuse, independent builds, or stronger dependency boundaries. Pick the minimum Android version when the pilot phone is known.
+Evaluate installability and reminders during the pilot. The [original Android slice](plans/first-android-slice.md) remains a reference if a native Android build or launcher widget becomes useful. Use shared data contracts and planner tests if a second client is built.
 
-A web companion makes sense when you want to manage plans or decks from a desktop. Give it Today, editing, vocabulary, and history views using a shared versioned data contract. Evaluate a responsive web app or installable PWA for that stage. The first synchronization slice can be routine settings and completions, with explicit conflict handling and local changes queued while offline. Keep the Android widget and launcher integration native. Share data contracts and planner test cases across platforms and evaluate sharing executable planner code once both clients have a use for it.
+If cross-device access becomes useful, start with routine settings and completions, with explicit conflict handling and local changes queued while offline. Choose a backend when the synchronization and account requirements are clear.
 
-### Package boundaries
+### Application boundaries
 
 | Package | Owns |
 | --- | --- |
 | `planner` | Plan generation, time estimates, statuses, shortening, ordering, and daily rollover. Depends on small activity contracts and an injected clock. |
 | `activities` | Activity registration, shared actions, and feature packages for news, books, vocabulary, and simple one-off items. Each feature owns its own configuration and completion details. |
-| `data` | Room stores, queries, migrations, preferences, and repositories. Applies plan edits and completions transactionally and exposes observable local state. |
-| `today`, `progress`, `settings` | Compose screens and ViewModels for plan execution, history, settings, and onboarding. |
-| `widget` | Glance layouts and actions that use the same plan and completion use cases as the app. |
+| Repository | IndexedDB records and schema versions. Applies plan edits and completions transactionally. |
+| Web interface | Setup, Today, Activities, and Progress. Reads through the repository and calls the planner for plan changes. |
+| Native widget, if added | Launcher layouts and actions that use the same plan and completion rules as the app. |
 | `integrations` | Provider adapters as needed, including news feeds and optional future availability, link, or import adapters. Maps provider responses to app-owned records. |
 
 ### How to add an activity
@@ -125,18 +125,18 @@ An activity registers a stable type ID, label, configuration, scheduling inputs,
 
 Use the persisted plan as the source of truth. Stage external fetches as inputs to local repositories so a failed fetch leaves the rest of the app usable. Save completion and its associated progress together when they represent one action. Track user edits independently of provider data so reloading a feed or losing a connection cannot overwrite them. Plan IDs and import format versions should survive a future move to sync.
 
-Keep personal data on the phone for the first release. Provide a versioned export of routines, history, and user-created content. Restore should preview and apply the backup atomically, with a confirmation before replacing stored data. Exclude cached headlines and future account tokens from exports. Explain that an exported file may contain personal history. Decide explicitly which files are eligible for Android system backup. When account connections are added, disclose the data each one uses, protect credentials with platform-backed storage where applicable, and remove account tokens and provider-only cache on disconnect. [Android offline-first guidance](https://developer.android.com/topic/architecture/data-layer/offline-first)
+Keep personal data in the browser for the first release. Provide a versioned export of routines, history, and user-created content. Restore should preview and apply the backup atomically, with a confirmation before replacing stored data. Exclude cached headlines and future account tokens from exports. Explain that an exported file may contain personal history. When account connections are added, disclose the data each one uses, protect credentials with platform-backed storage where applicable, and remove account tokens and provider-only cache on disconnect.
 
 ## Integrations and release order
 
 | Integration | First useful version | When to build it |
 | --- | --- | --- |
-| News feeds or API | Display a short list of attributed headlines and open the publisher. Swap the source adapter without changing Today. | Feed support in the Android release. Consider a paid or licensed API if feeds cannot supply your chosen languages or topics. |
+| News feeds or API | Display a short list of attributed headlines and open the publisher. Swap the source adapter without changing Today. | Feed support in the web release. Consider a paid or licensed API if feeds cannot supply your chosen languages or topics. |
 | Google Calendar | Use read-only free/busy windows to suggest when a plan could fit. Keep the plan usable when access expires and show when availability was last checked. | After the pilot if finding time is the main difficulty. Test permissions and verification requirements for the intended audience before adding public onboarding. [Calendar free/busy](https://developers.google.com/workspace/calendar/api/v3/reference/freebusy/query) · [Calendar scopes](https://developers.google.com/workspace/calendar/api/auth) |
 | Gmail | Capture a link or a user-selected snippet from an app that shares it, or add a manual email follow-up. Explore mailbox access if there is a clear repeated use case. | After the pilot. Confirm the actual Gmail share workflow on the phone first. Account-wide metadata and read-only scopes are restricted and can have additional verification and assessment requirements. [Android share targets](https://developer.android.com/develop/ui/compose/sharing/receive) · [Gmail scopes](https://developers.google.com/workspace/gmail/api/auth/scopes) |
 | Netflix | Add a watchlist activity from a pasted title or link, open it externally, and mark it watched manually. Explore optional local CSV import only if viewing history is useful. | After the pilot. Start with the link workflow. Treat automatic account synchronization as a candidate only if a supported integration is available for this use. [Netflix viewing activity export](https://help.netflix.com/en/node/101917) |
-| SmartLingo | Try opening an existing lesson on its website. Evaluate a deck or progress adapter if a supported interface becomes available for the phone. The sibling repo documents its current preview API as loopback-only. | Optional. The Android app’s local decks support the entire pilot independently. |
-| Web companion | Review and edit the plan from a browser, using the same activity and progress concepts. | Start when you have a recurring desktop use case. Confirm the desired data to sync, authentication, and conflict rules before choosing a backend. |
+| SmartLingo | Try opening an existing lesson on its website. Evaluate a deck or progress adapter if a supported interface becomes available for the phone. The sibling repo documents its current preview API as loopback-only. | Optional. The planned built-in decks support the pilot independently. |
+| Cross-device access | Share routine defaults and progress across phone and desktop browsers. | Confirm the desired data to sync, authentication, and conflict rules before choosing a backend. |
 
 A link, a data provider, and an account connector have different responsibilities. An activity can start with a link and add a provider later. Provider failures, revocations, and stale data surface in the affected activity with a usable fallback. Keep calendar changes, sending mail, and other actions that write to external accounts outside the first versions of their connectors pending a separate design for confirmation and recovery.
 
@@ -144,27 +144,27 @@ A link, a data provider, and an account connector have different responsibilitie
 
 | Milestone | Build | Completion check |
 | --- | --- | --- |
-| 1. Validate the daily flow | Sketch Today, Activities, a vocabulary session, and the widget in both sizes. Walk through a normal day, a 10-minute day, and a day with no news connection. Pick initial sources and confirm the pilot phone. | You can explain how to start, edit, and shorten today’s plan from the sketch. The default plan is legible in the target widget size. |
-| 2. Build a first working slice | Initialize the Kotlin Android app, set up navigation and storage, and build one local activity from onboarding to completion and history. Add unit tests for dates, budgets, and duplicate actions. | A physical Android phone can start and finish a local activity in airplane mode, and progress survives app restart. |
+| 1. Validate the daily flow | Sketch Today, Activities, and a vocabulary session. Walk through a normal day, a 10-minute day, and a day with no news connection. Pick initial sources and confirm the pilot phone. | You can explain how to start, edit, and shorten today’s plan from the sketch. |
+| 2. Build a first working slice | Initialize the mobile web app and build one local activity from onboarding to completion and history. Add unit tests for dates, budgets, and duplicate actions. | A phone browser can start and finish a local activity offline after its first load, and progress survives reopening the app. |
 | 3. Deliver the three activities | Add the shortlist, current book and reading log, and the three switchable vocabulary decks. Complete today-only editing, one-off items, shortening, and progress views. | You can plan, start, finish, and review all three activities. Each deck maintains its own state. A dead feed leaves the rest of the plan available. |
-| 4. Deliver the widget and polish | Add both widget sizes, optional reminder, accessibility work, and local export/restore. Test refresh, tap routing, and the normal release build on your launcher. | The default three activities are visible at a glance in the main widget, taps open the expected items, and restore reproduces history. |
-| 5. Run a seven-day personal pilot | Install a private APK on your phone and test that an app update preserves data. Use it through a normal week and record interruptions or steps that felt slow. Review completion, edits, switches, and widget use using local history and short notes. | You can identify what saved time, what made the plan harder to use, and which enhancement is worth doing next. |
-| 6. Expand one use case at a time | Choose calendar availability, richer news sources, a desktop companion, or another activity based on the pilot. | The chosen addition demonstrates its benefit while the daily plan still works with that addition disabled or unavailable. |
+| 4. Finish pilot readiness | Add accessibility improvements and local export and restore. Evaluate reminders and home-screen installation. | The daily workflow is usable with large text and a screen reader, and restore reproduces history. |
+| 5. Run a seven-day personal pilot | Use the web app on your phone through a normal week and verify that an app update preserves data. Record interruptions or steps that felt slow. | You can identify what saved time, what made the plan harder to use, and which enhancement is worth doing next. |
+| 6. Expand one use case at a time | Choose calendar availability, richer news sources, cross-device access, a native launcher widget, or another activity based on the pilot. | The chosen addition demonstrates its benefit while the daily plan still works with that addition disabled or unavailable. |
 
 ## Testing and pilot measures
 
 - **Planner tests.** Verify priorities and shortened variants respect the budget, manual changes persist, weekday and rest-day settings work, and switching dates across midnight, daylight saving, or travel reuses the correct saved plan. Test that consecutive opens and duplicate taps produce one plan and one completion.
 - **Storage and activities.** Test persistence after process death, database migrations once a schema ships, interrupted vocabulary sessions, deck isolation, book position changes, mixed or invalid backup files, and restoration from a valid export. Test a feed timeout, malformed or duplicate entries, unavailable articles, and offline startup with and without cache.
-- **UI and device checks.** Test onboarding, finishing and undoing an activity, editing while in a session, widget layout and day changes, deep links from stale widgets, notification permission denial, large text, dark mode, and TalkBack. Run local unit tests, lint, and instrumented tests before releasing the pilot build. Record exact commands in the README when the project is initialized.
-- **Pilot measures.** Target a usable plan within a minute of first launch. On the next day, aim to see the plan and start an activity in one tap after opening Today or by tapping its widget row. As a starting measure of usefulness, look for at least one completed activity on five of seven pilot days and ask whether the plan saved decision time. Review frequent edits and skips as feedback about defaults. Keep these observations local.
+- **UI and device checks.** Test onboarding, finishing and undoing an activity, editing while in a session, reopening offline, day changes, large text, dark mode, and screen readers. Run planner tests and test the normal workflow in the pilot phone's browser. See the [README](../README.md) for development commands.
+- **Pilot measures.** Target a usable plan within a minute of first launch. On the next day, aim to see the plan and start an activity in one tap after opening Today. As a starting measure of usefulness, look for at least one completed activity on five of seven pilot days and ask whether the plan saved decision time. Review frequent edits and skips as feedback about defaults. Keep these observations local.
 
 ## Decisions to settle during the design and pilot
 
-1. What Android phone, Android version, and launcher will you use for the pilot?
+1. What phone and browser will you use for the pilot?
 2. Which languages, topics, and publishers should the shortlist cover? Should it lean toward local news, international news, or a mix?
 3. What language should appear on the definition side of the vocabulary cards? Do you want Japanese reading help shown by default?
 4. What book or audiobook will you start with, and do pages, minutes, or chapters feel easiest to record?
 5. Do you want a morning reminder, and should weekends have different activities or a smaller budget?
 6. Should 15–30 minutes be your default every day or vary by weekday?
 7. Would you prefer a quiet weekly summary, a streak, or activity totals only?
-8. After a week of use, which repeated problem would justify the first extension: finding free time, managing the plan on desktop, handling email follow-ups, or something else?
+8. After a week of use, which repeated problem would justify the first extension: finding free time, switching between devices, handling email follow-ups, or something else?

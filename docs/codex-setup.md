@@ -36,4 +36,4 @@ Example request: “Use `$smartbot-deliver-feature` to build the first Android s
 
 - Check `git status --short --branch` and `git diff --check` during a review. Check untracked files directly since they are outside the ordinary diff until staged.
 - Parse the TOML files and validate the skill frontmatter after configuration changes. To verify discovery in a supported client, open a fresh SmartBot session and check the project skill list. During authorized delegation, ask for a named role and check that the runtime selects it. A file-format check alone cannot establish client discovery or role selection.
-- Android build and device verification begin with the [first Android slice](plans/first-android-slice.md). Document the real commands in the root README once the Gradle wrapper is available.
+- Run the web app and planner tests using the [README commands](../README.md#development). See the [first web slice](plans/first-web-slice.md#verification) for browser checks.

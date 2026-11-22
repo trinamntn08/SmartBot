@@ -1,6 +1,6 @@
 # First Android implementation slice
 
-Status: planned.
+Status: deferred. See the [first web slice](first-web-slice.md) for the active implementation.
 
 ## Outcome
 

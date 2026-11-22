@@ -2,7 +2,7 @@
 
 ## Project context
 
-SmartBot is a personal Android app that suggests an editable 15–30 minute daily plan. Start with news, book reading, three vocabulary decks, and a launcher widget. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. The Kotlin and Compose foundation described there is planned until the app project exists.
+SmartBot is a personal, mobile-first web app that suggests an editable 15–30 minute daily plan. Start with the reading routine, then add news and three vocabulary decks. Read [current status](docs/status.md) and the relevant part of the [product plan](docs/product-plan.md) before changing behavior. Native Android and its launcher widget are follow-up options.
 
 ## Working practices
 
@@ -29,4 +29,4 @@ SmartBot is a personal Android app that suggests an editable 15–30 minute dail
 
 ## Project-specific commands
 
-Current documentation and setup checks are in the [Codex setup guide](docs/codex-setup.md#verification). Add Android setup, build, and test commands to [README.md](README.md) after the Gradle wrapper and app module are in place.
+Web app run and test commands are in [README.md](README.md). Codex setup checks are in the [Codex setup guide](docs/codex-setup.md#verification).
