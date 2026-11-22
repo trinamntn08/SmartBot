@@ -13,6 +13,8 @@ Last updated November 22, 2026.
 
 Four planner tests passed under Node.js. A Chrome smoke test at 320 CSS pixels covered setup, missing-book recovery, editing, offline resume and completion, duplicate completion in two tabs, skip and undo, date rollover, and saved history. Chrome also passed the desktop width check in dark mode. The app has yet to be tested on a physical phone.
 
+The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the preview and opens its address in the default browser. The launcher checks covered both server paths and verified HTTP responses for the entry page and app files.
+
 ## Setup verification
 
 The local Codex app server reported the active project configuration with a three-subagent limit and discovered both project skills. All five role files passed TOML and required-field checks. Named-role selection can be verified when a task calls for delegation. Documentation links and Android ignore patterns passed local checks.
