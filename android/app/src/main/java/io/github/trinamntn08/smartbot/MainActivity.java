@@ -148,7 +148,7 @@ public final class MainActivity extends Activity {
 
     private static boolean isPublisher(String host) {
         return "www.canada.ca".equals(host) || "science.nasa.gov".equals(host)
-                || "www.nasa.gov".equals(host);
+                || "www.nasa.gov".equals(host) || "tuoitre.vn".equals(host);
     }
 
     private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, Uri uri) {
@@ -159,6 +159,10 @@ public final class MainActivity extends Activity {
                     || "science.nasa.gov".equals(host))) return null;
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+        }
+        String feedPrefix = ASSET_PATH + "api/tuoitre/";
+        if (uri.getPath().startsWith(feedPrefix)) {
+            return TuoitreFeed.read(uri.getPath().substring(feedPrefix.length()));
         }
         if ((ASSET_PATH + "sw.js").equals(uri.getPath())) {
             // The APK already supplies these files offline. Avoid caching them across APK updates.

@@ -1,4 +1,5 @@
-import { newsLanguages, newsPreferences, newsTopics } from './news-preferences.js';
+import { newsPreferences, newsTopics } from './news-preferences.js';
+import { fetchTuoitre, tuoitreFeeds } from './tuoitre.js';
 
 // Starter links checked in a mobile-sized browser with cookies disabled.
 export const starterStories = [
@@ -29,15 +30,17 @@ export const starterStories = [
   },
 ];
 
-export const feeds = newsLanguages.flatMap(({ id: language }) =>
-  newsTopics.map(({ id: topic, subject, department }) => ({ id: language + '-' + topic, language, topic, subject, department })));
+export const feeds = ['en', 'fr'].flatMap(language =>
+  newsTopics.filter(item => item.id === 'general' || item.subject || item.department)
+    .map(({ id: topic, subject, department, related }) => ({ id: language + '-' + topic, language, topic, subject, department, related })));
 feeds.push({ id: 'nasa', language: 'en', topic: 'general' });
+feeds.push(...tuoitreFeeds);
 
 export function selectedFeeds({ languages, topics }) {
   const interests = topics.length ? topics : ['general', 'sports'];
   return feeds.filter(feed => languages.includes(feed.language) && (feed.id === 'nasa'
     ? interests.some(id => ['general', 'space', 'science', 'tech'].includes(id))
-    : interests.includes(feed.topic)));
+    : interests.includes(feed.topic) || feed.related?.some(topic => interests.includes(topic))));
 }
 
 export function isCanadaStory(url) {
@@ -62,17 +65,22 @@ export function feedStories(entries, { language, topic }) {
     if (topic === 'general' && sportWords.test(text)) continue;
     if (topic === 'tech' && !techWords.test(text)) continue;
     if (topic === 'housing' && !housingWords.test(text)) continue;
+    const topics = [topic];
+    const performers = /\b(actor|actors|actress|actresses|acteur|actrice|singer|chanteur|chanteuse|comedian|comédien|musician|musicien|cinéaste|filmmaker|vedette)s?\b|tapis rouge|red carpet/i;
+    if ((topic === 'movies' || topic === 'culture') && performers.test(text)) topics.push('showbiz');
+    else if (topic === 'movies' && /festival|premi[eè]re|box.office|awards?|prix|gala|oscars?/i.test(text)) topics.push('showbiz');
     result.push({
-      title: entry.title.trim(), url: entry.link, date: entry.publishedDate, language, topic,
+      title: entry.title.trim(), url: entry.link, date: entry.publishedDate, language, topic, topics,
       source: language === 'en' ? 'Government of Canada' : 'Gouvernement du Canada',
     });
-    if (result.length === 8) break;
+    if (result.length === 8 && topic !== 'movies') break;
   }
   return result;
 }
 
 export async function fetchFeed(feed, signal) {
   const options = { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
+  if (feed.language === 'vi') return fetchTuoitre(feed, options);
   if (feed.id === 'nasa') {
     const response = await fetch('https://www.nasa.gov/news-release/feed/', options);
     if (!response.ok) throw new Error('Feed unavailable');

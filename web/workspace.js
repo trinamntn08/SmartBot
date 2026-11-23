@@ -1,5 +1,5 @@
 const sections = [
-  { id: 'news', title: 'News', summary: 'Headlines in English and French' },
+  { id: 'news', title: 'News', summary: 'Headlines for your interests' },
   { id: 'languages', title: 'Languages', summary: 'French, English, and Japanese', detail: 'Vocabulary decks are in development.' },
   { id: 'music', title: 'Music', summary: 'Playlists and listening', detail: 'Music browsing and playback are in development.' },
   { id: 'movies', title: 'Movies', summary: 'Films and your watchlist', detail: 'Film browsing and watchlists are in development.' },

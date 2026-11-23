@@ -2,7 +2,7 @@
 
 SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-The app includes a plain-text book reader, bilingual news, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
+The app includes a plain-text book reader, news in three languages, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 
@@ -31,11 +31,13 @@ Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot disp
 
 ## News
 
-Open **Settings → News** in the browser or Android app. Choose English, French, or both. Select any combination of the 16 topics, including Culture, Tech, and Sports, or choose **All topics**. Changes save automatically on this device.
+Open **Settings → News** in the browser or Android app. Select any combination of English, Français, and Tiếng Việt. Choose from 18 topics, including **Showbiz & celebrities**, **Movies**, and **Sports**, or select **All topics**. Changes save automatically on this device.
 
 Open **Workspace → News** for your headlines. Tap a headline to read the article and tap its star to save it. The star on the News screen opens all your saved articles, including those outside your current preferences.
 
 NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
+
+Vietnamese headlines come from Tuổi Trẻ. SmartBot shows the publisher’s RSS summary and saves it with the star. Tap **Read at Tuổi Trẻ** for the full article. Live Vietnamese feeds use the Python preview or the Android APK. [Tuổi Trẻ RSS channels and terms](https://tuoitre.vn/rss.htm)
 
 ## Ask SmartBot
 

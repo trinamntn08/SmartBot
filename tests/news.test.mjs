@@ -3,6 +3,7 @@ import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
 import { feedStories, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
 import { newsPreferences, newsTopics } from '../web/news-preferences.js';
+import { tuoitreStory } from '../web/tuoitre.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
 const story = starterStories.find(item => item.source === 'Affaires mondiales Canada');
@@ -45,15 +46,32 @@ test('news preferences retain earlier choices and normalize multiple selections'
 });
 
 test('each suggested interest has a feed in each language', () => {
-  for (const language of ['en', 'fr']) {
+  for (const language of ['en', 'fr', 'vi']) {
     for (const { id } of newsTopics) {
       const selected = selectedFeeds({ languages: [language], topics: [id] });
-      assert.ok(selected.some(feed => feed.topic === id && (id === 'general' || feed.subject || feed.department)));
+      assert.ok(selected.some(feed => feed.topic === id || feed.related?.includes(id)), language + '/' + id);
       assert.ok(selected.every(feed => feed.language === language));
     }
   }
   const feeds = selectedFeeds({ languages: ['fr'], topics: ['culture', 'tech'] });
   assert.deepEqual(feeds.map(feed => feed.subject), ['artsandmedia', 'scienceandinnovation']);
+});
+
+test('Vietnamese entertainment uses one feed, with cinema as a separate interest', () => {
+  const prefs = { languages: ['vi'], topics: ['movies', 'showbiz'] };
+  assert.deepEqual(newsPreferences(prefs), { languages: ['vi'], topics: ['showbiz', 'movies'] });
+  const feeds = selectedFeeds(prefs);
+  assert.deepEqual(feeds.map(feed => feed.section), ['giai-tri']);
+  const item = { title: 'Ca sĩ ra album', published: '11/23/2026 12:30:00 AM',
+    url: 'https://tuoitre.vn/ca-si-123456.htm', summary: 'Album mới' };
+  const music = tuoitreStory(feeds[0], item);
+  const movie = tuoitreStory(feeds[0], { ...item, title: 'Liên hoan phim', url: 'https://tuoitre.vn/phim-234567.htm' });
+  assert.equal(music.date, '2026-11-22T17:30:00.000Z');
+  assert.equal(music.summary, item.summary);
+  assert.equal(tuoitreStory(feeds[0], { ...item, url: 'https://example.org/a' }), null);
+  assert.equal(tuoitreStory(feeds[0], { ...item, published: '' }), null);
+  assert.deepEqual(shortlist([music, movie, story], { languages: ['vi'], topics: ['movies'] }), [movie]);
+  assert.equal(shortlist([music, movie, story], prefs).length, 2);
 });
 
 test('multiple interests show the union of matching headlines in the chosen language', () => {

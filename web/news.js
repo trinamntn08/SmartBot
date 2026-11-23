@@ -180,6 +180,13 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
 
   if (body) showBody();
   else store.saveArticle(story, null);
+  if (typeof story.summary === 'string') {
+    const summary = document.createElement('p');
+    summary.textContent = story.summary;
+    panel.querySelector('.news-body').replaceChildren(summary);
+    panel.querySelector('.news-info a').textContent = 'Read at ' + story.source;
+    return;
+  }
   if (body?.blocks) return;
   if (!navigator.onLine) {
     status.textContent = body ? 'Offline · Cached excerpt' : 'Connect to load the article.';

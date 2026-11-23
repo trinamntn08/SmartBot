@@ -1,12 +1,15 @@
 export const newsLanguages = [
   { id: 'en', label: 'English' },
   { id: 'fr', label: 'Français' },
+  { id: 'vi', label: 'Tiếng Việt' },
 ];
 
 // Use the publisher's subject feeds or a specialist department for each interest.
 export const newsTopics = [
   { id: 'general', label: 'General news' },
-  { id: 'culture', label: 'Culture', subject: 'artsandmedia' },
+  { id: 'culture', label: 'Culture', subject: 'artsandmedia', related: ['showbiz'] },
+  { id: 'showbiz', label: 'Showbiz & celebrities' },
+  { id: 'movies', label: 'Movies', department: 'nationalfilmboard', related: ['showbiz'] },
   { id: 'tech', label: 'Tech', subject: 'scienceandinnovation' },
   { id: 'sports', label: 'Sports', department: 'canadianheritage' },
   { id: 'science', label: 'Science', subject: 'scienceandinnovation' },
@@ -29,5 +32,5 @@ export function newsPreferences(value) {
     .filter(id => Array.isArray(multiple) ? multiple.includes(id) : single === id);
   const languages = valid(newsLanguages, value?.languages, value?.language);
   const topics = valid(newsTopics, value?.topics, value?.topic);
-  return { languages: languages.length ? languages : newsLanguages.map(item => item.id), topics };
+  return { languages: languages.length ? languages : ['en', 'fr'], topics };
 }

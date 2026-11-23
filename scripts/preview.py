@@ -3,10 +3,12 @@
 import argparse
 from functools import partial
 from hashlib import sha256
+from http.client import HTTPException, HTTPSConnection
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 import json
 from pathlib import Path
+import re
 import socket
 from urllib.request import urlopen
 import webbrowser
@@ -52,7 +54,25 @@ class PreviewServer(ThreadingHTTPServer):
 
 class PreviewHandler(SimpleHTTPRequestHandler):
     def send_head(self):
-        if self.path == REFRESH:
+        if self.path.startswith("/api/tuoitre/"):
+            section = self.path.removeprefix("/api/tuoitre/")
+            if not self.local_request() or not re.fullmatch(r"[a-z-]{1,32}", section):
+                return self.send_error(403)
+            connection = HTTPSConnection("tuoitre.vn", timeout=8)
+            try:
+                connection.request("GET", f"/rss/{section}.rss")
+                response = connection.getresponse()
+                if response.status != 200:
+                    return self.send_error(502)
+                body = response.read(512 * 1024 + 1)
+                if len(body) > 512 * 1024:
+                    return self.send_error(502)
+            except (OSError, HTTPException):
+                return self.send_error(502)
+            finally:
+                connection.close()
+            content_type = "text/plain; charset=utf-8"
+        elif self.path == REFRESH:
             body, content_type = REFRESH_PAGE.read_bytes(), "text/html; charset=utf-8"
         elif self.path == WORKER:
             body, content_type = preview_worker(self.directory), "text/javascript; charset=utf-8"
@@ -60,6 +80,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
             return super().send_head()
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()

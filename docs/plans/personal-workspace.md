@@ -47,6 +47,10 @@ November 23, 2026. **News preferences.** Settings now holds English and French l
 
 At 320 CSS pixels Chromium verified preference migration, automatic saving, five live French headlines for Culture and Tech, offline preference changes, cached headlines, and a saved article outside the new selection. All 14 Node and six Python tests passed. Android debug build, signature, and 21 bundled asset checks passed. Lint reported zero errors and seven warnings. Device testing remains pending.
 
+November 23, 2026. **Vietnamese and entertainment news.** Settings offers Tiếng Việt, a combined Showbiz & celebrities topic, and a separate Movies topic. Tuổi Trẻ supplies attributed headlines and summaries for personal RSS readers. Vietnamese sections are fetched by the local preview or the APK, with full stories at the publisher. English and French entertainment headlines draw on Canadian arts and National Film Board releases. Existing language choices carry forward. [Tuổi Trẻ feed terms](https://tuoitre.vn/rss.htm)
+
+At 320 CSS pixels Chromium loaded five headlines for each entertainment choice in each language, opened a Vietnamese article with cookies blocked, and reopened its starred summary offline. All 15 Node and seven Python tests passed. Android debug build, signature, and 22 bundled asset checks passed. Lint reported zero errors and seven warnings. Android publisher handoff still needs a device check.
+
 ## Handoff
 
 The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.
