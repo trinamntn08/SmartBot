@@ -27,13 +27,45 @@ export function savePreferences(routine, { budget, title, page }) {
 }
 
 export function ensurePlan(routine, day) {
-  if (!routine.settings || routine.plans[day.date]) return;
+  if (!routine.settings || routine.plans[day.date]?.reading) return;
   const { budget } = routine.settings;
   routine.plans[day.date] = {
     ...day,
+    ...routine.plans[day.date],
     budget,
     reading: { minutes: budget >= 10 ? 10 : 5, status: 'pending', book: null, outcome: null },
   };
+}
+
+export function updateNews(routine, day, story, action) {
+  let plan = routine.plans[day.date];
+  const pick = plan?.news;
+  if (action === 'add') {
+    if (pick || routine.readArticles?.[story.url]) return;
+    plan ??= routine.plans[day.date] = { ...day };
+    plan.news = { story: { ...story }, minutes: 5, status: 'pending' };
+  } else if (action === 'remove') {
+    if (pick?.story.url === story.url && pick.status === 'pending') {
+      delete plan.news;
+      if (!plan.reading && !plan.readStories) delete routine.plans[day.date];
+    }
+  } else if (action === 'read' || action === 'unread') {
+    routine.readArticles ??= {};
+    if (action === 'read' && !routine.readArticles[story.url]) {
+      plan ??= routine.plans[day.date] = { ...day };
+      plan.readStories ??= {};
+      plan.readStories[story.url] = story.title;
+      routine.readArticles[story.url] = true;
+    } else if (action === 'unread') {
+      delete routine.readArticles[story.url];
+      if (plan?.readStories) {
+        delete plan.readStories[story.url];
+        if (!Object.keys(plan.readStories).length) delete plan.readStories;
+        if (!plan.reading && !plan.news && !plan.readStories) delete routine.plans[day.date];
+      }
+    }
+    if (pick?.story.url === story.url) pick.status = action === 'read' ? 'completed' : 'pending';
+  }
 }
 
 export function updateReading(routine, date, action) {

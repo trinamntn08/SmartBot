@@ -1,0 +1,125 @@
+// Starter links checked in a mobile-sized browser with cookies disabled.
+export const starterStories = [
+  {
+    title: 'Le secrétaire d’État van Koeverden annonce un appui pour renforcer les capacités du Canada à accueillir des rencontres sportives',
+    source: 'Patrimoine canadien', language: 'fr', topic: 'sports', date: '2026-10-01',
+    url: 'https://www.canada.ca/fr/patrimoine-canadien/nouvelles/2026/10/le-secretaire-detat-van-koeverden-annonce-un-appui-pour-renforcer-les-capacites-du-canada-a-accueillir-des-rencontres-sportives.html',
+  },
+  {
+    title: 'NASA’s ESCAPADE Completes Powered Earth Flybys, Now En Route to Mars', source: 'NASA',
+    language: 'en', topic: 'general', date: '2026-11-09',
+    url: 'https://science.nasa.gov/science-research/heliophysics/nasas-escapade-completes-powered-earth-flybys-now-en-route-to-mars/',
+  },
+  {
+    title: 'La ministre Anand participera à la 48e session de la Conférence ministérielle de la Francophonie, au 20e Sommet de la Francophonie et à la réunion de l’APEC',
+    source: 'Affaires mondiales Canada', language: 'fr', topic: 'general', date: '2026-11-13',
+    url: 'https://www.canada.ca/fr/affaires-mondiales/nouvelles/2026/11/la-ministre-anand-participera-a-la-48e-session-de-la-conference-ministerielle-de-la-francophonie-au-20e-sommet-de-la-francophonie-et-a-la-reunion-d.html',
+  },
+  {
+    title: 'Building Canada Strong through sport: Secretary of State van Koeverden unveils vision to strengthen Canada’s sport system as the Playground to Podium Summit opens in Ottawa',
+    source: 'Canadian Heritage', language: 'en', topic: 'sports', date: '2026-11-09',
+    url: 'https://www.canada.ca/en/canadian-heritage/news/2026/11/building-canada-strong-through-sport-secretary-of-state-van-koeverden-unveils-vision-to-strengthen-canadas-sport-system-as-the-playground-to-podium.html',
+  },
+];
+
+export const feeds = ['en', 'fr'].flatMap(language =>
+  ['general', 'sports'].map(topic => ({ id: language + '-' + topic, language, topic })));
+feeds.push({ id: 'nasa', language: 'en', topic: 'general' });
+
+export function isCanadaStory(url) {
+  try {
+    const link = new URL(url);
+    return link.origin === 'https://www.canada.ca' && !link.username && !link.password
+      && /^\/(en\/[^/]+\/news|fr\/[^/]+\/nouvelles)\/\d{4}\/\d{2}\/[^/]+\.html$/.test(link.pathname);
+  } catch { return false; }
+}
+
+const sportWords = /\b(sports?|sportif\w*|sportive\w*|athl[eè]tes?|athletes?|olympi\w*|paralympi\w*|hockey|rinks?|patinoires?|soccer|rugby|football|curling|skating|patinage)\b/i;
+
+export function feedStories(entries, { language, topic }) {
+  const result = [];
+  for (const entry of entries) {
+    if (!isCanadaStory(entry.link) || !entry.link.includes('/' + language + '/')
+        || !entry.title?.trim() || !Number.isFinite(Date.parse(entry.publishedDate))) continue;
+    const sports = sportWords.test(entry.title + ' ' + (entry.teaser ?? ''));
+    if ((topic === 'sports') !== sports) continue;
+    result.push({
+      title: entry.title.trim(), url: entry.link, date: entry.publishedDate, language, topic,
+      source: language === 'en' ? 'Government of Canada' : 'Gouvernement du Canada',
+    });
+    if (result.length === 8) break;
+  }
+  return result;
+}
+
+export async function fetchFeed(feed, signal) {
+  const options = { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
+  if (feed.id === 'nasa') {
+    const response = await fetch('https://www.nasa.gov/news-release/feed/', options);
+    if (!response.ok) throw new Error('Feed unavailable');
+    const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+    const stories = Array.from(xml.querySelectorAll('channel > item'), item => ({
+      title: item.querySelector('title')?.textContent.trim(), url: item.querySelector('link')?.textContent.trim(),
+      date: item.querySelector('pubDate')?.textContent, source: 'NASA', language: 'en', topic: 'general',
+    })).filter(story => story.title && story.url?.startsWith('https://www.nasa.gov/news-release/')
+      && Number.isFinite(Date.parse(story.date)));
+    if (!stories.length) throw new Error('Empty feed');
+    return stories.slice(0, 8);
+  }
+  const query = new URLSearchParams({ sort: 'publishedDate', orderBy: 'desc', type: 'newsreleases', pick: '40' });
+  if (feed.topic === 'sports') query.set('dept', 'canadianheritage');
+  const url = 'https://api.io.canada.ca/io-server/gc/news/' + feed.language + '/v2?' + query;
+  const response = await fetch(url, options);
+  if (!response.ok) throw new Error('Feed unavailable');
+  const data = await response.json();
+  const stories = feedStories(data.feed.entry, feed);
+  if (!stories.length) throw new Error('Empty feed');
+  return stories;
+}
+
+export function shortlist(articles, { language = '', topic = '' } = {}) {
+  const sorted = articles.filter(story => (!language || story.language === language) && (!topic || story.topic === topic))
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  const selected = new Map();
+  const groups = new Set();
+  // The Canadian feed generally publishes both translations at the same instant.
+  // Prefer different releases in a mixed edition. Single-language browsing keeps all releases.
+  function add(story) {
+    if (!language && isCanadaStory(story.url) && [...selected.values()].some(other =>
+      other.language !== story.language && other.date === story.date && other.topic === story.topic
+      && isCanadaStory(other.url))) return false;
+    selected.set(story.url, story);
+    return true;
+  }
+  // Reserve one place per selected language and topic before filling the remaining places.
+  for (const story of sorted) {
+    const group = story.language + '-' + story.topic;
+    if (!groups.has(group) && add(story)) groups.add(group);
+  }
+  const sources = new Set(sorted.filter(story => selected.has(story.url)).map(story => story.source));
+  for (const story of sorted) {
+    if (selected.size >= 5) break;
+    if (!sources.has(story.source) && Date.parse(sorted[0].date) - Date.parse(story.date) < 7 * 86400000) {
+      if (add(story)) sources.add(story.source);
+    }
+  }
+  for (const story of sorted) {
+    if (selected.size >= 5) break;
+    add(story);
+  }
+  return sorted.filter(story => selected.delete(story.url));
+}
+
+export async function fetchArticle(url, signal) {
+  if (!isCanadaStory(url)) return null;
+  const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal });
+  if (!response.ok) return null;
+  // Template content stays inert. Only plain text from the release body reaches the reader.
+  const template = document.createElement('template');
+  template.innerHTML = await response.text();
+  const main = template.content.querySelector('main');
+  const body = main?.querySelector('.col-md-auto .cmp-text');
+  const paragraphs = Array.from(body?.querySelectorAll('p, li') ?? [], element => element.textContent.trim()).filter(Boolean);
+  const author = main?.querySelector('.gc-byline a')?.textContent.trim();
+  return author && paragraphs.length ? { author, paragraphs } : null;
+}

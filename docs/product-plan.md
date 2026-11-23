@@ -16,7 +16,7 @@ One day might look like 5 minutes of news, 10 minutes of reading, and 10 minutes
 
 ## What the app feels like
 
-The app opens on **Workspace**, with cards for Books, News, Languages, Music, and Movies. **Books** opens the offline library. The other four cards open previews while those features are in development. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time routine setup.
+The app opens on **Workspace**, with cards for Books, News, Languages, Music, and Movies. **Books** opens the offline library and **News** opens the bilingual shortlist. Languages, Music, and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
 
 | Screen | What you see and do |
 | --- | --- |

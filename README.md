@@ -2,7 +2,7 @@
 
 SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-The app includes a plain-text book reader, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
+The app includes a plain-text book reader, bilingual news, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 
@@ -28,6 +28,12 @@ The web app needs an initial online load at a given address to cache its files f
 ## Read a book
 
 Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot displays the text in sections and saves the last section you opened. Use a UTF-8 file or a UTF-16 file with a byte order mark, up to 8 MB. The book and its position are stored on the device and are available offline.
+
+## News
+
+Open **Workspace → News** in the browser or Android app. Choose English, French, or both, and optionally filter by General news or Sports. Open a headline to read it or add it to Today for five minutes. **Mark as read** records the article in Progress. Preferences, chosen articles, and history stay on the device.
+
+The pilot uses NASA and Government of Canada releases, including sports coverage from Canadian Heritage. Canada.ca stories can show a text excerpt with a link to the full release. Other originals open at the publisher. The app keeps the last headline lists and up to eight recently opened stories with their available excerpts. Offline, a dated starter edition covers a first visit. Fresh headlines and publisher pages need internet. No account or runtime permission prompt is required.
 
 ## Ask SmartBot
 
@@ -59,7 +65,7 @@ python3 scripts/preview.py --no-browser
 Run the planner and text import tests with Node.js 22 or newer, and the assistant API tests with Python 3.
 
 ```sh
-node --test tests/planner.test.mjs tests/text-book.test.mjs
+node --test tests/planner.test.mjs tests/text-book.test.mjs tests/news.test.mjs
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 

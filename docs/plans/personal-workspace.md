@@ -33,6 +33,12 @@ November 23, 2026. **Ask SmartBot** opens from the bottom of the browser app. Th
 
 Eight Node tests and four local API tests passed. Chromium at 320 CSS pixels checked both providers with substitute responses, recorded audio, transcript review, follow-ups, permission denial, usage-limit recovery, and offline access to Books. The Android debug build and lint passed. Live provider calls require a configured key and outbound access. Book passage context and a hosted assistant for the bundled Android app are pending.
 
+November 23, 2026. **News** now opens from Workspace before routine setup. Both clients fetch the same publisher feeds over HTTPS without credentials. The browser and Android package keep language and topic choices, dated feed snapshots, and the eight most recently opened story records locally. Canadian release excerpts use plain text with author attribution and a link to the full release. Each Today item keeps its own headline snapshot. Read and undo actions update progress transactionally with the plan.
+
+The pilot uses the [Government of Canada news feeds](https://www.canada.ca/en/news/subscribe-emails.html), [Canada.ca non-commercial reproduction terms](https://www.canada.ca/en/transparency/terms.html), and [NASA news releases](https://www.nasa.gov/rss-feeds/). Sports currently covers Canadian Heritage releases. The proposed rugby source needs linking permission before integration. [FFR site terms](https://api.www.ffr.fr/wp-content/uploads/2020/12/Sites-FFR_CGU_FR-2.pdf)
+
+All 13 Node and six Python tests passed. Mobile-sized Chromium loaded five live articles with cookies disabled and no sign-in or consent interaction. Flow checks covered switching filters, reading excerpts, a feed outage, cold-start starter links, independent read history, completion and undo controls, and the saved book section after an offline reload. The 320-pixel view also passed a horizontal overflow check at 200% text size. The Android debug build and lint passed with zero errors and seven warnings. Signature verification passed and all 20 packaged web assets matched. No phone or configured emulator was available to exercise the publisher handoff.
+
 ## Handoff
 
-The plain-text reader is ready for a phone check. Verify the assistant with a configured provider, then add optional book passage context and news.
+The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

@@ -20,6 +20,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.webkit.WebViewAssetLoader;
 
@@ -84,7 +85,17 @@ public final class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return !isAppAsset(request.getUrl());
+                Uri uri = request.getUrl();
+                if (isAppAsset(uri)) return false;
+                if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
+                        && isPublisher(uri.getAuthority())) {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    } catch (ActivityNotFoundException error) {
+                        Toast.makeText(MainActivity.this, "No browser available", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                return true;
             }
         });
 
@@ -135,9 +146,18 @@ public final class MainActivity extends Activity {
                 && path != null && path.startsWith(ASSET_PATH);
     }
 
+    private static boolean isPublisher(String host) {
+        return "www.canada.ca".equals(host) || "science.nasa.gov".equals(host)
+                || "www.nasa.gov".equals(host);
+    }
+
     private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, Uri uri) {
         if (!isAppAsset(uri)) {
-            return null;
+            String host = uri.getAuthority();
+            if ("https".equals(uri.getScheme()) && ("api.io.canada.ca".equals(host)
+                    || "www.canada.ca".equals(host) || "www.nasa.gov".equals(host))) return null;
+            return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
+                    Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
         if ((ASSET_PATH + "sw.js").equals(uri.getPath())) {
             // The APK already supplies these files offline. Avoid caching them across APK updates.

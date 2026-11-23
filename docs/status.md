@@ -5,7 +5,8 @@ Last updated November 23, 2026.
 ## Current state
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
-- **Workspace** is the home screen. Its five cards open the Books library and previews for News, Languages, Music, and Movies. The previews describe features in development. Today remains available for setup and the daily reading routine.
+- **News** opens a five-headline shortlist with English/French and general news/sports filters. NASA and Canada.ca supply live updates. Reading, a five-minute Today slot, and seven-day history work independently of book setup. A dated starter edition, cached headlines, and recently opened Canadian release excerpts are available offline.
+- **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -14,6 +15,8 @@ Last updated November 23, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+November 23 News checks covered live updates, article text, feed failures, persisted filters, standalone reads, a five-minute Today slot, completion, and offline reload at a saved book section in 320-pixel Chromium. All 13 Node and six Python tests passed. The Android debug APK built and passed signature and bundled-asset checks. Lint reported zero errors and seven warnings. The pilot phone check is pending.
 
 The compact composer passed Chromium checks at 320 and 1440 CSS pixels in dark and light mode and at 200% text size on the narrow viewport. The checks covered Enter and Shift+Enter, closing and restoring focus, text questions, editable voice transcripts, provider selection in Settings, and draft preservation when the assistant is unavailable. Provider responses and microphone input were simulated. The updated service worker cached the composer, and Books reopened offline. All eight Node tests and four Python API tests passed. The Android debug build and signature passed, all 17 packaged web files matched, and lint reported zero errors and seven warnings.
 
@@ -47,4 +50,4 @@ Local validation for the SmartBot rename covered Markdown links and section anch
 
 ## Handoff
 
-Verify the plain-text picker and reader on the pilot phone. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and news.
+On the pilot phone, check the book picker and offline resume, refresh News, open a publisher, and return to the chosen Today item. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and portability.

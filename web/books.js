@@ -1,5 +1,5 @@
 import { BookImportError, readTextBook } from './text-book.js';
-import { addBook, getBook, listBooks, saveBookPosition } from './library-repository.js';
+import { addBook, getBook, listBooks, rememberOpenedBook, saveBookPosition } from './library-repository.js';
 
 function showError(panel, message) {
   const error = panel.querySelector('[role="alert"]');
@@ -105,6 +105,7 @@ async function showReader(panel, id) {
     }
 
     heading.textContent = book.title;
+    if (panel.isConnected) rememberOpenedBook(id);
     panel.querySelector('section').hidden = false;
     previous.addEventListener('click', turnSection);
     next.addEventListener('click', turnSection);

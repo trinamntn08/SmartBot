@@ -1,5 +1,18 @@
 let connection;
 
+export function rememberOpenedBook(id) {
+  try { localStorage.setItem('smartbot-last-opened-book', String(id)); }
+  catch { /* Reading positions are saved independently in IndexedDB. */ }
+}
+
+export function resumeBookRoute() {
+  try {
+    const id = Number(localStorage.getItem('smartbot-last-opened-book'));
+    if (Number.isSafeInteger(id) && id > 0) return '#book=' + id;
+  } catch { /* Fall back to the library when the shortcut is unavailable. */ }
+  return '#books';
+}
+
 function openLibrary() {
   if (!connection) {
     connection = new Promise((resolve, reject) => {

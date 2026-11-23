@@ -1,9 +1,10 @@
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v7'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v8'}`;
 const files = [
   'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'books.js', 'library-repository.js', 'text-book.js',
+  'news.js', 'news-provider.js', 'news-repository.js',
   'workspace.js', 'assistant.js', 'assets/books.webp', 'assets/sections.webp',
   'assets/dm-sans.woff2', 'assets/instrument-serif.woff2',
 ];
