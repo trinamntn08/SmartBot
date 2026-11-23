@@ -25,11 +25,15 @@ Four planner tests passed under Node.js. A Chrome smoke test at 320 CSS pixels c
 
 The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the preview and opens its address in the default browser. The preview serves the [assistant API](../README.md#ask-smartbot) and the web assets on the same origin.
 
+On November 23, the Windows preview was restarted from the fetched `smartbot/workspace-cards` branch. Local HTTP checks confirmed the new entry page, Workspace and assistant scripts, service worker, and assistant endpoint. All eight Node tests and four Python API tests passed. Chrome initially showed the cached page. Close all SmartBot tabs and reopen the preview to complete the browser refresh.
+
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
 
 The Workspace debug APK built successfully. Lint reported zero errors and five warnings. The APK signature and all 16 bundled web assets were verified in the cloud environment. Device and emulator verification is pending.
+
+The November 23 Windows rebuild passed `assembleDebug` and `lintDebug` with zero lint errors and seven warnings. The APK signature and all 17 bundled web files matched the fetched branch. No Android device or configured emulator was available for the runtime check.
 
 The 0.2.0 debug build passed in the main checkout. Lint reported zero errors and six warnings. The APK signature and all nine bundled web assets were verified. The machine had no connected Android device or configured emulator for runtime testing. See the [APK verification record](plans/android-apk-preview.md) and the [phone installation steps](../README.md#install-on-android).
 

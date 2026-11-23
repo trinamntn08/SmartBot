@@ -8,9 +8,18 @@ Read the [product and development plan](docs/product-plan.md) for the screens, d
 
 ## Browser preview
 
-[Open SmartBot in your browser](http://localhost:8000/). The link works on the computer running the local preview.
+From the repository root, fetch the remote and bring your preview branch up to date before each build and launch. Run these on a clean checkout of the branch you want to preview.
 
-On Windows, double-click [preview.cmd](preview.cmd) in File Explorer to start the preview and open it in your default browser. If the launcher starts the server, keep its window open while you use SmartBot. It uses the Python 3 already installed on your computer.
+```powershell
+git fetch
+git merge --ff-only '@{upstream}'
+```
+
+The browser preview serves `web/` directly. For a fresh Android package, run the [debug APK build](#development) after syncing.
+
+On Windows with Python 3 installed, stop any running SmartBot preview with Ctrl+C in its server window, then run [preview.cmd](preview.cmd) to start a fresh server and open your default browser. Keep the server window open while you use SmartBot. If the browser still shows the previous version, close all SmartBot tabs at this address and reopen the preview so the updated service worker can take over.
+
+[Open SmartBot in your browser](http://localhost:8000/). The link works on the computer running the local preview.
 
 The web app needs an initial online load at a given address to cache its files for offline use. Routine data is local to each browser and address.
 
