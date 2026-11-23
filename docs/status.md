@@ -25,9 +25,9 @@ The Workspace card layout passed Chromium checks from 320 to 1440 CSS pixels in 
 
 Four planner tests passed under Node.js. A Chrome smoke test at 320 CSS pixels covered setup, missing-book recovery, editing, offline resume and completion, duplicate completion in two tabs, skip and undo, date rollover, and saved history. Chrome also passed the desktop width check in dark mode.
 
-The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the preview and opens its address in the default browser. The preview serves the [assistant API](../README.md#ask-smartbot) and the web assets on the same origin.
+The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the server and opens its refresh link in the default browser. The server versions the offline cache from the current web files and the refresh link waits for the new cache to activate. The preview serves the [assistant API](../README.md#ask-smartbot) and web assets on the same origin.
 
-On November 23, the Windows preview was restarted from the fetched `smartbot/workspace-cards` branch. Local HTTP checks confirmed the new entry page, Workspace and assistant scripts, service worker, and assistant endpoint. All eight Node tests and four Python API tests passed. Chrome initially showed the cached page. Close all SmartBot tabs and reopen the preview to complete the browser refresh.
+Chromium verified a fresh launch, an update with an older tab and unsent draft still open, a second update after a CSS-only change, and offline reading at the saved section. Windows checks confirmed launcher reuse and one listener on the preview port. All eight Node tests and six Python tests passed. The Android debug build and lint passed with zero lint errors and seven warnings.
 
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 

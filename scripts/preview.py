@@ -2,9 +2,12 @@
 
 import argparse
 from functools import partial
+from hashlib import sha256
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from io import BytesIO
 import json
 from pathlib import Path
+import socket
 from urllib.request import urlopen
 import webbrowser
 
@@ -17,9 +20,51 @@ HOST = "127.0.0.1"
 PORT = 8000
 WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 API = "/api/assistant"
+REFRESH = "/refresh"
+REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
+WORKER = "/sw.js"
+
+
+def preview_worker(directory):
+    """Tie the preview worker and its offline cache to the served web files."""
+    root = Path(directory)
+    worker = root / "sw.js"
+    source = worker.read_bytes()
+    revision = sha256()
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            data = source if path == worker else path.read_bytes()
+            revision.update(path.relative_to(root).as_posix().encode() + b"\0")
+            revision.update(sha256(data).digest())
+    return f"self.smartBotPreviewRevision = '{revision.hexdigest()}';\n".encode() + source
+
+
+class PreviewServer(ThreadingHTTPServer):
+    allow_reuse_address = not hasattr(socket, "SO_EXCLUSIVEADDRUSE")
+    allow_reuse_port = False
+
+    def server_bind(self):
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            # Windows address reuse can let two preview servers share one port.
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 class PreviewHandler(SimpleHTTPRequestHandler):
+    def send_head(self):
+        if self.path == REFRESH:
+            body, content_type = REFRESH_PAGE.read_bytes(), "text/html; charset=utf-8"
+        elif self.path == WORKER:
+            body, content_type = preview_worker(self.directory), "text/javascript; charset=utf-8"
+        else:
+            return super().send_head()
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        return BytesIO(body)
+
     def local_request(self):
         port = self.server.server_port
         host = self.headers.get("Host", "")
@@ -95,15 +140,15 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         return {"text": transcribe(provider, audio)}
 
 
-def preview_is_running(base_url):
-    index = (WEB_ROOT / "index.html").read_bytes()
+def preview_is_running(port):
+    base_url = f"http://{HOST}:{port}"
     try:
-        with urlopen(f"{base_url}/index.html", timeout=2) as response:
-            if response.read(len(index) + 1) != index:
+        with urlopen(base_url + REFRESH, timeout=2) as response:
+            if response.read() != REFRESH_PAGE.read_bytes():
                 return False
-        with urlopen(f"{base_url}{API}", timeout=2) as response:
-            return isinstance(json.load(response).get("providers"), list)
-    except (OSError, ValueError, AttributeError):
+        with urlopen(base_url + WORKER, timeout=2) as response:
+            return response.read() == preview_worker(WEB_ROOT)
+    except OSError:
         return False
 
 
@@ -114,23 +159,23 @@ def main():
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
-    base_url = f"http://localhost:{args.port}"
+    preview_url = f"http://localhost:{args.port}{REFRESH}"
     handler = partial(PreviewHandler, directory=WEB_ROOT)
     try:
-        server = ThreadingHTTPServer((HOST, args.port), handler)
+        server = PreviewServer((HOST, args.port), handler)
     except OSError as error:
-        if not preview_is_running(base_url):
+        if not preview_is_running(args.port):
             print(f"SmartBot could not start its local preview on port {args.port}. {error}", flush=True)
             return 1
-        print(f"SmartBot preview is available at {base_url}/", flush=True)
+        print(f"SmartBot preview is available at {preview_url}", flush=True)
         if not args.no_browser:
-            webbrowser.open_new_tab(f"{base_url}/")
+            webbrowser.open_new_tab(preview_url)
         return 0
 
     with server:
-        print(f"SmartBot preview is available at {base_url}/. Press Ctrl+C to stop.", flush=True)
+        print(f"SmartBot preview is available at {preview_url} (Ctrl+C to stop).", flush=True)
         if not args.no_browser:
-            webbrowser.open_new_tab(f"{base_url}/")
+            webbrowser.open_new_tab(preview_url)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -1,6 +1,6 @@
-// Bump the version when changing any of these files so they update together.
+// The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}v6`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v7'}`;
 const files = [
   'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'books.js', 'library-repository.js', 'text-book.js',
@@ -10,9 +10,10 @@ const files = [
 const urls = files.map((file) => new URL(file, self.registration.scope).href);
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(
-    urls.map((url) => new Request(url, { cache: 'reload' })),
-  )));
+  event.waitUntil(caches.open(cacheName).then(async (cache) => {
+    await cache.addAll(urls.map((url) => new Request(url, { cache: 'reload' })));
+    if (self.smartBotPreviewRevision) await self.skipWaiting();
+  }));
 });
 
 self.addEventListener('activate', (event) => {

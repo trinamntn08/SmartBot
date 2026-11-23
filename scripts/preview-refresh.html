@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartBot preview</title>
+<p id="status" role="status">Checking for the latest SmartBot preview…</p>
+<script type="module">
+  async function updatePreview() {
+    const registration = await navigator.serviceWorker?.getRegistration('/');
+    if (!registration) return;
+
+    await registration.update();
+    const worker = registration.installing ?? registration.waiting ?? registration.active;
+    if (!worker || worker.state === 'activated') return;
+
+    await new Promise((resolve, reject) => {
+      function checkState() {
+        if (worker.state === 'activated') resolve();
+        if (worker.state === 'redundant') reject(new Error('Preview update failed.'));
+      }
+      worker.addEventListener('statechange', checkState);
+      checkState();
+    });
+  }
+
+  try {
+    await updatePreview();
+    location.replace('/');
+  } catch {
+    document.querySelector('#status').textContent = 'Could not update the preview. Reload this page to try again.';
+  }
+</script>
+</html>

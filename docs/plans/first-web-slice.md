@@ -38,7 +38,7 @@ Start with HTML, CSS, and JavaScript modules. Use an IndexedDB repository and a 
 
 ### Consequences
 
-The app can run on a static server and each browser origin has independent data. The service worker needs HTTPS on a phone, or localhost for development. Bump the cache version in `web/sw.js` whenever one of its listed files changes. Installation, native widgets, and device sync remain separate decisions.
+The app can run on a static server and each browser origin has independent data. The service worker needs HTTPS on a phone, or localhost for development. For static hosting, bump the fallback cache version in `web/sw.js` whenever one of its listed files changes. The Python preview derives its cache version from the web files and the [refresh link](../../README.md#browser-preview) waits for the new cache to activate. Installation, native widgets, and device sync remain separate decisions.
 
 ## Handoff
 

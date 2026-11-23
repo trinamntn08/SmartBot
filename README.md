@@ -17,9 +17,11 @@ git merge --ff-only '@{upstream}'
 
 The browser preview serves `web/` directly. For a fresh Android package, run the [debug APK build](#development) after syncing.
 
-On Windows with Python 3 installed, stop any running SmartBot preview with Ctrl+C in its server window, then run [preview.cmd](preview.cmd) to start a fresh server and open your default browser. Keep the server window open while you use SmartBot. If the browser still shows the previous version, close all SmartBot tabs at this address and reopen the preview so the updated service worker can take over.
+On Windows with Python 3 installed, run [preview.cmd](preview.cmd) after syncing and any build. It starts or reuses the local server and opens the refresh link in your default browser. Keep the server window open while you use SmartBot.
 
-[Open SmartBot in your browser](http://localhost:8000/). The link works on the computer running the local preview.
+[Open or update the SmartBot preview](http://localhost:8000/refresh). Use this link on the computer running the preview whenever you want the latest version. It checks the current web files and activates the updated offline cache before opening the app. Other SmartBot tabs can stay open.
+
+Restart the preview server if its Python code or configuration changes. In its server window, press Ctrl+C, then run `preview.cmd` again.
 
 The web app needs an initial online load at a given address to cache its files for offline use. Routine data is local to each browser and address.
 
