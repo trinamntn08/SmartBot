@@ -31,9 +31,9 @@ Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot disp
 
 ## News
 
-Open **Workspace → News** in the browser or Android app. Choose English, French, or both, and optionally filter by General news or Sports. Open a headline to read it or add it to Today for five minutes. **Mark as read** records the article in Progress. Preferences, chosen articles, and history stay on the device.
+Open **Workspace → News** in the browser or Android app. Choose English, French, or both, and optionally filter by General news or Sports. Tap a headline to read the article in SmartBot. Tap the star to save it, or tap it again to remove it. The star on the News screen opens your saved articles.
 
-The pilot uses NASA and Government of Canada releases, including sports coverage from Canadian Heritage. Canada.ca stories can show a text excerpt with a link to the full release. Other originals open at the publisher. The app keeps the last headline lists and up to eight recently opened stories with their available excerpts. Offline, a dated starter edition covers a first visit. Fresh headlines and publisher pages need internet. No account or runtime permission prompt is required.
+NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
 
 ## Ask SmartBot
 

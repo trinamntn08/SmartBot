@@ -1,6 +1,11 @@
 // Starter links checked in a mobile-sized browser with cookies disabled.
 export const starterStories = [
   {
+    title: 'NASA Awards Contract for NOAA’s Near Earth Orbit Network Program', source: 'NASA',
+    language: 'en', topic: 'general', date: '2026-11-23',
+    url: 'https://www.nasa.gov/news-release/nasa-awards-contract-for-noaas-near-earth-orbit-network-program/',
+  },
+  {
     title: 'Le secrétaire d’État van Koeverden annonce un appui pour renforcer les capacités du Canada à accueillir des rencontres sportives',
     source: 'Patrimoine canadien', language: 'fr', topic: 'sports', date: '2026-10-01',
     url: 'https://www.canada.ca/fr/patrimoine-canadien/nouvelles/2026/10/le-secretaire-detat-van-koeverden-annonce-un-appui-pour-renforcer-les-capacites-du-canada-a-accueillir-des-rencontres-sportives.html',
@@ -111,15 +116,45 @@ export function shortlist(articles, { language = '', topic = '' } = {}) {
 }
 
 export async function fetchArticle(url, signal) {
-  if (!isCanadaStory(url)) return null;
-  const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal });
-  if (!response.ok) return null;
-  // Template content stays inert. Only plain text from the release body reaches the reader.
+  const options = { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
+  // Parse publisher markup in an inert template and return only text.
   const template = document.createElement('template');
-  template.innerHTML = await response.text();
-  const main = template.content.querySelector('main');
-  const body = main?.querySelector('.col-md-auto .cmp-text');
-  const paragraphs = Array.from(body?.querySelectorAll('p, li') ?? [], element => element.textContent.trim()).filter(Boolean);
-  const author = main?.querySelector('.gc-byline a')?.textContent.trim();
-  return author && paragraphs.length ? { author, paragraphs } : null;
+  let root;
+  let author;
+  let start;
+  if (isCanadaStory(url)) {
+    const response = await fetch(url, options);
+    if (!response.ok) return null;
+    template.innerHTML = await response.text();
+    root = template.content.querySelector('main');
+    start = root?.querySelector('.col-md-auto .cmp-text');
+    author = root?.querySelector('.gc-byline a')?.textContent.trim();
+    if (!start || !author) return null;
+  } else {
+    const { origin, pathname } = new URL(url);
+    const release = origin === 'https://www.nasa.gov' && pathname.startsWith('/news-release/');
+    if (!release && origin !== 'https://science.nasa.gov') return null;
+    const slug = pathname.split('/').filter(Boolean).pop();
+    const query = new URLSearchParams({ slug, _fields: 'link,content' });
+    const endpoint = origin + '/wp-json/wp/v2/' + (release ? 'press-release' : 'posts');
+    const response = await fetch(endpoint + '?' + query, options);
+    if (!response.ok) return null;
+    const post = (await response.json()).find(item => item.link === url);
+    if (!post?.content?.rendered || post.content.protected) return null;
+    template.innerHTML = post.content.rendered;
+    root = template.content;
+    author = 'NASA';
+  }
+  root.querySelectorAll('figure, figcaption, video, audio, aside, nav, form, script, style, [hidden]').forEach(el => el.remove());
+  const blocks = [];
+  for (const el of root.querySelectorAll('p, li, h2, h3, h4, cite')) {
+    if (start && !(start.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
+    const text = el.textContent.trim();
+    if (!text || el.parentElement?.closest('li')) continue;
+    const heading = /^H[234]$/.test(el.tagName);
+    if (start && heading && /^(contacts?|personnes-ressources|related products|associated links|produits connexes|liens connexes|page details|détails de la page)$/i.test(text)) break;
+    if (/^[-–—]\s*end\s*[-–—]$/i.test(text)) break;
+    blocks.push({ heading, text });
+  }
+  return blocks.length ? { author, blocks } : null;
 }

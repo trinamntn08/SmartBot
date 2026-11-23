@@ -39,6 +39,10 @@ The pilot uses the [Government of Canada news feeds](https://www.canada.ca/en/ne
 
 All 13 Node and six Python tests passed. Mobile-sized Chromium loaded five live articles with cookies disabled and no sign-in or consent interaction. Flow checks covered switching filters, reading excerpts, a feed outage, cold-start starter links, independent read history, completion and undo controls, and the saved book section after an offline reload. The 320-pixel view also passed a horizontal overflow check at 200% text size. The Android debug build and lint passed with zero errors and seven warnings. Signature verification passed and all 20 packaged web assets matched. No phone or configured emulator was available to exercise the publisher handoff.
 
+November 23, 2026. **In-app articles and stars.** The reader loads NASA's published article text from its public WordPress API, including the [NOAA contract release](https://www.nasa.gov/news-release/nasa-awards-contract-for-noaas-near-earth-orbit-network-program/). Canadian releases include the narrative and available quotations and facts. The publisher link is in the byline. Existing cached excerpts remain readable offline and upgrade on the next connected visit. An icon-only star saves the article to IndexedDB separately from the recent cache. New stories open independently of the daily planner. Earlier News history remains available in Progress.
+
+Chromium verified the requested NASA article at phone width, a French article, the saved collection, offline reopening after clearing the recent cache, and removal. A delayed response also filled a starred copy after leaving the reader. All 11 Node and six Python tests passed. The debug APK built, its signature and all 20 bundled assets verified, and Android lint reported zero errors and seven warnings. Runtime verification on the pilot phone is pending.
+
 ## Handoff
 
 The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

@@ -1,9 +1,9 @@
-import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, updateNews, updateReading } from './planner.js';
+import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, updateReading } from './planner.js';
 import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
 import { renderAssistantSettings } from './assistant.js';
 import { findSection, sectionPreview, workspace } from './workspace.js';
-import { escapeHtml, renderNews, renderStory, storyRoute } from './news.js';
+import { escapeHtml, renderNews, renderSavedNews, renderStory } from './news.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -43,19 +43,8 @@ function preferences() {
     </form>`;
 }
 
-function newsCard(news) {
-  if (!news) return '';
-  return `<section class="card today-news"><h2>Read the news</h2>
-    <a href="${escapeHtml(storyRoute(news.story))}" lang="${news.story.language}">${escapeHtml(news.story.title)}</a>
-    <p>${statusLabels[news.status]} · ${news.minutes} min</p>
-    <div class="actions"><button data-news-plan="${news.status === 'completed' ? 'unread' : 'read'}">${news.status === 'completed' ? 'Undo' : 'Mark as read'}</button>
-    ${news.status === 'pending' ? '<button class="quiet" data-news-plan="remove">Remove</button>' : ''}</div></section>`;
-}
-
 function today(plan) {
   const reading = plan.reading;
-  if (!reading) return `<h1 tabindex="-1">Today</h1><p>${formatDate(plan.date)}</p>${newsCard(plan.news)}
-    <a class="back-link" href="#activities">Set up reading</a>`;
   const book = reading.book ?? routine.book;
   const page = routine.book && book?.id === routine.book.id ? routine.book.page : book?.page;
   const open = reading.status === 'pending' || reading.status === 'started';
@@ -73,8 +62,7 @@ function today(plan) {
 
   return `<h1 tabindex="-1">Today</h1>
     <p><time datetime="${plan.date}">${formatDate(plan.date)}</time></p>
-    <p>${(reading.status === 'skipped' ? 0 : reading.minutes) + (plan.news?.minutes ?? 0)} min planned · ${plan.budget} min budget</p>
-    ${newsCard(plan.news)}
+    <p>${reading.status === 'skipped' ? 0 : reading.minutes} min planned · ${plan.budget} min budget</p>
     <section class="card" aria-labelledby="reading-title">
       <h2 id="reading-title">Read a book</h2>
       ${book ? `<p>${escapeHtml(book.title)}</p>` : ''}
@@ -119,8 +107,8 @@ function render(focusHeading = false) {
   const route = location.hash.slice(1);
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
-  const isStory = route.startsWith('story=');
-  const section = findSection(isStory ? 'news' : route);
+  const isStory = route.startsWith('story=') || route.startsWith('saved-story=');
+  const section = findSection(isStory || route === 'saved-news' ? 'news' : route);
   const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
   const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
@@ -137,26 +125,26 @@ function render(focusHeading = false) {
   }
   if (isStory) {
     let url;
-    try { url = decodeURIComponent(route.slice(6)); } catch { url = ''; }
-    renderStory(view, routine, displayedDate, url, changeNews, focusHeading);
+    try { url = decodeURIComponent(route.slice(route.indexOf('=') + 1)); } catch { url = ''; }
+    renderStory(view, repository.savedNews, routine.plans, url, route.startsWith('saved-story='), focusHeading);
+    return;
+  }
+  if (route === 'saved-news') {
+    renderSavedNews(view, repository.savedNews, focusHeading);
     return;
   }
   if (page === 'news') {
-    renderNews(view, routine, focusHeading);
+    renderNews(view, focusHeading);
     return;
   }
   if (section) view.innerHTML = sectionPreview(section);
   else if (page === 'workspace') view.innerHTML = workspace();
   else if (page === 'settings') renderAssistantSettings(view);
-  else if (page === 'activities' || (page === 'today' && !routine.settings && !routine.plans[displayedDate]?.news)) view.innerHTML = preferences();
+  else if (page === 'activities' || (page === 'today' && !routine.settings)) view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
   else view.innerHTML = today(routine.plans[displayedDate]);
 
   if (focusHeading) view.querySelector('h1').focus();
-}
-
-function changeNews(story, action) {
-  refresh((current, day) => updateNews(current, day, story, action), { focus: true, openToday: action === 'add' });
 }
 
 function showError(message) {
@@ -217,13 +205,6 @@ view.addEventListener('submit', (event) => {
 });
 
 view.addEventListener('click', (event) => {
-  const newsAction = event.target.closest('[data-news-plan]')?.dataset.newsPlan;
-  if (newsAction) {
-    const pick = routine.plans[displayedDate]?.news;
-    if (pick && displayedDate === localDay().date) changeNews(pick.story, newsAction);
-    else refresh();
-    return;
-  }
   const type = event.target.closest('button[data-action]')?.dataset.action;
   if (type) refresh((current) => updateReading(current, displayedDate, { type }), { focus: true });
 });

@@ -1,11 +1,11 @@
-import { feeds, fetchArticle, fetchFeed, isCanadaStory, shortlist } from './news-provider.js';
+import { feeds, fetchArticle, fetchFeed, shortlist } from './news-provider.js';
 import { newsRepository as store } from './news-repository.js';
 import { resumeBookRoute } from './library-repository.js';
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 const freshFor = 60 * 60 * 1000;
 const storyDate = value => dateFormat.format(new Date(value.length === 10 ? value + 'T12:00:00' : value));
-export const storyRoute = story => '#story=' + encodeURIComponent(story.url);
+const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.9 6.5.9-4.7 4.6 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.7-4.6 6.5-.9Z"/></svg>';
 
 export function escapeHtml(text) {
   return String(text).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]);
@@ -15,10 +15,34 @@ function backLink(route, title) {
   return `<a class="back-link" href="#${route}"><span class="arrow" aria-hidden="true"></span>${title}</a>`;
 }
 
-export function renderNews(view, routine, focus) {
+function storyRows(stories, saved = false) {
+  return stories.map(story => `<li>
+    <a class="news-headline" href="#${saved ? 'saved-story' : 'story'}=${escapeHtml(encodeURIComponent(story.url))}" lang="${story.language}">${escapeHtml(story.title)}</a>
+    <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}</small>
+  </li>`).join('');
+}
+
+export async function renderSavedNews(view, savedNews, focus) {
   const panel = document.createElement('section');
   view.replaceChildren(panel);
-  panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><button class="quiet" type="button">Refresh</button></div>
+  panel.innerHTML = `${backLink('news', 'News')}<h1 tabindex="-1">Saved</h1><ul class="news-list"></ul><p class="news-info" role="status"></p>`;
+  if (focus) panel.querySelector('h1').focus();
+  try {
+    const records = await savedNews.list();
+    records.sort((a, b) => b.savedAt - a.savedAt);
+    panel.querySelector('ul').innerHTML = storyRows(records.map(record => record.story), true);
+    if (!records.length) panel.querySelector('[role=status]').textContent = 'No saved articles.';
+  } catch {
+    panel.querySelector('[role=status]').textContent = 'Could not open saved articles.';
+  }
+}
+
+export function renderNews(view, focus) {
+  const panel = document.createElement('section');
+  view.replaceChildren(panel);
+  panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
+    <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
+    <button class="quiet" type="button">Refresh</button></div></div>
     <div class="news-filters">
       <select aria-label="Language" name="language"><option value="">Both languages</option><option value="en">English</option><option value="fr">Français</option></select>
       <select aria-label="Topic" name="topic"><option value="">All topics</option><option value="general">General news</option><option value="sports">Sports</option></select>
@@ -38,10 +62,7 @@ export function renderNews(view, routine, focus) {
   function draw() {
     const selections = { language: language.value, topic: topic.value };
     const stories = shortlist(store.stories(), selections);
-    panel.querySelector('ul').innerHTML = stories.map(story => `<li>
-      <a class="news-headline" href="${escapeHtml(storyRoute(story))}" lang="${story.language}">${escapeHtml(story.title)}</a>
-      <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}${routine.readArticles?.[story.url] ? ' · Read' : ''}</small>
-    </li>`).join('');
+    panel.querySelector('ul').innerHTML = storyRows(stories);
     return stories.length;
   }
 
@@ -85,71 +106,80 @@ export function renderNews(view, routine, focus) {
   if (focus) panel.querySelector('h1').focus();
 }
 
-export function renderStory(view, routine, date, url, change, focus) {
-  const cached = store.article(url);
-  const story = store.stories().find(item => item.url === url)
-    ?? Object.values(routine.plans).find(plan => plan.news?.story.url === url)?.news.story
-    ?? cached?.story;
+export async function renderStory(view, savedNews, plans, url, fromSaved, focus) {
   const panel = document.createElement('article');
   view.replaceChildren(panel);
+  panel.className = 'news-story';
+  const back = fromSaved ? backLink('saved-news', 'Saved') : backLink('news', 'News');
+  let saved;
+  try { saved = await savedNews.get(url); } catch { /* Reading also works without bookmark storage. */ }
+  if (!panel.isConnected) return;
+  const cached = store.article(url);
+  const story = saved?.story ?? store.stories().find(item => item.url === url)
+    ?? cached?.story ?? Object.values(plans).find(plan => plan.news?.story.url === url)?.news.story;
   if (!story) {
-    panel.innerHTML = backLink('news', 'News') + '<h1 tabindex="-1">Story unavailable</h1>';
+    panel.innerHTML = back + '<h1 tabindex="-1">Story unavailable</h1>';
     if (focus) panel.querySelector('h1').focus();
     return;
   }
-  const pick = routine.plans[date]?.news;
-  const read = routine.readArticles?.[url];
-  const onPlan = pick?.story.url === url;
-  const useReader = isCanadaStory(url);
-  panel.className = 'news-story';
-  panel.innerHTML = `${backLink('news', 'News')}
+
+  panel.innerHTML = `<div class="news-reader-tools">${back}
+    <button class="news-star" type="button" aria-label="Save for later" aria-pressed="${!!saved}">${starIcon}</button></div>
     <h1 lang="${story.language}" tabindex="-1">${escapeHtml(story.title)}</h1>
-    <p class="news-info">${escapeHtml(story.source)} · ${storyDate(story.date)}</p>
-    <div class="news-actions">
-    ${!pick && !read ? '<button class="quiet" data-news="add">Add to Today · 5 min</button>' : ''}
-    ${onPlan ? '<a href="#today">View in Today</a>' : ''}</div>
-    <p class="news-info" role="status"></p>
-    <div class="news-body" lang="${story.language}"></div>
-    <a class="publisher-link" rel="noreferrer" href="${escapeHtml(url)}">Read original at ${escapeHtml(story.source)}</a>
-    <div class="news-actions"><button data-news="read"></button></div>
-    <a class="book-fallback" href="${resumeBookRoute()}" ${navigator.onLine ? 'hidden' : ''}>Read a book instead</a>`;
-  const readButton = panel.querySelector('[data-news=read]');
-  readButton.textContent = read ? 'Mark unread' : 'Mark as read';
-  readButton.onclick = () => change(story, read ? 'unread' : 'read');
-  const add = panel.querySelector('[data-news=add]');
-  if (add) add.onclick = () => change(story, 'add');
-  const status = panel.querySelector('[role=status]');
-  if (!navigator.onLine) status.textContent = 'Offline';
-  function showBody(body) {
-    const content = panel.querySelector('.news-body');
-    for (const paragraph of body.paragraphs) {
-      const p = document.createElement('p');
-      p.textContent = paragraph;
-      content.append(p);
-    }
-    const link = panel.querySelector('.publisher-link');
-    panel.querySelector('.news-info').textContent = 'Excerpt · ' + body.author + ' · ' + storyDate(story.date);
-    link.textContent = 'Read full release';
-  }
-  if (cached?.body) showBody(cached.body);
-  else {
-    store.saveArticle(story, null);
-    if (useReader && navigator.onLine) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 9000);
-      status.textContent = 'Loading article…';
-      fetchArticle(url, controller.signal).then(body => {
-        if (!panel.isConnected || !body) return;
-        store.saveArticle(story, body);
-        showBody(body);
-      }).catch(() => {}).finally(() => {
-        clearTimeout(timeout);
-        if (panel.isConnected) {
-          status.textContent = '';
-          panel.querySelector('.book-fallback').hidden = !!panel.querySelector('.news-body p');
-        }
-      });
-    }
-  }
+    <p class="news-info"><a rel="noreferrer" href="${escapeHtml(url)}">${escapeHtml(story.source)}</a> · ${storyDate(story.date)}</p>
+    <p class="news-info" role="status"></p><div class="news-body" lang="${story.language}"></div>
+    <a class="book-fallback" href="${resumeBookRoute()}" hidden>Read a book instead</a>`;
   if (focus) panel.querySelector('h1').focus();
+  const status = panel.querySelector('[role=status]');
+  const star = panel.querySelector('button');
+  let body = saved?.body ?? cached?.body;
+  star.onclick = async () => {
+    if (star.disabled) return;
+    star.disabled = true;
+    const wasSaved = star.getAttribute('aria-pressed') === 'true';
+    try {
+      if (wasSaved) await savedNews.remove(url);
+      else await savedNews.save(story, body);
+      star.setAttribute('aria-pressed', String(!wasSaved));
+    } catch { status.textContent = 'Could not update saved articles.'; }
+    finally { star.disabled = false; }
+  };
+  function showBody() {
+    const blocks = body.blocks ?? body.paragraphs.map(text => ({ text }));
+    panel.querySelector('.news-body').replaceChildren(...blocks.map(block => {
+      const element = document.createElement(block.heading ? 'h2' : 'p');
+      element.textContent = block.text;
+      return element;
+    }));
+    panel.querySelector('.news-info a').textContent = body.author || story.source;
+  }
+
+  if (body) showBody();
+  else store.saveArticle(story, null);
+  if (body?.blocks) return;
+  if (!navigator.onLine) {
+    status.textContent = body ? 'Offline · Cached excerpt' : 'Connect to load the article.';
+    panel.querySelector('.book-fallback').hidden = false;
+    return;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  status.textContent = 'Loading article…';
+  try {
+    const fresh = await fetchArticle(url, controller.signal);
+    if (!fresh) throw new Error('Article unavailable');
+    body = fresh;
+    store.saveArticle(story, body);
+    showBody();
+    status.textContent = '';
+    // Complete a save made during loading, even if the reader has since navigated away.
+    await savedNews.cacheIfSaved(url, body).catch(() => {
+      if (star.getAttribute('aria-pressed') === 'true') status.textContent = 'Could not save the text offline.';
+    });
+  } catch {
+    status.textContent = body ? 'Showing cached excerpt.' : 'Article unavailable. Open the source above.';
+    panel.querySelector('.book-fallback').hidden = false;
+  } finally {
+    clearTimeout(timeout);
+  }
 }

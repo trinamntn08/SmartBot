@@ -1,4 +1,5 @@
 import { newRoutine } from './planner.js';
+import { savedNewsRepository } from './news-repository.js';
 
 export async function openRepository() {
   const database = await new Promise((resolve, reject) => {
@@ -10,6 +11,7 @@ export async function openRepository() {
   database.onversionchange = () => database.close();
 
   return {
+    savedNews: savedNewsRepository(database),
     // A single transaction keeps plan outcomes and reading progress in sync across tabs.
     update(change) {
       return new Promise((resolve, reject) => {
