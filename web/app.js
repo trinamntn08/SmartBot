@@ -1,6 +1,7 @@
 import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, updateReading } from './planner.js';
 import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
+import { renderAssistantSettings } from './assistant.js';
 import { findSection, sectionPreview, workspace } from './workspace.js';
 
 const view = document.querySelector('#view');
@@ -107,8 +108,8 @@ function render(focusHeading = false) {
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
   const section = findSection(route);
-  const routinePage = ['today', 'activities', 'progress'].includes(route);
-  const page = isLibrary ? 'books' : section?.id ?? (routinePage ? route : 'workspace');
+  const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
+  const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
@@ -123,6 +124,7 @@ function render(focusHeading = false) {
   }
   if (section) view.innerHTML = sectionPreview(section);
   else if (page === 'workspace') view.innerHTML = workspace();
+  else if (page === 'settings') renderAssistantSettings(view);
   else if (!routine.settings || page === 'activities') view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
   else view.innerHTML = today(routine.plans[displayedDate]);

@@ -1,20 +1,100 @@
 const launcher = document.querySelector('.ask-launcher');
 const dialog = document.querySelector('#assistant');
 const form = dialog.querySelector('form');
-const provider = form.elements.provider;
 const question = form.elements.question;
 const recordButton = form.querySelector('.assistant-record');
 const sendButton = form.querySelector('[type="submit"]');
 const conversation = dialog.querySelector('.assistant-conversation');
 const status = form.querySelector('.assistant-status');
-const privacy = form.querySelector('.assistant-privacy');
+const settingsLink = form.querySelector('.assistant-settings-link');
 const canRecord = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && window.OfflineAudioContext);
 const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 const sampleRate = 16_000;
 const maximumSeconds = 45;
 const history = [];
+const providerPreferenceKey = 'smartbot.assistant.provider';
+const setupMessage = 'Configure an OpenAI or Gemini API key on the SmartBot server.';
+const unavailableMessage = 'Your saved provider is unavailable. Choose an available provider.';
+let sessionPreference = '';
+let availableProviders = [];
 let pending = false;
 let capture = null;
+
+function selectedProvider(providers) {
+  let preferred = sessionPreference;
+  try {
+    preferred ||= localStorage.getItem(providerPreferenceKey);
+  } catch {
+    // The current tab can still use the preference when storage is blocked.
+  }
+  return preferred ? providers.find(({ id }) => id === preferred) : providers[0];
+}
+
+function saveProvider(id) {
+  try {
+    localStorage.setItem(providerPreferenceKey, id);
+    sessionPreference = '';
+    return true;
+  } catch {
+    sessionPreference = id;
+    return false;
+  }
+}
+
+async function fetchProviders() {
+  if (location.hostname === 'appassets.androidplatform.net') {
+    throw new Error('Open SmartBot in a browser with the preview server to use the assistant.');
+  }
+  let response;
+  try {
+    response = await fetch('./api/assistant', { cache: 'no-store' });
+  } catch {
+    throw new Error('Could not reach the assistant. Check your connection and try again.');
+  }
+  if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+    throw new Error('Start SmartBot with its Python preview server to connect the assistant.');
+  }
+  const { providers } = await response.json();
+  return providers;
+}
+
+export async function renderAssistantSettings(view) {
+  view.innerHTML = `<h1 tabindex="-1">Settings</h1>
+    <section class="card assistant-settings" aria-labelledby="assistant-settings-title">
+      <h2 id="assistant-settings-title">Assistant</h2>
+      <div class="provider-field" hidden>
+        <label for="assistant-provider">Provider</label>
+        <select id="assistant-provider" disabled></select>
+      </div>
+      <p class="settings-status" role="status">Checking providers…</p>
+      <p class="settings-privacy" hidden>Your provider receives recent messages when you send a question and recordings when you transcribe.</p>
+    </section>`;
+  const panel = view.querySelector('.assistant-settings');
+  const selector = panel.querySelector('select');
+  const message = panel.querySelector('.settings-status');
+  try {
+    const providers = await fetchProviders();
+    if (!providers.length) {
+      message.textContent = setupMessage;
+      return;
+    }
+    const selected = selectedProvider(providers);
+    const placeholder = new Option('Choose a provider', '');
+    placeholder.disabled = true;
+    selector.replaceChildren(placeholder, ...providers.map(({ id, label }) => new Option(label, id)));
+    selector.value = selected?.id ?? '';
+    selector.disabled = false;
+    selector.closest('.provider-field').hidden = false;
+    panel.querySelector('.settings-privacy').hidden = false;
+    message.textContent = selected ? '' : unavailableMessage;
+    selector.addEventListener('change', () => {
+      message.textContent = saveProvider(selector.value) ? 'Provider saved.' : 'Provider selected for this tab.';
+      updateControls();
+    });
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
 
 function setStatus(message, error = false) {
   status.textContent = message;
@@ -22,9 +102,8 @@ function setStatus(message, error = false) {
 }
 
 function updateControls() {
-  const ready = Boolean(provider.value) && !pending;
+  const ready = Boolean(selectedProvider(availableProviders)) && !pending;
   question.readOnly = pending || Boolean(capture);
-  provider.disabled = pending || Boolean(capture);
   sendButton.disabled = !ready || Boolean(capture) || !question.value.trim();
   recordButton.disabled = !ready || !canRecord || Boolean(capture && !capture.recorder);
   recordButton.textContent = capture?.recorder ? 'Stop and transcribe' : 'Record voice';
@@ -32,44 +111,30 @@ function updateControls() {
 
 async function loadProviders() {
   if (pending) return;
-  if (location.hostname === 'appassets.androidplatform.net') {
-    setStatus('Open SmartBot in a browser with the preview server to use the assistant.');
-    return;
-  }
   pending = true;
   updateControls();
-  setStatus('Checking providers…');
+  settingsLink.hidden = true;
+  setStatus('Connecting…');
   try {
-    const response = await fetch('./api/assistant', { cache: 'no-store' });
-    if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
-      provider.replaceChildren();
-      setStatus('Start SmartBot with its Python preview server to connect the assistant.');
-      return;
-    }
-    const { providers } = await response.json();
-    const selected = provider.value;
-    provider.replaceChildren(...providers.map(({ id, label }) => new Option(label, id)));
-    if (providers.some(({ id }) => id === selected)) provider.value = selected;
-    if (providers.length) {
-      setStatus(canRecord ? '' : 'Voice recording is unavailable here. You can still type a question.');
-    } else {
-      setStatus('Configure an OpenAI or Gemini API key on the SmartBot server.');
-    }
-  } catch {
-    provider.replaceChildren();
-    setStatus('Could not reach the assistant. Check your connection and reopen it.', true);
+    availableProviders = await fetchProviders();
+    const selected = selectedProvider(availableProviders);
+    settingsLink.hidden = Boolean(selected);
+    if (!availableProviders.length) setStatus('Set up the assistant in Settings.');
+    else if (!selected) setStatus(unavailableMessage);
+    else setStatus(canRecord ? '' : 'Voice recording is unavailable here. You can still type a question.');
+  } catch (error) {
+    availableProviders = [];
+    setStatus(error.message, true);
   } finally {
     pending = false;
-    form.querySelector('.assistant-provider').hidden = !provider.value;
-    privacy.hidden = !provider.value;
     updateControls();
   }
 }
 
-async function request(path, body, contentType) {
+async function request(providerId, path, body, contentType) {
   const response = await fetch(`./api/assistant/${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': contentType, 'X-SmartBot-Provider': provider.value },
+    headers: { 'Content-Type': contentType, 'X-SmartBot-Provider': providerId },
     body,
   });
   const result = await response.json();
@@ -105,14 +170,16 @@ function appendMessage(role, text) {
 async function sendQuestion(event) {
   event.preventDefault();
   const content = question.value.trim();
-  if (!content || pending || capture || !provider.value) return;
+  const provider = selectedProvider(availableProviders);
+  if (!content || pending || capture || !provider) return;
   const turn = { role: 'user', content };
   const entry = appendMessage(turn.role, turn.content);
   pending = true;
   updateControls();
   setStatus('Waiting for a reply…');
   try {
-    const text = await request('ask', JSON.stringify({ messages: [...history.slice(-12), turn] }), 'application/json');
+    const body = JSON.stringify({ messages: [...history.slice(-12), turn] });
+    const text = await request(provider.id, 'ask', body, 'application/json');
     history.push(turn, { role: 'assistant', content: text.slice(0, question.maxLength) });
     appendMessage('assistant', text);
     question.value = '';
@@ -176,7 +243,7 @@ async function transcribe(recording) {
   setStatus('Transcribing…');
   try {
     const wav = await wavRecording(recording);
-    const text = await request('transcribe', wav, 'audio/wav');
+    const text = await request(recording.providerId, 'transcribe', wav, 'audio/wav');
     const draft = question.value.trimEnd();
     const next = draft ? `${draft}\n${text}` : text;
     question.value = next.slice(0, question.maxLength);
@@ -198,8 +265,9 @@ async function toggleRecording() {
     recordButton.disabled = true;
     return;
   }
-  if (pending || capture || !provider.value || !canRecord) return;
-  const recording = { chunks: [] };
+  const provider = selectedProvider(availableProviders);
+  if (pending || capture || !provider || !canRecord) return;
+  const recording = { chunks: [], providerId: provider.id };
   capture = recording;
   updateControls();
   setStatus('Waiting for microphone access…');
@@ -221,7 +289,7 @@ async function toggleRecording() {
     recording.timeout = setTimeout(() => {
       if (recording.recorder.state === 'recording') recording.recorder.stop();
     }, maximumSeconds * 1_000);
-    setStatus('Recording for up to 45 seconds…');
+    setStatus('Recording for up to 45 seconds. Audio is sent for transcription when recording ends.');
     updateControls();
   } catch (error) {
     release(recording);
@@ -244,6 +312,14 @@ launcher.addEventListener('click', () => {
   loadProviders();
 });
 dialog.querySelector('.assistant-close').addEventListener('click', () => dialog.close());
+settingsLink.addEventListener('click', () => {
+  dialog.close();
+  if (location.hash === settingsLink.hash) {
+    const view = document.querySelector('#view');
+    renderAssistantSettings(view);
+    view.querySelector('h1').focus();
+  }
+});
 dialog.addEventListener('close', () => {
   cancelRecording();
   if (canSpeak) speechSynthesis.cancel();

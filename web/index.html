@@ -7,7 +7,6 @@
   <title>SmartBot</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.js"></script>
-  <script type="module" src="./assistant.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -19,6 +18,7 @@
         <a href="#today">Today</a>
         <a href="#activities">Activities</a>
         <a href="#progress">Progress</a>
+        <a href="#settings">Settings</a>
       </nav>
     </div>
   </header>
@@ -36,15 +36,13 @@
       </header>
       <div class="assistant-conversation" role="log" aria-label="Conversation" hidden></div>
       <form class="assistant-form">
-        <label class="assistant-provider" hidden>Provider <select name="provider"></select></label>
-        <label for="assistant-question">Your question</label>
-        <textarea id="assistant-question" name="question" rows="3" maxlength="4000" placeholder="Type a question…" autofocus></textarea>
-        <p class="assistant-privacy" hidden>The selected provider receives recent messages and audio for transcription.</p>
+        <textarea name="question" rows="2" maxlength="4000" aria-label="Your question" placeholder="Ask a question…" autofocus></textarea>
         <div class="assistant-actions">
           <button type="button" class="assistant-record" disabled>Record voice</button>
           <button type="submit" disabled>Send</button>
         </div>
         <p class="assistant-status" role="status"></p>
+        <a class="assistant-settings-link" href="#settings" hidden>Open Settings</a>
       </form>
     </div>
   </dialog>

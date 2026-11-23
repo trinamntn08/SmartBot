@@ -20,7 +20,7 @@ Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot disp
 
 ## Ask SmartBot
 
-Set at least one provider key in the environment that runs the Python preview server. Restart the preview after changing its environment. The provider list shows the keys available to the server by provider name.
+Set at least one provider key in the environment that runs the Python preview server. Restart the preview after changing its environment. Open **Settings** and choose a provider under **Assistant**. SmartBot saves your choice in this browser.
 
 | Provider | Server API key | Optional model override |
 | --- | --- | --- |

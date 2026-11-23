@@ -496,19 +496,19 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
   margin-block-start: 1rem;
 }
 
-.assistant-form label {
-  margin: 0;
-  font-size: 0.86rem;
+.provider-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  width: fit-content;
+  margin: 0.8rem 0 0;
   font-weight: 650;
 }
 
-.assistant-provider {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-}
+.provider-field label { margin: 0; }
 
-.assistant select,
+.assistant-settings select,
 .assistant textarea {
   box-sizing: border-box;
   min-height: 2.75rem;
@@ -520,16 +520,24 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
   font: inherit;
 }
 
+.assistant-settings select { min-width: 9rem; }
 .assistant textarea { width: 100%; resize: vertical; }
 .assistant textarea::placeholder { color: var(--muted); }
 
-.assistant-status,
-.assistant-privacy {
+.assistant-status {
   margin: 0;
   color: var(--muted);
   font-size: 0.83rem;
 }
 
+.assistant-settings p {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.settings-status:empty { margin: 0; }
+.assistant-settings-link { justify-self: start; }
 .assistant-status:empty { display: none; }
 .assistant-status.is-error { color: var(--ink); font-weight: 650; }
 
