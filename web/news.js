@@ -1,4 +1,5 @@
-import { feeds, fetchArticle, fetchFeed, shortlist } from './news-provider.js';
+import { fetchArticle, fetchFeed, selectedFeeds, shortlist } from './news-provider.js';
+import { newsLanguages, newsTopics } from './news-preferences.js';
 import { newsRepository as store } from './news-repository.js';
 import { resumeBookRoute } from './library-repository.js';
 
@@ -37,31 +38,59 @@ export async function renderSavedNews(view, savedNews, focus) {
   }
 }
 
+export function renderNewsSettings(view) {
+  const panel = document.createElement('section');
+  panel.className = 'card news-settings';
+  panel.setAttribute('aria-labelledby', 'news-settings-title');
+  function choices(name, options) {
+    return options.map(({ id, label }) => `<label><input type="checkbox" name="${name}" value="${id}"><span>${escapeHtml(label)}</span></label>`).join('');
+  }
+  panel.innerHTML = `<h2 id="news-settings-title">News</h2>
+    <fieldset><legend>Languages</legend><div class="news-choices">${choices('languages', newsLanguages)}</div></fieldset>
+    <fieldset><legend>Topics</legend><div class="news-choices">${choices('topics', [{ id: '', label: 'All topics' }, ...newsTopics])}</div></fieldset>
+    <p class="news-info" role="status"></p>`;
+  view.append(panel);
+  let preferences = store.preferences();
+  const message = panel.querySelector('[role=status]');
+  function sync() {
+    for (const input of panel.querySelectorAll('input')) {
+      const values = preferences[input.name];
+      input.checked = input.value ? values.includes(input.value) : values.length === 0;
+    }
+  }
+  sync();
+  panel.addEventListener('change', ({ target }) => {
+    const { name, value } = target;
+    let values = [];
+    if (value) values = [...panel.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value).filter(Boolean);
+    message.textContent = '';
+    if (name === 'languages' && !values.length) {
+      message.textContent = 'Choose at least one language.';
+    } else {
+      const next = { ...store.preferences(), [name]: values };
+      if (store.savePreferences(next)) preferences = next;
+      else message.textContent = 'Could not save news preferences on this device.';
+    }
+    sync();
+  });
+}
+
 export function renderNews(view, focus) {
   const panel = document.createElement('section');
   view.replaceChildren(panel);
   panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
     <button class="quiet" type="button">Refresh</button></div></div>
-    <div class="news-filters">
-      <select aria-label="Language" name="language"><option value="">Both languages</option><option value="en">English</option><option value="fr">Français</option></select>
-      <select aria-label="Topic" name="topic"><option value="">All topics</option><option value="general">General news</option><option value="sports">Sports</option></select>
-    </div>
     <p class="news-info" role="status"></p><ul class="news-list" aria-label="Headlines"></ul>
     <a class="book-fallback" href="${resumeBookRoute()}" hidden>Read a book instead</a>`;
-  const language = panel.querySelector('[name=language]');
-  const topic = panel.querySelector('[name=topic]');
   const refreshButton = panel.querySelector('button');
   const status = panel.querySelector('[role=status]');
   const fallback = panel.querySelector('.book-fallback');
   const preferences = store.preferences();
-  language.value = preferences.language;
-  topic.value = preferences.topic;
   let request;
 
   function draw() {
-    const selections = { language: language.value, topic: topic.value };
-    const stories = shortlist(store.stories(), selections);
+    const stories = shortlist(store.stories(), preferences);
     panel.querySelector('ul').innerHTML = storyRows(stories);
     return stories.length;
   }
@@ -70,8 +99,7 @@ export function renderNews(view, focus) {
     request?.abort();
     const controller = new AbortController();
     request = controller;
-    const selected = feeds.filter(feed => (!language.value || feed.language === language.value)
-      && (!topic.value || feed.topic === topic.value));
+    const selected = selectedFeeds(preferences);
     const pending = selected.filter(feed => force || !(Date.now() - store.edition(feed)?.time < freshFor));
     draw();
     const time = Date.now();
@@ -93,14 +121,10 @@ export function renderNews(view, focus) {
     const oldest = times.length ? new Date(Math.min(...times)) : null;
     const stamp = oldest ? 'Updated ' + oldest.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Starter edition · Nov 23, 2026';
     const note = !navigator.onLine ? 'Offline' : failures ? 'Some feeds unavailable' : '';
-    status.textContent = available ? [note, stamp].filter(Boolean).join(' · ') : 'No headlines for these filters.';
+    status.textContent = [note, available ? stamp : 'No matching headlines.'].filter(Boolean).join(' · ');
     fallback.hidden = navigator.onLine && !failures && available > 0;
   }
 
-  panel.querySelector('.news-filters').onchange = () => {
-    store.savePreferences({ language: language.value, topic: topic.value });
-    load();
-  };
   refreshButton.onclick = () => load(true);
   load();
   if (focus) panel.querySelector('h1').focus();

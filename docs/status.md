@@ -5,7 +5,7 @@ Last updated November 23, 2026.
 ## Current state
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
-- **News** opens a five-headline shortlist with English/French and general news/sports filters. NASA and Canada.ca articles open in the reader. An icon-only star saves articles on the device for offline reading. The News header opens the saved collection. Earlier News plan records remain in Progress.
+- **News** opens directly to up to five headlines. Under **Settings → News**, choose English, French, or both and any combination of 16 suggested topics. NASA and Canada.ca articles open in the reader. An icon-only star saves articles on the device for offline reading. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
@@ -15,6 +15,8 @@ Last updated November 23, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+At 320 CSS pixels, Chromium carried an earlier French Sports choice into Settings, persisted a switch to Culture and Tech, and loaded five French headlines from the live feeds. Cached headlines and Settings reopened offline. A starred French article remained readable after changing to English and Sports. All 14 Node and six Python tests passed. The Android debug build, signature, and all 21 bundled assets passed verification. Lint reported zero errors and seven warnings. A phone runtime check remains open.
 
 The revised News reader displayed the six paragraphs of the NOAA Near Earth Orbit Network release in 320-pixel Chromium. A starred copy reopened offline after clearing the feed and recent caches. Removing its star emptied Saved. A second check saved during loading, left the reader, and reopened the downloaded text offline. A French release also opened in the reader. All 11 Node and six Python tests passed.
 

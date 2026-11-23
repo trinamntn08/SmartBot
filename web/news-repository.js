@@ -1,4 +1,5 @@
 import { feeds, starterStories } from './news-provider.js';
+import { newsPreferences } from './news-preferences.js';
 
 function read(key) {
   try { return JSON.parse(localStorage.getItem('smartbot-news-' + key)); }
@@ -13,7 +14,7 @@ function write(key, value) {
 }
 
 export const newsRepository = {
-  preferences() { return read('filters') ?? { language: '', topic: '' }; },
+  preferences() { return newsPreferences(read('filters')); },
   savePreferences(value) { return write('filters', value); },
   edition(feed) { return read(feed.id); },
   saveEdition(feed, edition) {

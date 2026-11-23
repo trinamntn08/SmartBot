@@ -3,7 +3,7 @@ import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
 import { renderAssistantSettings } from './assistant.js';
 import { findSection, sectionPreview, workspace } from './workspace.js';
-import { escapeHtml, renderNews, renderSavedNews, renderStory } from './news.js';
+import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -139,7 +139,11 @@ function render(focusHeading = false) {
   }
   if (section) view.innerHTML = sectionPreview(section);
   else if (page === 'workspace') view.innerHTML = workspace();
-  else if (page === 'settings') renderAssistantSettings(view);
+  else if (page === 'settings') {
+    view.innerHTML = '<h1 tabindex="-1">Settings</h1>';
+    renderNewsSettings(view);
+    renderAssistantSettings(view);
+  }
   else if (page === 'activities' || (page === 'today' && !routine.settings)) view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
   else view.innerHTML = today(routine.plans[displayedDate]);

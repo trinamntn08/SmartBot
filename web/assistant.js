@@ -59,8 +59,7 @@ async function fetchProviders() {
 }
 
 export async function renderAssistantSettings(view) {
-  view.innerHTML = `<h1 tabindex="-1">Settings</h1>
-    <section class="card assistant-settings" aria-labelledby="assistant-settings-title">
+  view.insertAdjacentHTML('beforeend', `<section class="card assistant-settings" aria-labelledby="assistant-settings-title">
       <h2 id="assistant-settings-title">Assistant</h2>
       <div class="provider-field" hidden>
         <label for="assistant-provider">Provider</label>
@@ -68,7 +67,7 @@ export async function renderAssistantSettings(view) {
       </div>
       <p class="settings-status" role="status">Checking providers…</p>
       <p class="settings-privacy" hidden>Your provider receives recent messages when you send a question and recordings when you transcribe.</p>
-    </section>`;
+    </section>`);
   const panel = view.querySelector('.assistant-settings');
   const selector = panel.querySelector('select');
   const message = panel.querySelector('.settings-status');

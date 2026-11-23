@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
-import { feedStories, shortlist, starterStories } from '../web/news-provider.js';
+import { feedStories, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
+import { newsPreferences, newsTopics } from '../web/news-preferences.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
 const story = starterStories.find(item => item.source === 'Affaires mondiales Canada');
@@ -34,4 +35,33 @@ test('the shortlist keeps a bilingual topic mix, removes duplicates, and respect
   assert.equal(new Set(result.map(item => item.url)).size, 5);
   assert.equal(new Set(result.map(item => item.topic + item.language)).size, 4);
   assert.deepEqual(shortlist(stories, { language: 'fr', topic: 'sports' }), starterStories.filter(item => item.language === 'fr' && item.topic === 'sports'));
+});
+
+test('news preferences retain earlier choices and normalize multiple selections', () => {
+  assert.deepEqual(newsPreferences({ language: 'fr', topic: 'sports' }), { languages: ['fr'], topics: ['sports'] });
+  assert.deepEqual(newsPreferences({ language: '', topic: '' }), { languages: ['en', 'fr'], topics: [] });
+  assert.deepEqual(newsPreferences({ languages: ['fr', 'en', 'fr'], topics: ['tech', 'culture', 'other'] }),
+    { languages: ['en', 'fr'], topics: ['culture', 'tech'] });
+});
+
+test('each suggested interest has a feed in each language', () => {
+  for (const language of ['en', 'fr']) {
+    for (const { id } of newsTopics) {
+      const selected = selectedFeeds({ languages: [language], topics: [id] });
+      assert.ok(selected.some(feed => feed.topic === id && (id === 'general' || feed.subject || feed.department)));
+      assert.ok(selected.every(feed => feed.language === language));
+    }
+  }
+  const feeds = selectedFeeds({ languages: ['fr'], topics: ['culture', 'tech'] });
+  assert.deepEqual(feeds.map(feed => feed.subject), ['artsandmedia', 'scienceandinnovation']);
+});
+
+test('multiple interests show the union of matching headlines in the chosen language', () => {
+  const entry = { title: 'Festival de cinéma', link: story.url, publishedDate: '2026-11-20' };
+  const second = { ...entry, title: 'Recherche en intelligence artificielle', link: entry.link.replace('.html', '-2.html') };
+  const culture = feedStories([entry], { language: 'fr', topic: 'culture' });
+  const tech = feedStories([entry, second], { language: 'fr', topic: 'tech' });
+  assert.deepEqual(tech.map(item => item.title), [second.title]);
+  const result = shortlist([...culture, ...tech, ...starterStories], { languages: ['fr'], topics: ['culture', 'tech'] });
+  assert.deepEqual(result.map(item => item.url).sort(), [entry.link, second.link].sort());
 });

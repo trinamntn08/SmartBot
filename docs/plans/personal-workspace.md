@@ -43,6 +43,10 @@ November 23, 2026. **In-app articles and stars.** The reader loads NASA's publis
 
 Chromium verified the requested NASA article at phone width, a French article, the saved collection, offline reopening after clearing the recent cache, and removal. A delayed response also filled a starred copy after leaving the reader. All 11 Node and six Python tests passed. The debug APK built, its signature and all 20 bundled assets verified, and Android lint reported zero errors and seven warnings. Runtime verification on the pilot phone is pending.
 
+November 23, 2026. **News preferences.** Settings now holds English and French language choices and 16 suggested topics. Existing language and topic choices carry forward. Each selected interest uses a Canada.ca subject or department feed, with additional matching for Sports, Tech, and Housing. NASA also supplies relevant English headlines. All topics uses the broad release feeds. The News screen opens directly to the shortlist.
+
+At 320 CSS pixels Chromium verified preference migration, automatic saving, five live French headlines for Culture and Tech, offline preference changes, cached headlines, and a saved article outside the new selection. All 14 Node and six Python tests passed. Android debug build, signature, and 21 bundled asset checks passed. Lint reported zero errors and seven warnings. Device testing remains pending.
+
 ## Handoff
 
 The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

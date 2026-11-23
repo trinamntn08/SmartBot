@@ -31,7 +31,9 @@ Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot disp
 
 ## News
 
-Open **Workspace → News** in the browser or Android app. Choose English, French, or both, and optionally filter by General news or Sports. Tap a headline to read the article in SmartBot. Tap the star to save it, or tap it again to remove it. The star on the News screen opens your saved articles.
+Open **Settings → News** in the browser or Android app. Choose English, French, or both. Select any combination of the 16 topics, including Culture, Tech, and Sports, or choose **All topics**. Changes save automatically on this device.
+
+Open **Workspace → News** for your headlines. Tap a headline to read the article and tap its star to save it. The star on the News screen opens all your saved articles, including those outside your current preferences.
 
 NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
 
