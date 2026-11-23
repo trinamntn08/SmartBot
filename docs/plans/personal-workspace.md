@@ -29,6 +29,10 @@ November 22, 2026. **Books** now imports `.txt` files, displays their contents i
 
 Eight Node tests passed. A 320-pixel-wide Chrome test verified standalone Books, invalid-file recovery, text and line breaks, offline resume, and access to a saved reading log after importing a book. The Android debug build, lint, signature, and packaged asset checks passed. The Android file picker and offline resume still need verification on a phone.
 
+November 23, 2026. **Ask SmartBot** opens from the bottom of the browser app. The local Python preview serves both the frontend and the assistant API. It uses server-side OpenAI or Gemini credentials and returns provider labels to the browser. The browser records up to 45 seconds, transcribes through the selected provider, and lets the user edit the transcript before sending. Follow-up questions include recent turns from the current page session.
+
+Eight Node tests and four local API tests passed. Chromium at 320 CSS pixels checked both providers with substitute responses, recorded audio, transcript review, follow-ups, permission denial, usage-limit recovery, and offline access to Books. The Android debug build and lint passed. Live provider calls require a configured key and outbound access. Book passage context and a hosted assistant for the bundled Android app are pending.
+
 ## Handoff
 
-The plain-text reader is ready for a phone check. The assistant endpoint and optional book passage context are the next implementation step, followed by voice input and news.
+The plain-text reader is ready for a phone check. Verify the assistant with a configured provider, then add optional book passage context and news.

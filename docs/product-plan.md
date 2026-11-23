@@ -87,7 +87,7 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 ### Assistant
 
-- Use GPT through the OpenAI API for general questions and questions about a chosen book or news excerpt. Provide the same question flow from Ask and from the reader. Show the excerpt being attached before the question is sent.
+- Use OpenAI or Gemini for general questions. Add questions about a chosen book or news excerpt through the same assistant, and show the excerpt being attached before the question is sent.
 - Add text questions first, followed by microphone input with a reviewable transcript. Show the answer in text and offer playback for spoken answers.
 - Keep API credentials on the backend. Imported books, reading history, and other personal data stay local unless you choose what to include in a request. Keep the reader usable when the assistant is offline or unavailable.
 

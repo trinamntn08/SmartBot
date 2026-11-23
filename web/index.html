@@ -7,6 +7,7 @@
   <title>SmartBot</title>
   <link rel="stylesheet" href="./styles.css">
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./assistant.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -26,5 +27,26 @@
     <p id="error" role="alert" hidden></p>
     <noscript>Enable JavaScript to use SmartBot.</noscript>
   </div>
+  <button class="ask-launcher" type="button" aria-haspopup="dialog" aria-controls="assistant" aria-expanded="false" hidden>Ask SmartBot</button>
+  <dialog id="assistant" class="assistant" aria-labelledby="assistant-title">
+    <div class="assistant-inner">
+      <header class="assistant-header">
+        <h2 id="assistant-title">Ask SmartBot</h2>
+        <button type="button" class="assistant-close">Close</button>
+      </header>
+      <div class="assistant-conversation" role="log" aria-label="Conversation" hidden></div>
+      <form class="assistant-form">
+        <label class="assistant-provider" hidden>Provider <select name="provider"></select></label>
+        <label for="assistant-question">Your question</label>
+        <textarea id="assistant-question" name="question" rows="3" maxlength="4000" placeholder="Type a question…" autofocus></textarea>
+        <p class="assistant-privacy" hidden>The selected provider receives recent messages and audio for transcription.</p>
+        <div class="assistant-actions">
+          <button type="button" class="assistant-record" disabled>Record voice</button>
+          <button type="submit" disabled>Send</button>
+        </div>
+        <p class="assistant-status" role="status"></p>
+      </form>
+    </div>
+  </dialog>
 </body>
 </html>

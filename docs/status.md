@@ -1,9 +1,10 @@
 # SmartBot status
 
-Last updated November 22, 2026.
+Last updated November 23, 2026.
 
 ## Current state
 
+- **Ask SmartBot** opens from the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. The local preview server reads provider credentials from its environment.
 - **Workspace** is the home screen. Its five cards open the Books library and previews for News, Languages, Music, and Movies. The previews describe features in development. Today remains available for setup and the daily reading routine.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
@@ -14,11 +15,13 @@ Last updated November 22, 2026.
 
 ## Web app verification
 
+The assistant passed local API tests and a 320-pixel-wide Chromium check with substitute responses from both providers. Checks covered follow-ups, audio transcription, editable drafts, microphone denial, provider usage limits, an unconfigured server, and offline access to Books. Live provider verification is pending.
+
 The Workspace card layout passed Chromium checks from 320 to 1440 CSS pixels in light and dark mode. Keyboard navigation moved focus to each preview heading. The cards and artwork reopened offline, imported books resumed at the saved section, and a reading session completed from Today appeared in Progress. All eight Node tests passed.
 
 Four planner tests passed under Node.js. A Chrome smoke test at 320 CSS pixels covered setup, missing-book recovery, editing, offline resume and completion, duplicate completion in two tabs, skip and undo, date rollover, and saved history. Chrome also passed the desktop width check in dark mode.
 
-The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the preview and opens its address in the default browser. The launcher checks covered both server paths and verified HTTP responses for the entry page and app files.
+The [browser preview](../README.md#browser-preview) uses port 8000 on the local computer. The Windows launcher starts or reuses the preview and opens its address in the default browser. The preview serves the [assistant API](../README.md#ask-smartbot) and the web assets on the same origin.
 
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
@@ -36,4 +39,4 @@ Local validation for the SmartBot rename covered Markdown links and section anch
 
 ## Handoff
 
-Verify the plain-text picker and reader on the pilot phone. Then build the GPT text assistant and add voice input using the [personal workspace plan](plans/personal-workspace.md).
+Verify the plain-text picker and reader on the pilot phone. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and news.

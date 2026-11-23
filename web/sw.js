@@ -1,10 +1,10 @@
 // Bump the version when changing any of these files so they update together.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}v3`;
+const cacheName = `${cachePrefix}v4`;
 const files = [
   'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'books.js', 'library-repository.js', 'text-book.js',
-  'workspace.js', 'assets/books.webp', 'assets/sections.webp',
+  'workspace.js', 'assistant.js', 'assets/books.webp', 'assets/sections.webp',
   'assets/dm-sans.woff2', 'assets/instrument-serif.woff2',
 ];
 const urls = files.map((file) => new URL(file, self.registration.scope).href);
