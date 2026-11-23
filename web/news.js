@@ -1,4 +1,5 @@
-import { fetchArticle, fetchFeed, selectedFeeds, shortlist } from './news-provider.js';
+import { fetchArticle, fetchFeed, newsPageSize, selectedFeeds, shortlist } from './news-provider.js';
+import { isTuoitreStory } from './tuoitre.js';
 import { newsLanguages, newsTopics } from './news-preferences.js';
 import { newsRepository as store } from './news-repository.js';
 import { resumeBookRoute } from './library-repository.js';
@@ -16,11 +17,40 @@ function backLink(route, title) {
   return `<a class="back-link" href="#${route}"><span class="arrow" aria-hidden="true"></span>${title}</a>`;
 }
 
-function storyRows(stories, saved = false) {
-  return stories.map(story => `<li>
-    <a class="news-headline" href="#${saved ? 'saved-story' : 'story'}=${escapeHtml(encodeURIComponent(story.url))}" lang="${story.language}">${escapeHtml(story.title)}</a>
-    <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}</small>
-  </li>`).join('');
+function storyRows(stories, stars, saved = false) {
+  return stories.map(story => {
+    const original = isTuoitreStory(story.url);
+    const href = original && navigator.onLine ? story.url : '#' + (saved ? 'saved-story=' : 'story=') + encodeURIComponent(story.url);
+    return `<li><div><a class="news-headline" rel="noreferrer" href="${escapeHtml(href)}" lang="${story.language}">${escapeHtml(story.title)}</a>
+      <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}${original && saved && navigator.onLine ? ` · <a href="#saved-story=${escapeHtml(encodeURIComponent(story.url))}">Saved summary</a>` : ''}</small></div>
+      ${original ? `<button class="news-star" type="button" data-url="${escapeHtml(story.url)}" aria-label="Save for later: ${escapeHtml(story.title)}" aria-pressed="${stars.has(story.url)}">${starIcon}</button>` : ''}
+    </li>`;
+  }).join('');
+}
+
+function listStars(panel, savedNews, stars, findStory, onChange) {
+  const pending = new Set();
+  panel.addEventListener('click', async event => {
+    const button = event.target.closest('button[data-url]');
+    if (!button) return;
+    const url = button.dataset.url;
+    const story = findStory(url);
+    if (!story || pending.has(url)) return;
+    pending.add(url);
+    try {
+      if (stars.has(url)) {
+        await savedNews.remove(url);
+        stars.delete(url);
+      } else {
+        await savedNews.save(story, null);
+        stars.add(url);
+      }
+      const current = panel.querySelector('button[data-url="' + CSS.escape(url) + '"]');
+      current?.setAttribute('aria-pressed', String(stars.has(url)));
+      onChange?.(current);
+    } catch { panel.querySelector('[role=status]').textContent = 'Could not update saved articles.'; }
+    finally { pending.delete(url); }
+  });
 }
 
 export async function renderSavedNews(view, savedNews, focus) {
@@ -31,7 +61,13 @@ export async function renderSavedNews(view, savedNews, focus) {
   try {
     const records = await savedNews.list();
     records.sort((a, b) => b.savedAt - a.savedAt);
-    panel.querySelector('ul').innerHTML = storyRows(records.map(record => record.story), true);
+    const stories = new Map(records.map(({ story }) => [story.url, story]));
+    const stars = new Set(stories.keys());
+    panel.querySelector('ul').innerHTML = storyRows([...stories.values()], stars, true);
+    listStars(panel, savedNews, stars, url => stories.get(url), button => {
+      button?.closest('li').remove();
+      if (!stars.size) panel.querySelector('[role=status]').textContent = 'No saved articles.';
+    });
     if (!records.length) panel.querySelector('[role=status]').textContent = 'No saved articles.';
   } catch {
     panel.querySelector('[role=status]').textContent = 'Could not open saved articles.';
@@ -75,32 +111,54 @@ export function renderNewsSettings(view) {
   });
 }
 
-export function renderNews(view, focus) {
+export async function renderNews(view, savedNews, focus) {
   const panel = document.createElement('section');
   view.replaceChildren(panel);
   panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
     <button class="quiet" type="button">Refresh</button></div></div>
     <p class="news-info" role="status"></p><ul class="news-list" aria-label="Headlines"></ul>
+    <button class="quiet news-more" type="button" hidden>More</button>
     <a class="book-fallback" href="${resumeBookRoute()}" hidden>Read a book instead</a>`;
   const refreshButton = panel.querySelector('button');
   const status = panel.querySelector('[role=status]');
   const fallback = panel.querySelector('.book-fallback');
   const preferences = store.preferences();
+  const editionKey = JSON.stringify(preferences);
+  let visible = history.state?.newsEdition === editionKey ? history.state.newsCount : newsPageSize;
+  const more = panel.querySelector('.news-more');
+  const list = panel.querySelector('ul');
+  if (focus) panel.querySelector('h1').focus();
+  const stars = new Set(await savedNews.urls().catch(() => []));
+  if (!panel.isConnected) return;
+  let stories = [];
   let request;
 
   function draw() {
-    const stories = shortlist(store.stories(), preferences);
-    panel.querySelector('ul').innerHTML = storyRows(stories);
+    stories = shortlist(store.stories(), preferences);
+    list.innerHTML = storyRows(stories.slice(0, visible), stars);
+    more.hidden = visible >= stories.length;
     return stories.length;
   }
+  listStars(panel, savedNews, stars, url => stories.find(story => story.url === url));
+  more.onclick = () => {
+    const next = stories.slice(visible, visible + newsPageSize);
+    list.insertAdjacentHTML('beforeend', storyRows(next, stars));
+    list.children[visible]?.querySelector('a').focus({ preventScroll: true });
+    visible += newsPageSize;
+    history.replaceState({ ...history.state, newsEdition: editionKey, newsCount: visible }, '');
+    more.hidden = visible >= stories.length;
+  };
 
   async function load(force = false) {
     request?.abort();
     const controller = new AbortController();
     request = controller;
     const selected = selectedFeeds(preferences);
-    const pending = selected.filter(feed => force || !(Date.now() - store.edition(feed)?.time < freshFor));
+    const pending = selected.filter(feed => {
+      const edition = store.edition(feed);
+      return force || edition?.pageSize !== newsPageSize || Date.now() - edition.time >= freshFor;
+    });
     draw();
     const time = Date.now();
     let failures = 0;
@@ -110,7 +168,7 @@ export function renderNews(view, focus) {
     if (navigator.onLine) await Promise.all(pending.map(async feed => {
       try {
         const stories = await fetchFeed(feed, controller.signal);
-        if (!controller.signal.aborted && !store.saveEdition(feed, { time, stories })) failures++;
+        if (!controller.signal.aborted && !store.saveEdition(feed, { time, stories, pageSize: newsPageSize })) failures++;
       } catch { failures++; }
     }));
     clearTimeout(timeout);
@@ -127,7 +185,6 @@ export function renderNews(view, focus) {
 
   refreshButton.onclick = () => load(true);
   load();
-  if (focus) panel.querySelector('h1').focus();
 }
 
 export async function renderStory(view, savedNews, plans, url, fromSaved, focus) {
@@ -184,7 +241,8 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
     const summary = document.createElement('p');
     summary.textContent = story.summary;
     panel.querySelector('.news-body').replaceChildren(summary);
-    panel.querySelector('.news-info a').textContent = 'Read at ' + story.source;
+    panel.querySelector('.news-info a').textContent = 'Full article at ' + story.source;
+    if (!navigator.onLine) status.textContent = 'Offline · Cached summary';
     return;
   }
   if (body?.blocks) return;

@@ -48,6 +48,11 @@ export function savedNewsRepository(database) {
       const range = IDBKeyRange.bound(['saved-news'], ['saved-news', []]);
       return run('readonly', store => store.getAll(range));
     },
+    async urls() {
+      const range = IDBKeyRange.bound(['saved-news'], ['saved-news', []]);
+      const keys = await run('readonly', store => store.getAllKeys(range));
+      return keys.map(key => key[1]);
+    },
     save(story, body) {
       return run('readwrite', store => {
         const request = store.get(key(story.url));

@@ -134,7 +134,7 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'news') {
-    renderNews(view, focusHeading);
+    renderNews(view, repository.savedNews, focusHeading);
     return;
   }
   if (section) view.innerHTML = sectionPreview(section);

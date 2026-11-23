@@ -42,8 +42,12 @@ function publishedDate(value) {
   return Number.isFinite(time) ? new Date(time).toISOString() : null;
 }
 
+export function isTuoitreStory(url) {
+  return /^https:\/\/tuoitre\.vn\/[a-z0-9-]+-\d+\.htm$/.test(url);
+}
+
 export function tuoitreStory(feed, { title, url, summary, published }) {
-  if (!title || !/^https:\/\/tuoitre\.vn\/[a-z0-9-]+-\d+\.htm$/.test(url)) return null;
+  if (!title || !isTuoitreStory(url)) return null;
   const date = publishedDate(published);
   if (!date) return null;
   const text = title + ' ' + summary;

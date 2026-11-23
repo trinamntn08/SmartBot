@@ -32,9 +32,12 @@ test('the shortlist keeps a bilingual topic mix, removes duplicates, and respect
   const stories = [...starterStories, ...starterStories, ...Array.from({ length: 8 }, (_, i) =>
     ({ ...story, date: '2026-11-23', url: 'https://example.org/' + i }))];
   const result = shortlist(stories);
-  assert.equal(result.length, 5);
-  assert.equal(new Set(result.map(item => item.url)).size, 5);
-  assert.equal(new Set(result.map(item => item.topic + item.language)).size, 4);
+  assert.equal(result.length, new Set(stories.map(item => item.url)).size);
+  assert.equal(new Set(result.map(item => item.url)).size, result.length);
+  const firstPage = result.slice(0, 10);
+  assert.equal(firstPage.length, 10);
+  assert.equal(new Set(firstPage.map(item => item.topic + item.language)).size, 4);
+  assert.ok(result.slice(10).length > 0);
   assert.deepEqual(shortlist(stories, { language: 'fr', topic: 'sports' }), starterStories.filter(item => item.language === 'fr' && item.topic === 'sports'));
 });
 

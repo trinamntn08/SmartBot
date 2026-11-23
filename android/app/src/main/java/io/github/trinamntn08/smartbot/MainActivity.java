@@ -90,7 +90,11 @@ public final class MainActivity extends Activity {
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
                         && isPublisher(uri.getAuthority())) {
                     try {
-                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                        Intent article = new Intent(Intent.ACTION_VIEW, uri);
+                        Bundle extras = new Bundle();
+                        extras.putBinder("android.support.customtabs.extra.SESSION", null);
+                        article.putExtras(extras);
+                        startActivity(article);
                     } catch (ActivityNotFoundException error) {
                         Toast.makeText(MainActivity.this, "No browser available", Toast.LENGTH_SHORT).show();
                     }

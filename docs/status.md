@@ -5,7 +5,7 @@ Last updated November 23, 2026.
 ## Current state
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
-- **News** opens directly to up to five headlines. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. Showbiz & celebrities is one choice and Movies has its own checkbox. The reader shows NASA and Canada.ca articles and Tuổi Trẻ summaries. A star saves the displayed text on the device. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
+- **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
@@ -15,6 +15,8 @@ Last updated November 23, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+At 320 CSS pixels, the Vietnamese Culture list expanded from ten to 50 unique headlines. Opening the digital culture passport story reached all 17 article paragraphs and two original images. Back restored the expanded edition. Offline reload preserved the saved summary and More worked on cached headlines. All 15 Node and seven Python tests passed. Android build, lint and signature checks passed. On-device Custom Tab verification is pending.
 
 Mobile-width Chromium verified live Showbiz & celebrities and Movies headlines in all three languages. A Tuổi Trẻ article opened with cookies blocked, and its starred summary reopened offline. All 15 Node and seven Python tests passed. The Android debug APK built with all 22 web assets matching, passed signature verification, and lint reported zero errors and seven warnings. A device check is pending.
 

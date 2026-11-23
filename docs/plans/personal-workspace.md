@@ -51,6 +51,10 @@ November 23, 2026. **Vietnamese and entertainment news.** Settings offers Tiến
 
 At 320 CSS pixels Chromium loaded five headlines for each entertainment choice in each language, opened a Vietnamese article with cookies blocked, and reopened its starred summary offline. All 15 Node and seven Python tests passed. Android debug build, signature, and 22 bundled asset checks passed. Lint reported zero errors and seven warnings. Android publisher handoff still needs a device check.
 
+November 23, 2026. **Full Vietnamese originals and longer editions.** Online Tuổi Trẻ headlines open the original with photos in one tap. The publisher’s feed supplies summaries and its article page restricts framing to its own origin. SmartBot keeps a star next to the headline and opens its cached summary offline. Android requests a browser Custom Tab for the original. News displays ten stories and appends batches of ten from the current edition. An expanded edition survives browser Back. [Tuổi Trẻ RSS](https://tuoitre.vn/rss.htm)
+
+Mobile-width Chromium verified 50 distinct Culture headlines, 17 paragraphs and two images on the reported digital passport article, return navigation, and offline reading and pagination. All 22 automated tests passed. The Android debug build, signature and lint checks passed with seven existing lint warnings. A physical Android reading check is pending.
+
 ## Handoff
 
 The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

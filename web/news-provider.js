@@ -1,6 +1,8 @@
 import { newsPreferences, newsTopics } from './news-preferences.js';
 import { fetchTuoitre, tuoitreFeeds } from './tuoitre.js';
 
+export const newsPageSize = 10;
+
 // Starter links checked in a mobile-sized browser with cookies disabled.
 export const starterStories = [
   {
@@ -73,7 +75,7 @@ export function feedStories(entries, { language, topic }) {
       title: entry.title.trim(), url: entry.link, date: entry.publishedDate, language, topic, topics,
       source: language === 'en' ? 'Government of Canada' : 'Gouvernement du Canada',
     });
-    if (result.length === 8 && topic !== 'movies') break;
+    if (result.length === 40) break;
   }
   return result;
 }
@@ -91,9 +93,10 @@ export async function fetchFeed(feed, signal) {
     })).filter(story => story.title && story.url?.startsWith('https://www.nasa.gov/news-release/')
       && Number.isFinite(Date.parse(story.date)));
     if (!stories.length) throw new Error('Empty feed');
-    return stories.slice(0, 8);
+    return stories.slice(0, 40);
   }
   const query = new URLSearchParams({ sort: 'publishedDate', orderBy: 'desc', type: 'newsreleases', pick: '40' });
+  if (['sports', 'tech', 'housing'].includes(feed.topic)) query.set('pick', '150');
   if (feed.department) query.set('dept', feed.department);
   if (feed.subject) query.set('topic', feed.subject);
   const url = 'https://api.io.canada.ca/io-server/gc/news/' + feed.language + '/v2?' + query;
@@ -114,39 +117,46 @@ export function shortlist(articles, preferences) {
       && (!topics.length || storyTopics(story).some(id => topics.includes(id))))
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
   const selected = new Map();
+  const translations = new Map();
   const groups = new Set();
   // The Canadian feed generally publishes both translations at the same instant.
   // Prefer different releases in a mixed edition. Single-language browsing keeps all releases.
   function add(story) {
     if (selected.has(story.url)) return false;
-    if (languages.length > 1 && isCanadaStory(story.url) && [...selected.values()].some(other =>
-      other.language !== story.language && other.date === story.date && other.topic === story.topic
-      && isCanadaStory(other.url))) return false;
+    if (languages.length > 1 && isCanadaStory(story.url)) {
+      const key = story.date + '/' + story.topic;
+      if (translations.has(key) && translations.get(key) !== story.language) return false;
+      translations.set(key, story.language);
+    }
     selected.set(story.url, story);
     return true;
   }
-  // Give each available language a place, then vary the topics up to the five-story limit.
+  // Reserve first-page places for each language, topic and publisher.
   for (const language of languages) {
     const first = sorted.find(story => story.language === language && add(story));
     if (first) groups.add(first.language + '-' + first.topic);
   }
   for (const story of sorted) {
-    if (selected.size >= 5) break;
+    if (selected.size >= newsPageSize) break;
     const group = story.language + '-' + story.topic;
     if (!groups.has(group) && add(story)) groups.add(group);
   }
   const sources = new Set(sorted.filter(story => selected.has(story.url)).map(story => story.source));
   for (const story of sorted) {
-    if (selected.size >= 5) break;
+    if (selected.size >= newsPageSize) break;
     if (!sources.has(story.source) && Date.parse(sorted[0].date) - Date.parse(story.date) < 7 * 86400000) {
       if (add(story)) sources.add(story.source);
     }
   }
   for (const story of sorted) {
-    if (selected.size >= 5) break;
+    if (selected.size >= newsPageSize) break;
     add(story);
   }
-  return [...selected.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  const edition = [...selected.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  for (const story of sorted) {
+    if (add(story)) edition.push(story);
+  }
+  return edition;
 }
 
 export async function fetchArticle(url, signal) {
