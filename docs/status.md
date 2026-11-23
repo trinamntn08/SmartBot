@@ -4,7 +4,7 @@ Last updated November 23, 2026.
 
 ## Current state
 
-- **Ask SmartBot** opens from the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
+- **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **Workspace** is the home screen. Its five cards open the Books library and previews for News, Languages, Music, and Movies. The previews describe features in development. Today remains available for setup and the daily reading routine.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
@@ -15,7 +15,9 @@ Last updated November 23, 2026.
 
 ## Web app verification
 
-The provider settings passed a 320-pixel-wide Chromium check with simulated providers. The choice survived a reload and applied to questions and voice transcription. When a saved provider became unavailable, the chat kept the draft and linked to Settings for a new choice. Settings and Books remained accessible offline.
+The compact composer passed Chromium checks at 320 and 1440 CSS pixels in dark and light mode and at 200% text size on the narrow viewport. The checks covered Enter and Shift+Enter, closing and restoring focus, text questions, editable voice transcripts, provider selection in Settings, and draft preservation when the assistant is unavailable. Provider responses and microphone input were simulated. The updated service worker cached the composer, and Books reopened offline. All eight Node tests and four Python API tests passed. The Android debug build and signature passed, all 17 packaged web files matched, and lint reported zero errors and seven warnings.
+
+The provider settings passed a 320-pixel-wide Chromium check with simulated providers. The choice survived a reload and applied to questions and voice transcription. Settings and Books remained accessible offline.
 
 The assistant passed local API tests and a 320-pixel-wide Chromium check with substitute responses from both providers. Checks covered follow-ups, audio transcription, editable drafts, microphone denial, provider usage limits, an unconfigured server, and offline access to Books. Live provider verification is pending.
 

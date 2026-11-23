@@ -36,7 +36,7 @@ Set at least one provider key in the environment that runs the Python preview se
 | OpenAI | `SMARTBOT_OPENAI_API_KEY` or `OPENAI_API_KEY` | `SMARTBOT_OPENAI_MODEL` defaults to `gpt-4o-mini`. `SMARTBOT_OPENAI_TRANSCRIPTION_MODEL` defaults to `gpt-4o-mini-transcribe`. |
 | Gemini | `SMARTBOT_GEMINI_API_KEY` or `GEMINI_API_KEY` | `SMARTBOT_GEMINI_MODEL` defaults to `gemini-2.5-flash`. Use an audio-capable model for voice. |
 
-In a browser, select **Ask SmartBot** at the bottom of any screen. Type a question or select **Record voice**, allow microphone access, then select **Stop and transcribe**. Review or edit the transcript and select **Send**. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
+In a browser, select **Ask SmartBot** at the bottom of any screen. Type a question and select the send arrow or press Enter. Use Shift+Enter for a new line. To ask by voice, select the microphone, allow access, then select stop to transcribe. You can edit the transcript before sending. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
 
 The assistant requires the Python preview server and outbound HTTPS to `api.openai.com` or `generativelanguage.googleapis.com`. The preview listens on loopback for personal use. In a restricted cloud environment, allow the hostname for the provider you choose. The bundled Android APK directs you to the browser preview for the assistant.
 

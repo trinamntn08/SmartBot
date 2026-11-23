@@ -6,7 +6,6 @@ const recordButton = form.querySelector('.assistant-record');
 const sendButton = form.querySelector('[type="submit"]');
 const conversation = dialog.querySelector('.assistant-conversation');
 const status = form.querySelector('.assistant-status');
-const settingsLink = form.querySelector('.assistant-settings-link');
 const canRecord = Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder && window.OfflineAudioContext);
 const canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 const sampleRate = 16_000;
@@ -17,6 +16,7 @@ const setupMessage = 'Configure an OpenAI or Gemini API key on the SmartBot serv
 const unavailableMessage = 'Your saved provider is unavailable. Choose an available provider.';
 let sessionPreference = '';
 let availableProviders = [];
+let providerError = '';
 let pending = false;
 let capture = null;
 
@@ -89,7 +89,6 @@ export async function renderAssistantSettings(view) {
     message.textContent = selected ? '' : unavailableMessage;
     selector.addEventListener('change', () => {
       message.textContent = saveProvider(selector.value) ? 'Provider saved.' : 'Provider selected for this tab.';
-      updateControls();
     });
   } catch (error) {
     message.textContent = error.message;
@@ -102,33 +101,41 @@ function setStatus(message, error = false) {
 }
 
 function updateControls() {
-  const ready = Boolean(selectedProvider(availableProviders)) && !pending;
+  const recording = Boolean(capture?.recorder);
+  const recordLabel = recording ? 'Stop and transcribe' : 'Record voice';
   question.readOnly = pending || Boolean(capture);
-  sendButton.disabled = !ready || Boolean(capture) || !question.value.trim();
-  recordButton.disabled = !ready || !canRecord || Boolean(capture && !capture.recorder);
-  recordButton.textContent = capture?.recorder ? 'Stop and transcribe' : 'Record voice';
+  sendButton.disabled = question.readOnly || !question.value.trim();
+  recordButton.disabled = pending || !canRecord || Boolean(capture && !recording);
+  recordButton.classList.toggle('is-recording', recording);
+  recordButton.setAttribute('aria-label', recordLabel);
+  recordButton.title = recordLabel;
 }
 
 async function loadProviders() {
   if (pending) return;
   pending = true;
+  setStatus('');
   updateControls();
-  settingsLink.hidden = true;
-  setStatus('Connecting…');
   try {
     availableProviders = await fetchProviders();
-    const selected = selectedProvider(availableProviders);
-    settingsLink.hidden = Boolean(selected);
-    if (!availableProviders.length) setStatus('Set up the assistant in Settings.');
-    else if (!selected) setStatus(unavailableMessage);
-    else setStatus(canRecord ? '' : 'Voice recording is unavailable here. You can still type a question.');
+    providerError = '';
   } catch (error) {
     availableProviders = [];
-    setStatus(error.message, true);
+    providerError = error.message;
   } finally {
     pending = false;
     updateControls();
   }
+}
+
+function providerForAction() {
+  const provider = selectedProvider(availableProviders);
+  if (!provider) {
+    setStatus(providerError || (availableProviders.length
+      ? 'The selected provider is unavailable.'
+      : 'The assistant is unavailable.'), true);
+  }
+  return provider;
 }
 
 async function request(providerId, path, body, contentType) {
@@ -170,8 +177,9 @@ function appendMessage(role, text) {
 async function sendQuestion(event) {
   event.preventDefault();
   const content = question.value.trim();
-  const provider = selectedProvider(availableProviders);
-  if (!content || pending || capture || !provider) return;
+  if (!content || pending || capture) return;
+  const provider = providerForAction();
+  if (!provider) return;
   const turn = { role: 'user', content };
   const entry = appendMessage(turn.role, turn.content);
   pending = true;
@@ -265,8 +273,9 @@ async function toggleRecording() {
     recordButton.disabled = true;
     return;
   }
-  const provider = selectedProvider(availableProviders);
-  if (pending || capture || !provider || !canRecord) return;
+  if (pending || capture || !canRecord) return;
+  const provider = providerForAction();
+  if (!provider) return;
   const recording = { chunks: [], providerId: provider.id };
   capture = recording;
   updateControls();
@@ -306,20 +315,13 @@ if (typeof dialog.showModal === 'function') {
   launcher.hidden = false;
   document.body.classList.add('has-assistant');
 }
+recordButton.hidden = !canRecord;
 launcher.addEventListener('click', () => {
   dialog.showModal();
   launcher.setAttribute('aria-expanded', 'true');
   loadProviders();
 });
 dialog.querySelector('.assistant-close').addEventListener('click', () => dialog.close());
-settingsLink.addEventListener('click', () => {
-  dialog.close();
-  if (location.hash === settingsLink.hash) {
-    const view = document.querySelector('#view');
-    renderAssistantSettings(view);
-    view.querySelector('h1').focus();
-  }
-});
 dialog.addEventListener('close', () => {
   cancelRecording();
   if (canSpeak) speechSynthesis.cancel();
@@ -327,5 +329,10 @@ dialog.addEventListener('close', () => {
 });
 window.addEventListener('pagehide', cancelRecording);
 question.addEventListener('input', updateControls);
+question.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  if (!sendButton.disabled) form.requestSubmit(sendButton);
+});
 form.addEventListener('submit', sendQuestion);
 recordButton.addEventListener('click', toggleRecording);

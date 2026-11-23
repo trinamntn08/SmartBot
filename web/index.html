@@ -28,23 +28,27 @@
     <noscript>Enable JavaScript to use SmartBot.</noscript>
   </div>
   <button class="ask-launcher" type="button" aria-haspopup="dialog" aria-controls="assistant" aria-expanded="false" hidden>Ask SmartBot</button>
-  <dialog id="assistant" class="assistant" aria-labelledby="assistant-title">
-    <div class="assistant-inner">
-      <header class="assistant-header">
-        <h2 id="assistant-title">Ask SmartBot</h2>
-        <button type="button" class="assistant-close">Close</button>
-      </header>
-      <div class="assistant-conversation" role="log" aria-label="Conversation" hidden></div>
-      <form class="assistant-form">
-        <textarea name="question" rows="2" maxlength="4000" aria-label="Your question" placeholder="Ask a question…" autofocus></textarea>
-        <div class="assistant-actions">
-          <button type="button" class="assistant-record" disabled>Record voice</button>
-          <button type="submit" disabled>Send</button>
-        </div>
-        <p class="assistant-status" role="status"></p>
-        <a class="assistant-settings-link" href="#settings" hidden>Open Settings</a>
-      </form>
-    </div>
+  <dialog id="assistant" class="assistant" aria-label="Ask SmartBot">
+    <div class="assistant-conversation" role="log" aria-label="Conversation" hidden></div>
+    <form class="assistant-form">
+      <textarea name="question" rows="1" maxlength="4000" aria-label="Your question" placeholder="Ask SmartBot…" enterkeyhint="send" autofocus></textarea>
+      <button type="button" class="assistant-icon assistant-record" aria-label="Record voice" title="Record voice" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g class="record-start">
+            <rect x="9" y="3" width="6" height="12" rx="3"/>
+            <path d="M5 11v1a7 7 0 0 0 14 0v-1m-7 8v3"/>
+          </g>
+          <rect class="record-stop" x="7" y="7" width="10" height="10" rx="2"/>
+        </svg>
+      </button>
+      <button type="submit" class="assistant-icon assistant-send" aria-label="Send question" title="Send question" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>
+      </button>
+      <button type="button" class="assistant-icon assistant-close" aria-label="Close assistant" title="Close assistant">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10m0-10L7 17"/></svg>
+      </button>
+      <p class="assistant-status" role="status"></p>
+    </form>
   </dialog>
 </body>
 </html>
