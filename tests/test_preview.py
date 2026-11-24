@@ -1,6 +1,7 @@
 """Check the local preview's versioned browser entry points."""
 
 from functools import partial
+import json
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -8,13 +9,59 @@ from threading import Thread
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_market_prices_keep_provider_credentials_server_side_and_normalize_closes(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/daily?symbol="
+
+            def request(symbol):
+                return Request(url + symbol, headers={"X-SmartBot-Market": "daily"})
+
+            try:
+                with patch("market_api.HTTPSConnection") as connect:
+                    for invalid, status in ((url + "SPY", 403), (request("SPY&symbol=AAPL"), 400),
+                                            (request("https%3A%2F%2Fexample.org"), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(invalid, timeout=2)
+                        self.assertEqual(error.exception.code, status)
+                    with patch.dict("os.environ", {"SMARTBOT_ALPHA_VANTAGE_API_KEY": ""}):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(request("SPY"), timeout=2)
+                        self.assertEqual(error.exception.code, 503)
+                    connect.assert_not_called()
+
+                    upstream = connect.return_value.getresponse.return_value
+                    upstream.status = 200
+                    upstream.read.return_value = json.dumps({"Time Series (Daily)": {
+                        "2026-11-23": {"4. close": "675.25"}, "2026-11-20": {"4. close": "660.10"},
+                        "2026-11-19": {"4. close": "NaN"}, "2026-11-31": {"4. close": "700"},
+                    }}).encode()
+                    with patch.dict("os.environ", {"SMARTBOT_ALPHA_VANTAGE_API_KEY": "test-key"}):
+                        with urlopen(request("SPY"), timeout=2) as result:
+                            self.assertEqual(result.headers["Cache-Control"], "no-store")
+                            self.assertEqual(json.load(result), {"symbol": "SPY", "prices": [
+                                {"date": "2026-11-20", "close": 660.10}, {"date": "2026-11-23", "close": 675.25},
+                            ]})
+                        connect.assert_called_once_with("www.alphavantage.co", timeout=8)
+                        connect.return_value.request.assert_called_once_with(
+                            "GET", "/query?function=TIME_SERIES_DAILY&symbol=SPY&outputsize=compact&apikey=test-key"
+                        )
+                        upstream.read.return_value = b'{"Information": "Standard API rate limit is 25 requests per day."}'
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(request("SPY"), timeout=2)
+                        self.assertEqual(error.exception.code, 429)
+            finally:
+                server.shutdown()
+                thread.join()
+
     def test_news_feeds_are_allowlisted_and_cannot_redirect_or_exceed_the_size_limit(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})

@@ -10,19 +10,21 @@ import json
 from pathlib import Path
 import re
 import socket
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import urlopen
 import webbrowser
 
 from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
+from market_api import MarketError, daily_prices
 
 
 HOST = "127.0.0.1"
 PORT = 8000
 WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 API = "/api/assistant"
+MARKET_API = "/api/markets/daily"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
@@ -117,6 +119,19 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        path, _, query = self.path.partition("?")
+        if path == MARKET_API:
+            if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
+                self.send_json(403, {"error": "Open SmartBot using its local preview address."})
+                return
+            symbols = parse_qs(query, keep_blank_values=True).get("symbol", [])
+            try:
+                data = daily_prices(symbols[0] if len(symbols) == 1 else "")
+            except MarketError as error:
+                self.send_json(error.status, {"error": str(error)})
+            else:
+                self.send_json(200, data)
+            return
         if self.path != API:
             super().do_GET()
             return

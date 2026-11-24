@@ -9,6 +9,7 @@ import { renderPodcasts } from './podcasts.js';
 import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
+import { renderMarkets } from './markets.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -25,6 +26,7 @@ let busy = false;
 let activitySaveFailed = false;
 let loadActivity;
 let keepReadingPlanOpen = false;
+let stopMarkets;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -128,6 +130,8 @@ function progress() {
 
 function render(focusHeading = false) {
   loadActivity = undefined;
+  stopMarkets?.();
+  stopMarkets = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -166,6 +170,10 @@ function render(focusHeading = false) {
   }
   if (page === 'music') {
     renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+    return;
+  }
+  if (page === 'markets') {
+    stopMarkets = renderMarkets(view, focusHeading);
     return;
   }
   if (section) view.innerHTML = sectionPreview(section);
