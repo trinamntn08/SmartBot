@@ -6,7 +6,7 @@ Last updated November 24, 2026.
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
-- **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
+- **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** supports podcast search, public RSS imports, following, and local listening progress. See the [podcast pilot setup](plans/podcast-listening.md).
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. The reader opens inside the shared Workspace navigation. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -16,7 +16,7 @@ Last updated November 24, 2026.
 
 ## Web app verification
 
-The Books redesign and PDF import now run inside Workspace. At 320 CSS pixels, Chromium verified keyboard navigation from Workspace to Books and back, return from an open book through the SmartBot header, offline reading position, offline PDF conversion, and both EPUB and original PDF export. All 15 Node and seven Python tests passed. The combined Android build is tracked in the branch integration check.
+The Books redesign and PDF import now run inside Workspace. At 320 CSS pixels, Chromium verified keyboard navigation from Workspace to Books and back, return from an open book through the SmartBot header, offline reading position, offline PDF conversion, and both EPUB and original PDF export. All 15 Node and seven Python tests passed. See the [branch integration record](plans/branch-integration.md) for combined browser and Android verification.
 
 At 320 CSS pixels, the Vietnamese Culture list expanded from ten to 50 unique headlines. Opening the digital culture passport story reached all 17 article paragraphs and two original images. Back restored the expanded edition. Offline reload preserved the saved summary and More worked on cached headlines. All 15 Node and seven Python tests passed. Android build, lint and signature checks passed. On-device Custom Tab verification is pending.
 
@@ -46,6 +46,8 @@ Four text import tests covered encoding, line breaks, Unicode section boundaries
 
 ## Android APK verification
 
+The combined Android 0.3.2 build includes Workspace, PDF Books, News, and Podcasts. The APK signature and all 220 bundled web assets were verified. Lint reported zero errors and nine warnings. Drive import and background podcast playback still need a phone check.
+
 The Workspace debug APK built successfully. Lint reported zero errors and five warnings. The APK signature and all 16 bundled web assets were verified in the cloud environment. Device and emulator verification is pending.
 
 The November 23 Windows rebuild passed `assembleDebug` and `lintDebug` with zero lint errors and seven warnings. The APK signature and all 17 bundled web files matched the fetched branch. No Android device or configured emulator was available for the runtime check.
@@ -61,5 +63,7 @@ Local validation for the SmartBot rename covered Markdown links and section anch
 The design-skill setup started from matching local and live `main` at `99acc66` and was prepared on `chore/design-skills`. A fresh project installed all six folders with their license notices. A rerun kept the installed folders, and a separate check preserved a pre-existing incomplete folder. A new Codex app server discovered all six added skill folders and both SmartBot workflows. The Windows Impeccable launcher reported version 4.10.0 from a temporary cache. The installer and Taste browser checker passed syntax checks, and all eight planner and text import tests passed.
 
 ## Handoff
+
+The podcast feature requires a hosted metadata service for Android and Podcast Index credentials for full name search. Live publisher playback and lock-screen verification remain pending.
 
 On the pilot phone, check the book picker and offline resume, refresh News, star an article, then reopen it offline. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and portability.

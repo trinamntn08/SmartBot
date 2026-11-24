@@ -4,6 +4,8 @@ import { renderBooks } from './books.js';
 import { renderAssistantSettings } from './assistant.js';
 import { findSection, sectionPreview, workspace } from './workspace.js';
 import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
+import { createPodcastPlayer } from './podcast-player.js';
+import { renderPodcasts } from './podcasts.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -13,6 +15,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
 });
 const statusLabels = { pending: 'Planned', started: 'In progress', completed: 'Done', skipped: 'Skipped' };
 let repository;
+let podcastPlayer;
 let routine;
 let displayedDate;
 let busy = false;
@@ -138,6 +141,10 @@ function render(focusHeading = false) {
     renderNews(view, repository.savedNews, focusHeading);
     return;
   }
+  if (page === 'music') {
+    renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+    return;
+  }
   if (section) view.innerHTML = sectionPreview(section);
   else if (page === 'workspace') view.innerHTML = workspace();
   else if (page === 'settings') {
@@ -237,6 +244,7 @@ setInterval(refreshOnDateChange, 30_000);
 
 try {
   repository = await openRepository();
+  podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'));
   await refresh();
 } catch {
   view.setAttribute('aria-busy', 'false');

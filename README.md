@@ -47,6 +47,21 @@ NASA and Government of Canada releases open as text, with a source link in the b
 
 Tap a Tuổi Trẻ headline to open the publisher’s full article with its original photos. Use Back to return to your list. The star beside the headline keeps the RSS summary on your device for offline reading. Live Vietnamese feeds use the Python preview or the Android APK. [Tuổi Trẻ RSS channels and terms](https://tuoitre.vn/rss.htm)
 
+## Listen to podcasts
+
+Open **Workspace → Music → Podcasts**. Search by name, paste a public HTTPS RSS link, or open the suggested franceinfo show. Follow shows and use **Continue listening** to pick up where you left off.
+
+Streaming uses the publisher’s audio and requires internet. SmartBot requires no listening subscription and inserts no ads. Publishers may include ads in their audio.
+
+For a local preview, run these commands from the repository root with Node.js 22. Keep the podcast service running while using the regular browser preview.
+
+```sh
+npm --prefix podcast-service ci
+npm --prefix podcast-service start
+```
+
+Set `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` in the service environment to enable full name search. The franceinfo suggestion and pasted feeds work independently. To use podcasts on Android without a computer running, see the [podcast pilot setup](docs/plans/podcast-listening.md#pilot-setup).
+
 ## Ask SmartBot
 
 Set at least one provider key in the environment that runs the Python preview server. Restart the preview after changing its environment. Open **Settings** and choose a provider under **Assistant**. SmartBot saves your choice in this browser.

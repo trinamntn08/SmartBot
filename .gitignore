@@ -29,6 +29,7 @@ dist/
 build/
 coverage/
 .venv/
+.vercel/
 venv/
 
 # Project-local downloads from scripts/install-design-skills.py

@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application' version '8.13.0'
 }
 
+def podcastApi = providers.gradleProperty('smartbotPodcastApi')
+        .orElse(providers.environmentVariable('SMARTBOT_PODCAST_API')).getOrElse('')
+
 android {
     namespace 'io.github.trinamntn08.smartbot'
     compileSdk 35
@@ -10,9 +13,12 @@ android {
         applicationId 'io.github.trinamntn08.smartbot'
         minSdk 26
         targetSdk 35
-        versionCode 4
-        versionName '0.3.1'
+        versionCode 5
+        versionName '0.3.2'
+        buildConfigField 'String', 'PODCAST_API', groovy.json.JsonOutput.toJson(podcastApi)
     }
+
+    buildFeatures { buildConfig = true }
 
     sourceSets {
         main.assets.srcDir(rootProject.file('../web'))
@@ -26,4 +32,6 @@ android {
 
 dependencies {
     implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.media3:media3-exoplayer:1.6.1'
+    implementation 'androidx.media3:media3-session:1.6.1'
 }

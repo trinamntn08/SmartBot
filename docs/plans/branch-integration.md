@@ -1,6 +1,6 @@
 # SmartBot branch integration
 
-Status: in progress.
+Status: complete.
 
 ## Outcome
 
@@ -23,6 +23,8 @@ Run the Node, Python, and podcast service suites. Check navigation, offline PDF 
 
 - November 24, 2026. The design skill installer and setup guide merged. The installer argument parser responded to `--help` and the downloaded skill directories are ignored.
 
+- November 24, 2026. Podcasts merged into Workspace Music. All 15 web, seven Python, and five podcast service tests passed. The 320-pixel browser checks covered Books navigation, saved reading position, offline PDF conversion and export, and local podcast discovery. Chromium also opened News and Ask SmartBot. Android 0.3.2 built and passed signature verification. All 220 bundled web files matched and lint reported zero errors and nine warnings.
+
 ## Handoff
 
-The Podcasts merge, combined package verification, and main update are pending.
+Use the regular Workspace preview for the combined app. Phone verification of the Drive picker and background podcast playback remains open. Android podcast discovery needs the service configuration in the [podcast plan](podcast-listening.md#pilot-setup).
