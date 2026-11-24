@@ -73,6 +73,14 @@ The product plan, agent instructions, and delivery and review skills now require
 
 At 320 CSS pixels Chromium verified the Tech filter with French selected, More, a LinuxFr.org publisher handoff, and a previously saved Le Monde headline online and after an offline reload. All 12 active publisher feeds returned usable stories. All 23 Node tests, eight Python tests, both skill validators, and the agent TOML checks passed. The Android debug APK built and passed signature and 224 bundled asset checks. Lint reported zero errors and nine warnings. Phone testing is pending.
 
+### News recommendations
+
+November 24, 2026. News starts with the freshness-based edition. After an article opens, **For you** ranks related unread headlines within the reader's selected languages and topics. Choosing All topics also refreshes existing feeds for up to two learned interests. The first page keeps its language and topic mix. [News requirements](../product-plan.md#news)
+
+The local News repository remembers up to 120 distinct article opens from the past 90 days. Interests fade over time, and the ranking boost is capped. Turning personalization off pauses collection and ranking. Reset clears the learning history while keeping language and topic selections, saved articles, and routine progress.
+
+Chromium at 320 CSS pixels verified the fresh edition, two publisher opens, an in-app read, a related story moving above the newest headline, More across Back, and offline reopening. Keyboard opt-out restored the freshness-based order, and resetting cleared activity without changing settings. The recommendation controls were checked at 320 and 1280 CSS pixels. All 26 Node and eight Python tests passed. The Android debug APK built, its signature and 224 bundled assets matched, and lint reported zero errors and nine warnings.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

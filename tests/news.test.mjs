@@ -2,13 +2,74 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
-import { feedStories, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
+import { feedStories, newsAffinity, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
 import { newsPreferences, newsTopics } from '../web/news-preferences.js';
+import { newsRepository } from '../web/news-repository.js';
 import { isCurrentPublisherLink, rssFeeds, rssStory } from '../web/news-rss.js';
 import { tuoitreStory } from '../web/tuoitre.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
 const story = starterStories.find(item => item.source === 'Affaires mondiales Canada');
+
+test('reading activity ranks unread related headlines without overriding filters or freshness', () => {
+  const now = Date.parse('2026-11-24T12:00:00Z');
+  const posts = [
+    { url: 'https://example.org/now', date: '2026-11-24', language: 'en', topic: 'sports', source: 'Sports' },
+    { url: 'https://example.org/read', date: '2026-11-24', language: 'en', topic: 'ai', source: 'Tech' },
+    { url: 'https://example.org/related', date: '2026-11-22', language: 'en', topic: 'ai', source: 'Tech' },
+    { url: 'https://example.org/old', date: '2026-11-04', language: 'en', topic: 'ai', source: 'Tech' },
+    { url: 'https://example.org/fr', date: '2026-11-24', language: 'fr', topic: 'ai', source: 'ActuIA' },
+  ];
+  const open = { url: posts[1].url, at: now, topics: ['tech', 'ai'], source: 'Tech' };
+  const affinity = newsAffinity([open, open, { ...open, url: 'https://example.org/another' }], now);
+  const prefs = { languages: ['en'], topics: [] };
+  assert.equal(affinity.topics.get('ai'), 2);
+  assert.equal(shortlist(posts, prefs)[0], posts[0]);
+  assert.deepEqual(shortlist(posts, prefs, affinity), [posts[2], posts[0], posts[1], posts[3]]);
+  assert.deepEqual(shortlist(posts, { ...prefs, topics: ['sports'] }, affinity), [posts[0]]);
+  assert.equal(newsAffinity([{ ...open, at: now - 28 * 86400000 }], now).topics.get('ai'), 0.25);
+});
+
+test('learned interests refresh relevant feeds when browsing all topics', () => {
+  const now = Date.now();
+  const affinity = newsAffinity([{ url: story.url, at: now, topics: ['culture'], source: story.source }], now);
+  assert.ok(selectedFeeds({ languages: ['vi'], topics: [] }, affinity).some(feed => feed.topic === 'culture'));
+  assert.ok(selectedFeeds({ languages: ['vi'], topics: ['sports'] }, affinity).every(feed => feed.topic === 'sports'));
+});
+
+test('opened stories stay bounded and can be disabled and cleared without touching preferences', t => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  const storage = {
+    getItem(key) { return this[key] ?? null; },
+    setItem(key, value) { this[key] = value; },
+    removeItem(key) { delete this[key]; },
+  };
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: storage });
+  t.after(() => {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else delete globalThis.localStorage;
+  });
+  const now = Date.parse('2026-11-24T12:00:00Z');
+  const prefs = { languages: ['fr'], topics: ['world'] };
+  newsRepository.savePreferences(prefs);
+  newsRepository.recordOpen(story, now - 3600000);
+  newsRepository.recordOpen(story, now);
+  assert.equal(newsRepository.opens(now).length, 1);
+  assert.equal(newsRepository.opens(now)[0].at, now - 3600000);
+  assert.deepEqual(newsRepository.opens(now + 90 * 86400000), []);
+  newsRepository.setPersonalized(false);
+  newsRepository.recordOpen(starterStories[0], now);
+  assert.equal(newsRepository.opens(now).length, 1);
+  newsRepository.setPersonalized(true);
+  for (let i = 0; i < 125; i++) {
+    newsRepository.recordOpen({ ...story, url: 'https://example.org/' + i }, now + i);
+  }
+  assert.equal(newsRepository.opens(now + 125).length, 120);
+  assert.equal(Object.keys(storage).filter(key => key.startsWith('smartbot-news-open:')).length, 120);
+  assert.ok(newsRepository.resetOpens());
+  assert.deepEqual(newsRepository.opens(now), []);
+  assert.deepEqual(newsRepository.preferences(), prefs);
+});
 
 test('setting up reading preserves an earlier news pick and its read history', () => {
   const routine = newRoutine();

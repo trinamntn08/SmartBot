@@ -40,8 +40,10 @@ feeds.push({ id: 'nasa', language: 'en', topic: 'general' });
 feeds.push(...tuoitreFeeds);
 feeds.push(...rssFeeds);
 
-export function selectedFeeds({ languages, topics }) {
-  const interests = topics.length ? topics : ['general', 'sports'];
+export function selectedFeeds({ languages, topics }, affinity) {
+  const learned = topics.length || !affinity ? [] : [...affinity.topics]
+    .sort((a, b) => b[1] - a[1]).slice(0, 2).map(([topic]) => topic);
+  const interests = topics.length ? topics : ['general', 'sports', ...learned];
   return feeds.filter(feed => {
     if (!languages.includes(feed.language)) return false;
     if (!topics.length && feed.provider === 'rss') return true;
@@ -112,16 +114,49 @@ export async function fetchFeed(feed, signal) {
   return feedStories(data.feed.entry, feed);
 }
 
-function storyTopics(story) {
+export function storyTopics(story) {
   if (story.source !== 'NASA') return story.topics ?? [story.topic];
   return techWords.test(story.title) ? ['general', 'space', 'science', 'tech'] : ['general', 'space', 'science'];
 }
 
-export function shortlist(articles, preferences) {
+const dayInMs = 86400000;
+
+export function newsAffinity(opens, now = Date.now()) {
+  const seen = new Set();
+  const topics = new Map();
+  const sources = new Map();
+  for (const open of opens) {
+    if (seen.has(open.url)) continue;
+    seen.add(open.url);
+    const weight = 2 ** (-Math.max(0, now - open.at) / (14 * dayInMs));
+    const tags = [...new Set(open.topics)].filter(topic => topic && topic !== 'general');
+    if (tags.length > 1 && tags.includes('tech')) tags.splice(tags.indexOf('tech'), 1);
+    for (const tag of tags) topics.set(tag, (topics.get(tag) ?? 0) + weight / tags.length);
+    sources.set(open.source, (sources.get(open.source) ?? 0) + weight);
+  }
+  return { seen, topics, sources };
+}
+
+function compareHeadlines(stories, affinity) {
+  const byDate = (a, b) => Date.parse(b.date) - Date.parse(a.date);
+  if (!affinity?.seen.size) return byDate;
+  const { seen, topics, sources } = affinity;
+  const scores = new Map(stories.map(story => {
+    const strongestTopic = Math.max(0, ...storyTopics(story).map(topic => topics.get(topic) ?? 0));
+    const publisherWeight = sources.get(story.source) ?? 0;
+    // Limit the lift to a week of freshness so new coverage can still surface.
+    const lift = seen.has(story.url) ? -3 : 2 * Math.min(3, strongestTopic) + 0.5 * Math.min(2, publisherWeight);
+    return [story, Date.parse(story.date) + lift * dayInMs];
+  }));
+  return (a, b) => scores.get(b) - scores.get(a) || byDate(a, b);
+}
+
+export function shortlist(articles, preferences, affinity) {
   const { languages, topics } = newsPreferences(preferences);
   const sorted = articles.filter(story => languages.includes(story.language)
-      && (!topics.length || storyTopics(story).some(id => topics.includes(id))))
-    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+    && (!topics.length || storyTopics(story).some(id => topics.includes(id))));
+  const compare = compareHeadlines(sorted, affinity);
+  sorted.sort(compare);
   const selected = new Map();
   const translations = new Map();
   const groups = new Set();
@@ -138,7 +173,8 @@ export function shortlist(articles, preferences) {
     return true;
   }
   // Reserve first-page places for each language and favor recent stories in the default edition.
-  const recent = sorted.filter(story => Date.parse(sorted[0].date) - Date.parse(story.date) < 7 * 86400000);
+  const latest = Math.max(...sorted.map(story => Date.parse(story.date)));
+  const recent = sorted.filter(story => latest - Date.parse(story.date) < 7 * dayInMs);
   for (const language of languages) {
     const first = sorted.find(story => story.language === language && add(story));
     if (first) groups.add(first.language + '-' + first.topic);
@@ -166,7 +202,7 @@ export function shortlist(articles, preferences) {
     if (selected.size >= newsPageSize) break;
     add(story);
   }
-  const edition = [...selected.values()].sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
+  const edition = [...selected.values()].sort(compare);
   for (const story of sorted) {
     if (add(story)) edition.push(story);
   }

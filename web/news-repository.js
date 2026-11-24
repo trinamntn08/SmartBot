@@ -1,21 +1,65 @@
-import { feeds, starterStories } from './news-provider.js';
+import { feeds, starterStories, storyTopics } from './news-provider.js';
 import { newsPreferences } from './news-preferences.js';
 
+const storagePrefix = 'smartbot-news-';
+const openPrefix = 'open:';
+const maxOpens = 120;
+const activityWindow = 90 * 86400000;
+
 function read(key) {
-  try { return JSON.parse(localStorage.getItem('smartbot-news-' + key)); }
+  try { return JSON.parse(localStorage.getItem(storagePrefix + key)); }
   catch { return null; }
 }
 
 function write(key, value) {
   try {
-    localStorage.setItem('smartbot-news-' + key, JSON.stringify(value));
+    localStorage.setItem(storagePrefix + key, JSON.stringify(value));
     return true;
   } catch { return false; }
+}
+
+function openKeys() {
+  return Object.keys(localStorage).filter(key => key.startsWith(storagePrefix + openPrefix))
+    .map(key => key.slice(storagePrefix.length));
+}
+
+function readOpens() {
+  return openKeys().map(key => {
+    const value = read(key);
+    return { ...value, url: key.slice(openPrefix.length) };
+  }).filter(open => Number.isFinite(open.at) && Array.isArray(open.topics))
+    .sort((a, b) => b.at - a.at);
 }
 
 export const newsRepository = {
   preferences() { return newsPreferences(read('filters')); },
   savePreferences(value) { return write('filters', value); },
+  personalized() { return read('personalized') !== false; },
+  setPersonalized(enabled) { return write('personalized', enabled); },
+  opens(now = Date.now()) {
+    try { return readOpens().filter(open => open.at > now - activityWindow).slice(0, maxOpens); }
+    catch { return []; }
+  },
+  recordOpen(story, now = Date.now()) {
+    if (!this.personalized()) return;
+    const key = openPrefix + story.url;
+    if (read(key)?.at > now - activityWindow) return;
+    // One key per article lets tabs record different opens without overwriting each other.
+    if (!write(key, { at: now, source: story.source, topics: storyTopics(story) })) return;
+    try {
+      readOpens().forEach((open, index) => {
+        if (index >= maxOpens || open.at <= now - activityWindow) {
+          localStorage.removeItem(storagePrefix + openPrefix + open.url);
+        }
+      });
+    } catch { /* Ranking still uses a bounded history if storage cleanup is unavailable. */ }
+  },
+  resetOpens() {
+    try {
+      for (const key of openKeys()) localStorage.removeItem(storagePrefix + key);
+      return true;
+    } catch { return false; }
+  },
   edition(feed) { return read(feed.id); },
   saveEdition(feed, edition) {
     if (this.edition(feed)?.time > edition.time) return true;

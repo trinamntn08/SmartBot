@@ -43,6 +43,8 @@ Open **Settings → News** in the browser or Android app. Select any combination
 
 Open **Workspace → News** for the first ten matching headlines. Tap **More** for the next ten while more stories are available. The star in the News header opens all your saved articles, including those outside your current preferences.
 
+News marks the feed **For you** after you open an article. Recent reading activity helps it rank related, unread stories within your language and topic choices. Turn **Personalize headlines** off in **Settings → News** to use the freshness-based feed, or use **Reset recommendations** to clear what News learned. Reading activity stays on this device.
+
 News draws on free-to-read sources from the US, France, and Vietnam. French coverage includes LinuxFr.org community posts, ActuIA, and La French Tech. English sources include Hacker News, Show HN, Y Combinator, GitHub Blog, and Viet Nam News’ BizHub. Dân trí supplies Vietnamese tech and business headlines. Star a headline to keep it available offline. [News source verification](docs/product-plan.md#verify-news-sources)
 
 NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
