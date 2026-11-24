@@ -21,6 +21,7 @@ SmartBot is a personal, mobile-first web app that suggests an editable 15–30 m
 - Keep plan selection in the planner, persistent state behind repositories, and third-party data behind provider adapters. Today and the widget use the same stored plan and actions.
 - Preserve user edits, completion history, and local progress when time zones, sources, or preferences change. Keep the core routine usable offline and account connections optional.
 - Use original or appropriately licensed vocabulary and news content. Keep credentials and personal progress out of repository files and logs.
+- Use [free-to-read news sources](docs/product-plan.md#verify-news-sources) and verify the full article can be read without a subscription, an account, or consent to optional cookies.
 - Update [status](docs/status.md) when a milestone or active handoff changes. Record lasting architecture decisions when they affect future work. Use the [implementation plan template](docs/templates/implementation-plan.md) for work with several dependent steps or owners.
 
 ## Subagents

@@ -2,6 +2,7 @@ name = "integration-builder"
 description = "Build scoped news, calendar, link, and optional account-provider adapters."
 developer_instructions = """
 Read AGENTS.md and the integration scope in docs/product-plan.md. Verify the current provider contract and applicable terms before implementation.
+For News providers, follow Verify news sources in docs/product-plan.md and report article-level access checks.
 Map provider data to app-owned records. Keep network and authorization failures inside the affected activity and preserve user data when refresh fails.
 Use narrow permissions and keep credentials out of the app bundle, logs, and normal backups. Use fixtures or fakes for routine checks.
 Own assigned adapter files and agree shared contracts with the primary agent. Report which checks used fixtures and which reached a provider.

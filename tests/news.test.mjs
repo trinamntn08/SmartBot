@@ -4,7 +4,7 @@ import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
 import { feedStories, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
 import { newsPreferences, newsTopics } from '../web/news-preferences.js';
-import { rssFeeds, rssStory } from '../web/news-rss.js';
+import { isCurrentPublisherLink, rssFeeds, rssStory } from '../web/news-rss.js';
 import { tuoitreStory } from '../web/tuoitre.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
@@ -63,7 +63,7 @@ test('each suggested interest has a feed in each language', () => {
     }
   }
   const feeds = selectedFeeds({ languages: ['fr'], topics: ['culture', 'tech'] });
-  assert.deepEqual(feeds.map(feed => feed.id), ['fr-culture', 'fr-tech', 'next-ink', 'le-monde-pixels']);
+  assert.deepEqual(feeds.map(feed => feed.id), ['fr-culture', 'fr-tech', 'linuxfr-news', 'linuxfr-journals', 'actuia']);
 });
 
 test('regional RSS entries use matching topics and trusted publisher or discussion URLs', () => {
@@ -81,17 +81,26 @@ test('regional RSS entries use matching topics and trusted publisher or discussi
   assert.equal(rssStory(hn, { ...item, comments: 'https://news.ycombinator.com/from?id=123' }), null);
   assert.equal(rssStory(hn, { ...item, published: 'unknown' }), null);
 
-  const next = rssFeeds.find(feed => feed.id === 'next-ink');
+  const linuxfr = rssFeeds.find(feed => feed.id === 'linuxfr-news');
   const danTri = rssFeeds.find(feed => feed.id === 'dan-tri-business');
-  const french = rssStory(next, { ...item, title: 'Un autre modèle', categories: ['IA et algorithmes'],
-    link: 'https://next.ink/123/a/#comment' });
+  const french = rssStory(linuxfr, { ...item, title: 'Un autre modèle', categories: ['IA et algorithmes'],
+    link: 'https://linuxfr.org/news/un-autre-modele#comment' });
   const vietnamese = rssStory(danTri, { ...item, title: 'Doanh nghiệp mở rộng hoạt động',
     link: 'https://dantri.com.vn/kinh-doanh/a.htm', description: 'Nhà sáng lập nói về kế hoạch gọi vốn.' });
-  assert.equal(french.url, 'https://next.ink/123/a/');
+  assert.equal(french.url, 'https://linuxfr.org/news/un-autre-modele');
   assert.deepEqual(shortlist([project, french, vietnamese], { topics: ['ai', 'startups'] }), [french, vietnamese]);
   assert.equal(vietnamese.description, undefined);
-  assert.deepEqual(rssStory(next, { ...item, title: "J'ai acheté un portable", link: french.url }).topics, ['tech']);
-  assert.equal(rssStory(next, { ...item, link: 'https://next.ink.example.org/article' }), null);
+  assert.deepEqual(rssStory(linuxfr, { ...item, title: "J'ai acheté un portable", link: french.url }).topics, ['open-source', 'tech']);
+  assert.equal(rssStory(linuxfr, { ...item, link: 'https://linuxfr.org.example.org/article' }), null);
+});
+
+test('current edition links exclude publishers removed for gated access', () => {
+  assert.equal(isCurrentPublisherLink('https://www.lemonde.fr/pixels/article/example.html'), false);
+  assert.equal(isCurrentPublisherLink('https://next.ink/123/example/'), false);
+  assert.equal(isCurrentPublisherLink('https://arstechnica.com/gadgets/example/'), false);
+  assert.equal(isCurrentPublisherLink('https://e.vnexpress.net/news/tech/example.html'), false);
+  assert.equal(isCurrentPublisherLink('https://linuxfr.org/news/luneos-en-2026'), true);
+  assert.equal(isCurrentPublisherLink('http://linuxfr.org/news/luneos-en-2026'), false);
 });
 
 test('the default edition surfaces regional publishers when general feeds are busy', () => {
@@ -99,7 +108,7 @@ test('the default edition surfaces regional publishers when general feeds are bu
   const general = Array.from({ length: 15 }, (_, i) => ({
     ...story, date: recent, url: 'https://example.org/' + i,
   }));
-  const regional = ['hacker-news', 'next-ink', 'dan-tri-tech'].map(id => {
+  const regional = ['hacker-news', 'linuxfr-news', 'dan-tri-tech'].map(id => {
     const feed = rssFeeds.find(feed => feed.id === id);
     return rssStory(feed, { title: 'New software', link: 'https://' + feed.host + '/item?id=1',
       published: '2026-11-23T18:00:00Z' });

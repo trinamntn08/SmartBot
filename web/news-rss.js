@@ -3,13 +3,14 @@ const publishers = [
   ['hacker-news', 'Hacker News', 'en', 'tech', 'news.ycombinator.com', [...techInterests, 'show-hn']],
   ['show-hn', 'Show HN', 'en', 'show-hn', 'news.ycombinator.com', ['tech', ...techInterests]],
   ['yc-blog', 'Y Combinator', 'en', 'startups', 'www.ycombinator.com', ['ai', 'programming']],
-  ['ars-technica', 'Ars Technica', 'en', 'tech', 'arstechnica.com', techInterests],
-  ['next-ink', 'Next', 'fr', 'tech', 'next.ink', techInterests],
-  ['le-monde-pixels', 'Le Monde · Pixels', 'fr', 'tech', 'www.lemonde.fr', techInterests],
-  ['le-monde-economy', 'Le Monde · Économie', 'fr', 'business', 'www.lemonde.fr', ['startups', 'finance']],
+  ['github-blog', 'GitHub Blog', 'en', 'tech', 'github.blog', techInterests],
+  ['linuxfr-news', 'LinuxFr.org', 'fr', 'open-source', 'linuxfr.org', ['tech', 'programming', 'ai']],
+  ['linuxfr-journals', 'LinuxFr.org', 'fr', 'open-source', 'linuxfr.org', ['tech', 'programming', 'ai']],
+  ['actuia', 'ActuIA', 'fr', 'ai', 'www.actuia.com', ['tech', 'startups', 'programming', 'open-source']],
+  ['french-tech', 'La French Tech', 'fr', 'startups', 'lafrenchtech.gouv.fr', ['business']],
   ['dan-tri-tech', 'Dân trí', 'vi', 'tech', 'dantri.com.vn', techInterests],
   ['dan-tri-business', 'Dân trí', 'vi', 'business', 'dantri.com.vn', ['startups', 'finance']],
-  ['vnexpress-tech', 'VnExpress International', 'en', 'tech', 'e.vnexpress.net', techInterests],
+  ['bizhub-tech', 'Viet Nam News · BizHub', 'en', 'tech', 'bizhub.vietnamnews.vn', techInterests],
   ['bizhub-startups', 'Viet Nam News · BizHub', 'en', 'startups', 'bizhub.vietnamnews.vn', ['ai', 'programming']],
 ];
 
@@ -17,12 +18,22 @@ export const rssFeeds = publishers.map(([id, source, language, topic, host, rela
   id, source, language, topic, host, related, provider: 'rss',
 }));
 
+const publisherOrigins = new Set(rssFeeds.map(feed => 'https://' + feed.host));
+
+export function isCurrentPublisherLink(url) {
+  try {
+    const link = new URL(url);
+    return publisherOrigins.has(link.origin) && !link.username && !link.password;
+  } catch { return false; }
+}
+
 const topicWords = {
   startups: /\b(?:start[- ]?ups?|founders?|venture capital|seed round|lev[ée]e de fonds|capital[- ]risque|jeunes? pousses?)\b|khởi nghiệp|gọi vốn|nhà sáng lập|vốn mạo hiểm/iu,
   ai: /\b(?:llms?|artificial intelligence|intelligence artificielle|machine learning|chatgpt|claude|gemini|deepseek)\b|trí tuệ nhân tạo/iu,
   programming: /\b(?:programming|programmation|developers?|d[ée]veloppeu[rs]\w*|javascript|python|rust|typescript|postgres(?:ql)?|compiler|code editor|api|sdk|linux kernel)\b|lập trình|mã nguồn/iu,
   'open-source': /\b(?:open[- ]source|logiciels? libres?|linux|github|gitlab|kernel)\b|mã nguồn mở/iu,
   finance: /\b(?:finance|financier\w*|banques?|bourse|inflation|taux d['’]int[ée]r[êe]t)\b|tài chính|ngân hàng|chứng khoán|lãi suất/iu,
+  business: /\b(?:entreprises?|march[ée]s?|investissements?|[ée]conomi\w*|entrepreneuriat)\b/iu,
   'show-hn': /^show hn:/iu,
 };
 
@@ -51,13 +62,18 @@ export async function fetchPublisherFeed(feed, options) {
   const response = await fetch('./api/news/' + feed.id, options);
   if (!response.ok) throw new Error('Feed unavailable');
   const xml = new DOMParser().parseFromString(await response.text(), 'application/xml');
+  const atom = xml.documentElement.namespaceURI === 'http://www.w3.org/2005/Atom';
+  const entries = atom ? xml.getElementsByTagNameNS(xml.documentElement.namespaceURI, 'entry')
+    : xml.querySelectorAll('rss > channel > item');
   const snippet = document.createElement('template');
-  const stories = Array.from(xml.querySelectorAll('rss > channel > item'), item => {
+  const stories = Array.from(entries, item => {
     const field = name => item.querySelector(name)?.textContent.trim() ?? '';
+    const link = atom ? item.querySelector('link[rel="alternate"], link:not([rel])')?.getAttribute('href') : field('link');
+    const published = atom ? field('published') || field('updated') : field('pubDate');
+    const categories = Array.from(item.querySelectorAll('category'), node => atom ? node.getAttribute('term') ?? '' : node.textContent);
     // Feed descriptions help classify stories. Only the headline and link are kept.
-    snippet.innerHTML = field('description');
-    return rssStory(feed, { title: field('title'), link: field('link'), comments: field('comments'),
-      published: field('pubDate'), categories: [...item.querySelectorAll('category')].map(node => node.textContent),
+    snippet.innerHTML = atom ? field('summary') || field('content') : field('description');
+    return rssStory(feed, { title: field('title'), link, comments: field('comments'), published, categories,
       description: snippet.content.textContent });
   }).filter(Boolean);
   if (!stories.length) throw new Error('Empty feed');

@@ -2,12 +2,13 @@
   "hacker-news": "https://news.ycombinator.com/rss",
   "show-hn": "https://news.ycombinator.com/showrss",
   "yc-blog": "https://www.ycombinator.com/blog/rss",
-  "ars-technica": "https://arstechnica.com/feed/",
-  "next-ink": "https://next.ink/feed/",
-  "le-monde-pixels": "https://www.lemonde.fr/pixels/rss_full.xml",
-  "le-monde-economy": "https://www.lemonde.fr/economie/rss_full.xml",
+  "github-blog": "https://github.blog/feed/",
+  "linuxfr-news": "https://linuxfr.org/news.atom",
+  "linuxfr-journals": "https://linuxfr.org/journaux.atom",
+  "actuia": "https://www.actuia.com/feed/",
+  "french-tech": "https://lafrenchtech.gouv.fr/fr/feed/",
   "dan-tri-tech": "https://dantri.com.vn/rss/cong-nghe.rss",
   "dan-tri-business": "https://dantri.com.vn/rss/kinh-doanh.rss",
-  "vnexpress-tech": "https://e.vnexpress.net/rss/tech.rss",
+  "bizhub-tech": "https://bizhub.vietnamnews.vn/rss/tech.rss",
   "bizhub-startups": "https://bizhub.vietnamnews.vn/rss/start-up.rss"
 }

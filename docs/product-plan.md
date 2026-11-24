@@ -80,6 +80,12 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 - Cache permitted headlines and article text with a visible feed update time. A star saves a story for later, independently of the daily plan. Refreshing feeds preserves starred articles and their downloaded text.
 - Keep language and topic preferences under Settings. Readers can select any combination of English, French, and Vietnamese, pick multiple suggested interests, and revise their choices over time. News opens directly to matching headlines. The saved collection spans all languages and interests. Source toggles and Android Share capture are follow-up options. A keyed API goes behind a server adapter if provider credentials must be kept secret. Confirm rights, coverage, limits, and cost before opting in. News API’s Developer tier is limited to development and testing, which matters even for an internal release. [News API terms](https://newsapi.org/terms)
 
+#### Verify news sources
+
+- Open several recent article links from each feed being added or reviewed in a fresh, signed-out browser at mobile width. Block cookies or reject optional cookies. Confirm the entire article or community discussion remains readable, including content below the first screen.
+- Use feeds whose articles are free to read without an account, payment, or consent to optional cookies. For a publisher with mixed access, use a documented free-only feed or an explicit publisher-provided access flag that identifies free entries. Leave unverified entries out. A successful RSS or Atom response only confirms that the feed can be downloaded.
+- Record the feed, sampled destinations, access conditions, and any failures in the implementation notes. Remove a source from new editions if its reading access changes. Preserve existing saved headlines and reading history.
+
 ### Books
 
 - Import your own readable ebook files into a local library. Open a book directly or from the Today plan and save a position that survives closing the app. Start with the format used by the pilot books.

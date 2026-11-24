@@ -1,4 +1,5 @@
 import { fetchArticle, fetchFeed, newsPageSize, selectedFeeds, shortlist } from './news-provider.js';
+import { isCurrentPublisherLink } from './news-rss.js';
 import { isTuoitreStory } from './tuoitre.js';
 import { newsLanguages, newsTopics } from './news-preferences.js';
 import { newsRepository as store } from './news-repository.js';
@@ -19,12 +20,13 @@ function backLink(route, title) {
 
 function storyRows(stories, stars, saved = false) {
   return stories.map(story => {
-    const original = story.linkKind || isTuoitreStory(story.url);
+    const tuoitre = isTuoitreStory(story.url);
+    const original = story.linkKind ? isCurrentPublisherLink(story.url) : tuoitre;
     const savedLabel = story.linkKind ? 'Saved headline' : 'Saved summary';
     const href = original && navigator.onLine ? story.url : '#' + (saved ? 'saved-story=' : 'story=') + encodeURIComponent(story.url);
     return `<li><div><a class="news-headline" rel="noreferrer" href="${escapeHtml(href)}" lang="${story.language}">${escapeHtml(story.title)}</a>
       <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}${original && saved && navigator.onLine ? ` · <a href="#saved-story=${escapeHtml(encodeURIComponent(story.url))}">${savedLabel}</a>` : ''}</small></div>
-      ${original ? `<button class="news-star" type="button" data-url="${escapeHtml(story.url)}" aria-label="Save for later: ${escapeHtml(story.title)}" aria-pressed="${stars.has(story.url)}">${starIcon}</button>` : ''}
+      ${(story.linkKind || tuoitre) ? `<button class="news-star" type="button" data-url="${escapeHtml(story.url)}" aria-label="Save for later: ${escapeHtml(story.title)}" aria-pressed="${stars.has(story.url)}">${starIcon}</button>` : ''}
     </li>`;
   }).join('');
 }
@@ -238,7 +240,13 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
 
   if (body) showBody();
   if (story.linkKind) {
-    panel.querySelector('.news-info a').textContent = story.linkKind === 'discussion'
+    const source = panel.querySelector('.news-info a');
+    if (!isCurrentPublisherLink(url)) {
+      source.replaceWith(document.createTextNode(story.source));
+      status.textContent = 'Saved headline · Publisher removed from News';
+      return;
+    }
+    source.textContent = story.linkKind === 'discussion'
       ? 'Discussion on Hacker News' : 'Full article at ' + story.source;
     if (!navigator.onLine) status.textContent = 'Offline · Cached headline';
     return;
