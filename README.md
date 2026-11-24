@@ -51,6 +51,12 @@ NASA releases open as text, with a source link in the byline. Starred articles k
 
 Tap a Tuổi Trẻ headline to open the publisher’s full article with its original photos. Use Back to return to your list. The star beside the headline keeps the RSS summary on your device for offline reading. Live Vietnamese feeds use the Python preview or the Android APK. [Tuổi Trẻ RSS channels and terms](https://tuoitre.vn/rss.htm)
 
+## Markets
+
+Open **Workspace → Markets** in the local browser preview. Choose a U.S. stock or ETF and view 30 or 90 days of daily closing prices in USD. Expand **Daily closing prices** to read individual dates and prices. The browser keeps the most recent download for each symbol so you can reopen it offline.
+
+Set `SMARTBOT_ALPHA_VANTAGE_API_KEY` in the environment that runs the Python preview, then start or restart the server. The preview needs HTTPS access to `www.alphavantage.co` for new data. [Get an Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
+
 ## Listen to podcasts
 
 Open **Workspace → Music → Podcasts**. Search by name, paste a public HTTPS RSS link, or open the suggested franceinfo show. Follow shows and use **Continue listening** to pick up where you left off.

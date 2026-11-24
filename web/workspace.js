@@ -3,6 +3,7 @@ const sections = [
   { id: 'languages', title: 'Languages', summary: 'French, English, and Japanese', detail: 'Vocabulary decks are in development.' },
   { id: 'music', title: 'Music', summary: 'Find and listen to podcasts' },
   { id: 'movies', title: 'Movies', summary: 'Films and your watchlist', detail: 'Film browsing and watchlists are in development.' },
+  { id: 'markets', title: 'Markets', summary: 'Stock and ETF price charts' },
 ];
 
 export function findSection(route) {
@@ -24,9 +25,9 @@ export function workspace() {
       <img src="./assets/books.webp" alt="" width="1536" height="1024">
     </a>
     <ul class="workspace-grid" role="list">${sections.map(({ id, title, summary }) => `
-      <li>
+      <li${id === 'markets' ? ' class="workspace-markets"' : ''}>
         <a class="section-card" href="#${id}">
-          ${sectionImage(id)}
+          ${id === 'markets' ? '' : sectionImage(id)}
           <div class="section-copy">
             <h2>${title}</h2>
             <span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>
