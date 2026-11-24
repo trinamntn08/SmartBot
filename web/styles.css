@@ -541,15 +541,31 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 
 .podcast-player {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(8rem, 1fr) auto;
+  grid-template-areas: "title controls seek time";
   align-items: center;
-  gap: 0.4rem 1rem;
-  margin-block-start: 1rem;
+  column-gap: 0.75rem;
+  margin-block-start: 0.75rem;
+  padding: 0.25rem 0.75rem;
 }
 
-.podcast-player .actions { align-items: center; gap: 0.5rem; }
-.podcast-player [data-player-time] { color: var(--muted); font-variant-numeric: tabular-nums; }
-.podcast-player input { grid-column: 1 / -1; max-width: none; margin: 0; padding: 0; accent-color: var(--accent); }
+.podcast-player strong { grid-area: title; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.25; }
+.podcast-player .actions { grid-area: controls; flex-wrap: nowrap; gap: 0.35rem; }
+.podcast-player button { min-width: 2.75rem; padding-inline: 0.5rem; }
+.podcast-player :focus-visible { outline-offset: 1px; }
+.podcast-player [data-player-toggle] { display: grid; place-items: center; }
+.podcast-player [data-icon] { display: none; }
+.podcast-player [data-playback="play"] [data-icon="play"],
+.podcast-player [data-playback="pause"] [data-icon="pause"],
+.podcast-player [data-playback="retry"] [data-icon="retry"] { display: block; }
+.podcast-player [data-player-time] {
+  grid-area: time;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.podcast-player input { grid-area: seek; min-width: 0; max-width: none; margin: 0; padding: 0; accent-color: var(--accent); }
 .podcast-player [role="status"] { grid-column: 1 / -1; margin: 0; color: var(--muted); }
 .podcast-player:not([hidden]) + main[data-page="music"] { padding-block-start: 1rem; }
 .podcast-player:not([hidden]) + main .podcast-continue { display: none; }
@@ -562,8 +578,13 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
   .podcast-shelves { grid-template-columns: 1fr; gap: 1.4rem; }
 }
 
-@media (max-width: 38rem) {
-  .podcast-player { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 40rem) {
+  .podcast-player {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "title title time" "controls seek seek";
+    row-gap: 0.2rem;
+    padding-block-start: 0.45rem;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

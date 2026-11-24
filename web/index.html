@@ -27,11 +27,17 @@
     <section id="podcast-player" class="card podcast-player" aria-label="Podcast player" hidden>
       <strong></strong>
       <div class="actions">
-        <button type="button" data-player-toggle>Play</button>
+        <button type="button" data-player-toggle data-playback="play" aria-label="Play podcast">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
+            <path data-icon="play" d="M8 5v14l11-7z"/>
+            <path data-icon="pause" d="M7 5h4v14H7zm6 0h4v14h-4z"/>
+            <path data-icon="retry" d="M20 6v6h-6m6 0a8 8 0 1 0-2.3 5.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button type="button" class="quiet" data-player-rewind aria-label="Back 15 seconds">−15 s</button>
-        <span data-player-time></span>
       </div>
       <input type="range" min="0" max="0" step="1" value="0" aria-label="Episode position">
+      <span data-player-time></span>
       <p role="status"></p>
     </section>
     <main id="view" aria-busy="true">Opening SmartBot…</main>

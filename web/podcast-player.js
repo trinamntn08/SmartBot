@@ -29,9 +29,16 @@ export function createPodcastPlayer(repository, panel) {
   function render() {
     panel.hidden = !current;
     if (!current) return;
-    title.textContent = current.episode.title;
-    toggle.textContent = current.playing ? 'Pause' : current.error ? 'Retry' : 'Play';
-    toggle.setAttribute('aria-label', `${toggle.textContent} podcast`);
+    if (title.textContent !== current.episode.title) {
+      title.textContent = current.episode.title;
+      title.title = current.episode.title;
+    }
+    const action = current.playing ? 'Pause' : current.error ? 'Retry' : 'Play';
+    const playback = action.toLowerCase();
+    if (toggle.dataset.playback !== playback) {
+      toggle.dataset.playback = playback;
+      toggle.setAttribute('aria-label', `${action} podcast`);
+    }
     rewind.disabled = !current.duration;
     seek.disabled = !current.duration;
     seek.max = current.duration || 0;
