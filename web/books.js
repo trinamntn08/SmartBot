@@ -2,6 +2,7 @@ import { BookImportError, readTextBook } from './text-book.js';
 import { convertPdf, importPdf } from './pdf-book.js';
 import { makeEpub, saveBookFile } from './epub-book.js';
 import { addBook, getBook, getOriginal, listBooks, rememberOpenedBook, saveBookPosition, saveConversion } from './library-repository.js';
+import { localDay } from './planner.js';
 
 let savingFile = false;
 
@@ -86,7 +87,7 @@ async function showLibrary(panel) {
   }
 }
 
-async function showReader(panel, id) {
+async function showReader(panel, id, activity) {
   panel.innerHTML = `<a class="back-link" href="#books"><span class="arrow" aria-hidden="true"></span>Back to books</a>
     <h1 tabindex="-1">Book</h1>
     <button type="button" data-convert hidden>Convert to EPUB</button>
@@ -96,6 +97,7 @@ async function showReader(panel, id) {
       <div class="actions book-pagination" hidden>
         <button type="button" class="quiet" data-step="-1">Previous section</button>
         <button type="button" data-step="1">Next section</button>
+        <button type="button" data-finish-section hidden></button>
       </div>
     </section>`;
 
@@ -110,20 +112,32 @@ async function showReader(panel, id) {
     heading.textContent = book.title;
     if (panel.isConnected) rememberOpenedBook(id);
     if (!book.count) {
-      if (book.originalName) configureConversion(panel, id);
+      if (book.originalName) configureConversion(panel, id, activity);
       return;
     }
 
     const content = panel.querySelector('.book-content');
     const previous = panel.querySelector('[data-step="-1"]');
     const next = panel.querySelector('[data-step="1"]');
-    panel.querySelector('.book-pagination').hidden = book.count < 2;
+    const finish = panel.querySelector('[data-finish-section]');
+    const reading = { category: 'reading', id: `book:${id}`, topic: book.title };
     let section = book.position;
 
     function renderSection() {
       content.textContent = book.sections[section];
       previous.disabled = section === 0;
+      previous.hidden = book.count < 2;
       next.disabled = section === book.count - 1;
+      next.hidden = section === book.count - 1;
+      finish.hidden = section < book.count - 1;
+      finish.textContent = book.pageEnds ? 'Mark last page read' : 'Mark last section read';
+      finish.disabled = false;
+    }
+
+    async function recordSection(index) {
+      const pdfPage = book.pageEnds?.[index];
+      const progress = book.pageEnds ? (pdfPage ? { pdfPages: [pdfPage] } : null) : { sections: [index] };
+      if (progress) return activity.record([{ ...reading, ...progress, date: localDay().date }]);
     }
 
     async function turnSection(event) {
@@ -131,11 +145,16 @@ async function showReader(panel, id) {
       if (target < 0 || target >= book.count) return;
       previous.disabled = true;
       next.disabled = true;
+      finish.disabled = true;
       showError(panel, '');
       try {
         await saveBookPosition(id, target);
+        const completed = section;
         section = target;
         heading.focus();
+        if (target > completed) await recordSection(completed).catch(() => {
+          showError(panel, 'Your place is saved. The activity report could not be updated.');
+        });
       } catch {
         showError(panel, 'Could not save your reading position.');
       } finally {
@@ -144,15 +163,28 @@ async function showReader(panel, id) {
     }
 
     panel.querySelector('section').hidden = false;
+    panel.querySelector('.book-pagination').hidden = false;
     previous.addEventListener('click', turnSection);
     next.addEventListener('click', turnSection);
+    finish.addEventListener('click', async () => {
+      finish.disabled = true;
+      try {
+        await recordSection(section);
+        finish.textContent = book.pageEnds ? 'Last page recorded' : 'Last section recorded';
+        heading.focus({ preventScroll: true });
+      } catch {
+        finish.disabled = false;
+        showError(panel, 'Could not update the activity report. Try again.');
+      }
+    });
     renderSection();
+    if (panel.isConnected) activity.foreground(reading, panel);
   } catch {
     showError(panel, 'Could not open this book.');
   }
 }
 
-function configureConversion(panel, id) {
+function configureConversion(panel, id, activity) {
   const convert = panel.querySelector('[data-convert]');
   convert.hidden = false;
   convert.addEventListener('click', async () => {
@@ -163,7 +195,7 @@ function configureConversion(panel, id) {
       const result = await convertPdf(await getOriginal(id));
       await saveConversion(id, result);
       if (panel.isConnected) {
-        await showReader(panel, id);
+        await showReader(panel, id, activity);
         panel.querySelector('h1').focus();
       }
     } catch (error) {
@@ -212,10 +244,10 @@ function bookDownloads(book, titleId) {
   return files;
 }
 
-export function renderBooks(view, id, focus) {
+export function renderBooks(view, id, focus, activity) {
   const panel = document.createElement('div');
   view.replaceChildren(panel);
-  if (id) showReader(panel, id);
+  if (id) showReader(panel, id, activity);
   else showLibrary(panel);
   if (focus) panel.querySelector('h1').focus();
 }

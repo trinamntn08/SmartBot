@@ -1,4 +1,5 @@
 import { hasNativePodcastPlayer, nativePodcast } from './podcast-native.js';
+import { activityIntervals } from './activity.js';
 
 function time(seconds) {
   const total = Math.max(0, Math.floor(seconds));
@@ -8,7 +9,7 @@ function time(seconds) {
   return `${hours ? `${hours}:${pad(minutes)}` : minutes}:${pad(total % 60)}`;
 }
 
-export function createPodcastPlayer(repository, panel) {
+export function createPodcastPlayer(repository, panel, recordActivity) {
   const title = panel.querySelector('strong');
   const toggle = panel.querySelector('[data-player-toggle]');
   const rewind = panel.querySelector('[data-player-rewind]');
@@ -25,6 +26,24 @@ export function createPodcastPlayer(repository, panel) {
   let nativeTimer;
   let seeking = false;
   let restorePosition;
+  let listening;
+
+  function trackPlayback(continuePlaying = false, force = true) {
+    const now = performance.now();
+    if (!force && listening && now - listening.time < 5000) return;
+    if (listening && !audio.seeking) {
+      const elapsed = now - listening.time;
+      const played = (audio.currentTime - listening.position) * 1000 / audio.playbackRate;
+      // Natural playback advances with the clock. A discontinuity is a seek or a source change.
+      if (played > 0 && played <= elapsed + 500) {
+        const end = Date.now();
+        const { id, title } = current.episode;
+        const activity = { category: 'podcasts', id: `podcast:${id}`, topic: title };
+        recordActivity(activityIntervals(activity, end - Math.min(elapsed, played), end));
+      }
+    }
+    listening = continuePlaying ? { time: now, position: audio.currentTime } : null;
+  }
 
   function render() {
     panel.hidden = !current;
@@ -92,6 +111,11 @@ export function createPodcastPlayer(repository, panel) {
 
   function syncAudio(event) {
     if (!current) return;
+    const active = !audio.paused && !audio.ended && !audio.seeking && !audio.error;
+    if (event.type === 'seeking') listening = null;
+    if (event.type === 'playing' || event.type === 'seeked') trackPlayback(active);
+    if (event.type === 'timeupdate' && listening) trackPlayback(active, !active);
+    if (['pause', 'ended', 'waiting', 'error'].includes(event.type)) trackPlayback();
     if (event.type === 'loadedmetadata' && restorePosition !== undefined) {
       try {
         audio.currentTime = Number.isFinite(audio.duration) ? Math.min(restorePosition, audio.duration) : restorePosition;
@@ -113,11 +137,21 @@ export function createPodcastPlayer(repository, panel) {
 
   if (audio) {
     audio.preload = 'metadata';
-    for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'playing', 'pause', 'waiting', 'seeked', 'ended', 'error']) {
+    for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'playing', 'pause', 'waiting', 'seeking', 'seeked', 'ended', 'error']) {
       audio.addEventListener(event, syncAudio);
     }
-    document.addEventListener('visibilitychange', () => { if (document.hidden) checkpoint(true); });
-    window.addEventListener('pagehide', () => checkpoint(true));
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) return;
+      trackPlayback(Boolean(listening));
+      checkpoint(true);
+    });
+    window.addEventListener('pagehide', () => {
+      trackPlayback();
+      checkpoint(true);
+    });
+    window.addEventListener('pageshow', () => {
+      if (!audio.paused && !audio.ended && audio.readyState >= 3) trackPlayback(true);
+    });
     repository.latest().then(value => { if (!current) updateRecent(value); }).catch(() => {});
   }
 
@@ -153,6 +187,7 @@ export function createPodcastPlayer(repository, panel) {
     }
     const saved = await repository.position(episode.id).catch(() => null);
     if (attempt !== startSequence) return;
+    trackPlayback();
     checkpoint(true);
     seeking = false;
     restorePosition = saved?.ended ? 0 : saved?.position ?? 0;
@@ -166,6 +201,7 @@ export function createPodcastPlayer(repository, panel) {
     if (!current?.duration) return;
     const target = Math.max(0, Math.min(current.duration, position));
     if (audio) {
+      trackPlayback();
       audio.currentTime = target;
       current.position = audio.currentTime;
       render();

@@ -49,17 +49,23 @@ export async function convertPdf(file) {
 
   try {
     const pdf = await task.promise;
-    const pages = [];
+    const sections = [];
+    const pageEnds = {};
+    let readablePages = 0;
     for (let number = 1; number <= pdf.numPages; number += 1) {
       const page = await pdf.getPage(number);
       const text = pageText((await page.getTextContent()).items);
-      if (text) pages.push(text);
+      if (text) {
+        sections.push(...readingSections(text));
+        pageEnds[sections.length - 1] = number;
+        readablePages += 1;
+      }
       page.cleanup();
     }
-    if (!pages.length) {
+    if (!readablePages) {
       throw new BookImportError('This PDF has no selectable text. Run OCR on it, then import the resulting PDF.');
     }
-    return { sections: readingSections(pages.join('\n\n')), skippedPages: pdf.numPages - pages.length };
+    return { sections, pageEnds, skippedPages: pdf.numPages - readablePages };
   } catch (error) {
     if (error.code === PasswordResponses.NEED_PASSWORD) {
       throw new BookImportError('Unlock this PDF before converting it.');

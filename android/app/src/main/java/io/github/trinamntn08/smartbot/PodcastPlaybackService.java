@@ -37,10 +37,12 @@ public final class PodcastPlaybackService extends MediaSessionService {
     };
     private ExoPlayer player;
     private MediaSession session;
+    private PodcastActivityLog activityLog;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        activityLog = new PodcastActivityLog(this);
         AudioAttributes attributes = new AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
                 .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build();
         player = new ExoPlayer.Builder(this).setAudioAttributes(attributes, true)
@@ -87,6 +89,7 @@ public final class PodcastPlaybackService extends MediaSessionService {
 
     private void saveCurrent() {
         MediaItem item = player.getCurrentMediaItem();
+        activityLog.checkpoint(player.isPlaying() ? item : null);
         if (item != null) save(item, player.getCurrentPosition(), player.getPlaybackState() == Player.STATE_ENDED, true);
     }
 
@@ -135,6 +138,7 @@ public final class PodcastPlaybackService extends MediaSessionService {
     public void onDestroy() {
         handler.removeCallbacks(checkpoint);
         saveCurrent();
+        activityLog.checkpoint(null);
         session.release();
         player.release();
         super.onDestroy();

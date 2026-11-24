@@ -67,11 +67,12 @@ function listStars(panel, savedNews, stars, findStory, onChange) {
   });
 }
 
-export async function renderSavedNews(view, savedNews, focus) {
+export async function renderSavedNews(view, savedNews, focus, track) {
   const panel = document.createElement('section');
   view.replaceChildren(panel);
   panel.innerHTML = `${backLink('news', 'News')}<h1 tabindex="-1">Saved</h1><ul class="news-list"></ul><p class="news-info" role="status"></p>`;
   if (focus) panel.querySelector('h1').focus();
+  track({ category: 'news', id: 'news:saved', topic: 'Saved articles' }, panel);
   try {
     const records = await savedNews.list();
     records.sort((a, b) => b.savedAt - a.savedAt);
@@ -146,7 +147,7 @@ export function renderNewsSettings(view) {
   });
 }
 
-export async function renderNews(view, savedNews, focus) {
+export async function renderNews(view, savedNews, focus, track) {
   const panel = document.createElement('section');
   view.replaceChildren(panel);
   panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
@@ -165,6 +166,7 @@ export async function renderNews(view, savedNews, focus) {
   const more = panel.querySelector('.news-more');
   const list = panel.querySelector('ul');
   if (focus) panel.querySelector('h1').focus();
+  track({ category: 'news', id: 'news:headlines', topic: 'Headlines' }, panel);
   const stars = new Set(await savedNews.urls().catch(() => []));
   if (!panel.isConnected) return;
   let stories = [];
@@ -227,7 +229,7 @@ export async function renderNews(view, savedNews, focus) {
   load();
 }
 
-export async function renderStory(view, savedNews, plans, url, fromSaved, focus) {
+export async function renderStory(view, savedNews, plans, url, fromSaved, focus, track) {
   const panel = document.createElement('article');
   view.replaceChildren(panel);
   panel.className = 'news-story';
@@ -254,6 +256,10 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
   if (focus) panel.querySelector('h1').focus();
   const status = panel.querySelector('[role=status]');
   const star = panel.querySelector('button');
+  const topic = newsTopics.find(({ id }) => story.topic === id)?.label ?? 'General news';
+  function trackStory() {
+    if (panel.isConnected) track({ category: 'news', id: `news:topic:${story.topic}`, topic }, panel);
+  }
   let body = saved?.body ?? cached?.body;
   star.onclick = async () => {
     if (star.disabled) return;
@@ -274,6 +280,7 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
       return element;
     }));
     panel.querySelector('.news-info a').textContent = body.author || story.source;
+    trackStory();
   }
 
   if (body) showBody();
@@ -294,6 +301,7 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
     const summary = document.createElement('p');
     summary.textContent = story.summary;
     panel.querySelector('.news-body').replaceChildren(summary);
+    trackStory();
     panel.querySelector('.news-info a').textContent = 'Full article at ' + story.source;
     if (!navigator.onLine) status.textContent = 'Offline · Cached summary';
     return;

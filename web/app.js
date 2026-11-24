@@ -6,6 +6,9 @@ import { findSection, sectionPreview, workspace } from './workspace.js';
 import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
 import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
+import { trackForegroundActivity } from './activity.js';
+import { hasNativePodcastPlayer } from './podcast-native.js';
+import { renderToday } from './today.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -19,6 +22,25 @@ let podcastPlayer;
 let routine;
 let displayedDate;
 let busy = false;
+let activitySaveFailed = false;
+let loadActivity;
+let keepReadingPlanOpen = false;
+
+async function recordActivity(entries) {
+  if (!entries.length) return;
+  await repository.activity.record(entries);
+  void loadActivity?.();
+}
+
+function recordAutomatically(entries) {
+  recordActivity(entries).catch(() => {
+    activitySaveFailed = true;
+    void loadActivity?.();
+  });
+}
+
+const track = trackForegroundActivity(recordAutomatically);
+const activity = { foreground: track, record: recordActivity };
 
 function formatDate(date) {
   return dateFormat.format(new Date(`${date}T00:00:00Z`));
@@ -46,7 +68,8 @@ function preferences() {
     </form>`;
 }
 
-function today(plan) {
+function readingPlan(plan) {
+  if (!plan?.reading) return '<p><a href="#activities">Set up a reading plan</a></p>';
   const reading = plan.reading;
   const book = reading.book ?? routine.book;
   const page = routine.book && book?.id === routine.book.id ? routine.book.page : book?.page;
@@ -63,11 +86,8 @@ function today(plan) {
     </form>`;
   }
 
-  return `<h1 tabindex="-1">Today</h1>
-    <p><time datetime="${plan.date}">${formatDate(plan.date)}</time></p>
-    <p>${reading.status === 'skipped' ? 0 : reading.minutes} min planned · ${plan.budget} min budget</p>
-    <section class="card" aria-labelledby="reading-title">
-      <h2 id="reading-title">Read a book</h2>
+  return `<div class="today-plan">
+      <p class="muted">${reading.status === 'skipped' ? 0 : reading.minutes} min planned · ${plan.budget} min budget</p>
       ${book ? `<p>${escapeHtml(book.title)}</p>` : ''}
       <p><a href="#books">Read an imported book</a></p>
       <p>${statusLabels[reading.status]}${reading.outcome ? ` · ${reading.outcome.minutes} min read` : ''}</p>
@@ -84,7 +104,7 @@ function today(plan) {
           </div>
         </form>
       </details>` : '<button data-action="undo">Undo</button>'}
-    </section>`;
+    </div>`;
 }
 
 function progress() {
@@ -107,6 +127,8 @@ function progress() {
 }
 
 function render(focusHeading = false) {
+  loadActivity = undefined;
+  track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
@@ -125,21 +147,21 @@ function render(focusHeading = false) {
   }
 
   if (isLibrary) {
-    renderBooks(view, bookId, focusHeading);
+    renderBooks(view, bookId, focusHeading, activity);
     return;
   }
   if (isStory) {
     let url;
     try { url = decodeURIComponent(route.slice(route.indexOf('=') + 1)); } catch { url = ''; }
-    renderStory(view, repository.savedNews, routine.plans, url, route.startsWith('saved-story='), focusHeading);
+    renderStory(view, repository.savedNews, routine.plans, url, route.startsWith('saved-story='), focusHeading, track);
     return;
   }
   if (route === 'saved-news') {
-    renderSavedNews(view, repository.savedNews, focusHeading);
+    renderSavedNews(view, repository.savedNews, focusHeading, track);
     return;
   }
   if (page === 'news') {
-    renderNews(view, repository.savedNews, focusHeading);
+    renderNews(view, repository.savedNews, focusHeading, track);
     return;
   }
   if (page === 'music') {
@@ -153,9 +175,17 @@ function render(focusHeading = false) {
     renderNewsSettings(view);
     renderAssistantSettings(view);
   }
-  else if (page === 'activities' || (page === 'today' && !routine.settings)) view.innerHTML = preferences();
+  else if (page === 'activities') view.innerHTML = preferences();
   else if (page === 'progress') view.innerHTML = progress();
-  else view.innerHTML = today(routine.plans[displayedDate]);
+  else {
+    const plan = routine.plans[displayedDate];
+    loadActivity = renderToday(view, {
+      date: displayedDate, dateLabel: formatDate(displayedDate), plan,
+      routineMarkup: readingPlan(plan), planOpen: keepReadingPlanOpen,
+      repository: repository.activity, trackingError: () => activitySaveFailed,
+    });
+    keepReadingPlanOpen = false;
+  }
 
   if (focusHeading) view.querySelector('h1').focus();
 }
@@ -177,7 +207,10 @@ async function refresh(change, { focus = false, openToday = false } = {}) {
       ensurePlan(current, day);
     });
     displayedDate = day.date;
-    if (openToday) history.replaceState(null, '', '#today');
+    if (openToday) {
+      history.replaceState(null, '', '#today');
+      keepReadingPlanOpen = true;
+    }
     render(focus);
   } catch {
     if (!routine) view.textContent = 'Your routine could not be opened.';
@@ -214,12 +247,16 @@ view.addEventListener('submit', (event) => {
     minutes: form.elements.minutes.valueAsNumber,
     page: Number.isFinite(page) ? page : null,
   };
+  keepReadingPlanOpen = true;
   refresh((current) => updateReading(current, displayedDate, action), { focus: true });
 });
 
 view.addEventListener('click', (event) => {
   const type = event.target.closest('button[data-action]')?.dataset.action;
-  if (type) refresh((current) => updateReading(current, displayedDate, { type }), { focus: true });
+  if (type) {
+    keepReadingPlanOpen = true;
+    refresh((current) => updateReading(current, displayedDate, { type }), { focus: true });
+  }
 });
 
 function refreshOnDateChange() {
@@ -239,13 +276,17 @@ function refreshNewsConnection() {
 window.addEventListener('online', refreshNewsConnection);
 window.addEventListener('offline', refreshNewsConnection);
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) refreshOnDateChange();
+  if (!document.hidden) {
+    refreshOnDateChange();
+    void loadActivity?.();
+  }
 });
 setInterval(refreshOnDateChange, 30_000);
+if (hasNativePodcastPlayer) setInterval(() => { if (!document.hidden) void loadActivity?.(); }, 5000);
 
 try {
   repository = await openRepository();
-  podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'));
+  podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'), recordAutomatically);
   await refresh();
 } catch {
   view.setAttribute('aria-busy', 'false');

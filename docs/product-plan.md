@@ -21,7 +21,7 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Music, an
 | Screen | What you see and do |
 | --- | --- |
 | First run | Confirm your time budget and enabled activities, select a starting deck, and go straight to Today. Add a book or news preferences when you first open those activities. |
-| Today | See the planned time, completion count, and ordered activity cards. Start the next item in one tap. Use **Edit plan** to reorder, swap, change an estimate, or add an item, and **Shorten today** when time is tight. |
+| Today | See the day's activity time, pages read, and listening time. Review time by activity and topic. Open **Log activity** to record time or pages yourself, or **Reading plan** to manage the daily routine. |
 | Activities | Enable or pause activities, change defaults for future plans, choose a vocabulary deck, maintain your current book, and manage your news sources. |
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
@@ -33,20 +33,22 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Music, an
 ### Today screen sketch
 
 ```text
-Today                              Edit plan
-25 min planned                      0 of 3 done
+Today
+Tuesday, Nov 24, 2026
 
-Next up
-Read one news article                   5 min
-[ Choose an article ]
+Activity time          Pages read          Listening
+24 min                 8                   14 min
 
-Read your current book                 10 min
-Learn 5 words · Japanese A1             10 min
-
-[ Shorten today ]                 [ Add item ]
-
-Today            Activities            Progress
+Time by activity                           [ Log activity ]
+Books                              7 min   [ Reading plan ]
+Podcasts                          14 min
+News                               3 min
+…
 ```
+
+Book reading and in-app News use foreground time, with an idle cutoff. Podcast listening uses playback time, including time while continuing to browse SmartBot. Activity time adds time across categories, including concurrent activities. Keep report records on the device by local date. Keep publisher reading, music playback, and other off-app activities available through manual logging.
+
+Track source pages when a converted PDF retains page boundaries. Record completed sections for text books and earlier conversions. A reading routine uses its starting and ending page when both are known. Keep the report available before routine setup and retain the existing plan actions in a disclosure.
 
 Use large tap targets, readable text sizes, plain action labels, and text alongside color for states. Support dark mode, browser zoom, keyboard navigation, and screen readers. Give each activity one primary action and put occasional actions in its menu. Provide accessible move-up and move-down controls alongside any drag gesture. Give empty states an immediate action, such as **Add a book** or **Turn on an activity**.
 

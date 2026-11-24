@@ -34,7 +34,7 @@ test('repeated finish keeps one outcome and undo retains the saved page', () => 
   updateReading(routine, date, { type: 'start' });
   updateReading(routine, date, { type: 'finish', minutes: 8, page: 27 });
   updateReading(routine, date, { type: 'finish', minutes: 9, page: 40 });
-  assert.deepEqual(routine.plans[date].reading.outcome, { minutes: 8, page: 27 });
+  assert.deepEqual(routine.plans[date].reading.outcome, { minutes: 8, page: 27, pages: 15 });
   assert.equal(routine.book.page, 27);
 
   updateReading(routine, date, { type: 'undo' });
@@ -43,6 +43,7 @@ test('repeated finish keeps one outcome and undo retains the saved page', () => 
   assert.equal(routine.book.page, 27);
   updateReading(routine, date, { type: 'finish', minutes: 8, page: null });
   assert.equal(routine.plans[date].reading.outcome.page, 27);
+  assert.equal(routine.plans[date].reading.outcome.pages, 15);
 });
 
 test('a started session keeps its book after changing the current book', () => {

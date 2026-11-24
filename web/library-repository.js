@@ -78,14 +78,14 @@ export function getOriginal(id) {
   });
 }
 
-export function saveConversion(id, { sections, skippedPages }) {
+export function saveConversion(id, { sections, pageEnds, skippedPages }) {
   return runTransaction(['books', 'sections'], 'readwrite', (transaction) => {
     const books = transaction.objectStore('books');
     const request = books.get(id);
     request.onsuccess = () => {
       const book = request.result;
       if (!book?.originalName || book.count > 0) return;
-      books.put({ ...book, count: sections.length, skippedPages });
+      books.put({ ...book, count: sections.length, pageEnds, skippedPages });
       transaction.objectStore('sections').put(sections, id);
     };
     return () => undefined;

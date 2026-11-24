@@ -58,6 +58,12 @@ final class PodcastBridge {
                 respond(reply, requestId, BuildConfig.PODCAST_API, null);
                 return;
             }
+            if ("activity".equals(action)) {
+                String date = request.getString("date");
+                if (!date.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new IllegalArgumentException("Invalid activity date");
+                respond(reply, requestId, PodcastActivityLog.read(activity, date), null);
+                return;
+            }
             if ("publisher".equals(action)) {
                 activity.startActivity(new Intent(Intent.ACTION_VIEW, httpsUri(request.getString("url")))
                         .addCategory(Intent.CATEGORY_BROWSABLE));

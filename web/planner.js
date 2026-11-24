@@ -49,6 +49,7 @@ export function updateReading(routine, date, action) {
     case 'start':
       if (reading.status === 'pending' && routine.book) {
         reading.book = { ...routine.book };
+        reading.startPage = routine.book.page;
         reading.status = 'started';
       }
       break;
@@ -56,9 +57,12 @@ export function updateReading(routine, date, action) {
       if (reading.status !== 'started') return;
       const currentBook = routine.book?.id === reading.book.id ? routine.book : null;
       const page = action.page ?? (currentBook ? currentBook.page : reading.book.page);
+      const startPage = Object.hasOwn(reading, 'startPage') ? reading.startPage : reading.book.page;
+      reading.startPage = startPage;
       reading.book.page = page;
       if (currentBook) currentBook.page = page;
       reading.outcome = { minutes: action.minutes, page };
+      if (startPage != null && page > startPage) reading.outcome.pages = page - startPage;
       reading.status = 'completed';
       break;
     }
@@ -67,6 +71,7 @@ export function updateReading(routine, date, action) {
       break;
     case 'undo':
       if (reading.status === 'completed' || reading.status === 'skipped') {
+        if (reading.status === 'completed' && !Object.hasOwn(reading, 'startPage')) reading.startPage = null;
         reading.status = reading.book ? 'started' : 'pending';
         reading.outcome = null;
       }

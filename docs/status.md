@@ -4,6 +4,7 @@ Last updated November 24, 2026.
 
 ## Current state
 
+- **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines from free-to-read sources, with more stories in batches of ten. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. Row stars keep external headlines and available summaries offline. NASA and Canada.ca articles open in SmartBot, and the header star opens the saved collection across all languages and topics. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
@@ -15,6 +16,8 @@ Last updated November 24, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The Today activity report passed Chromium checks for manual logging, book progress, timed podcasts, News topics, offline reopening, and the existing reading plan. All 37 automated tests passed. The debug APK passed build, signature, and asset checks. Background playback reporting still needs a phone check. [Today verification](plans/today-activity.md#verification)
 
 At 320 CSS pixels, Chromium verified that opening controlled headlines changed the News order, including publisher and in-app reads, More, and an offline reload. Turning personalization off restored the freshness-based edition, and reset cleared the learned activity. All 34 automated tests passed in the News worktree. The Android debug APK passed signature and asset checks. Phone testing is pending. [News recommendation verification](plans/personal-workspace.md#news-recommendations)
 

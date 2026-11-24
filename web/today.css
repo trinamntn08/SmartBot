@@ -1,0 +1,110 @@
+main[data-page="today"] { max-width: 68rem; container-type: inline-size; }
+
+.today-heading { margin-block-end: 1.6rem; }
+.today-heading h1 { margin-block-end: 0.24em; }
+.today-heading time { color: var(--muted); }
+
+.today-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  border-block: 1px solid var(--line);
+}
+
+.today-metrics div { min-width: 0; padding: 1rem clamp(0.5rem, 3vw, 1.5rem); }
+.today-metrics div:first-child { padding-inline-start: 0; }
+.today-metrics div + div { border-inline-start: 1px solid var(--line); }
+.today-metrics dt, .today-topics, .today-manual small { color: var(--muted); font-size: 0.9rem; }
+.today-metrics dt { overflow-wrap: anywhere; }
+.today-metrics dd {
+  margin: 0.25rem 0 0;
+  color: var(--ink);
+  font-size: 1.6rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.18;
+  overflow-wrap: anywhere;
+}
+
+.today-metrics dd, .today-row > span, .today-topics li > span:last-child { font-variant-numeric: tabular-nums; }
+.today-report-note { margin-block: 0.8rem 0; }
+
+.today-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(15rem, 1fr);
+  grid-template-areas: "report log" "report plan";
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: 0.75rem clamp(2rem, 6vw, 5rem);
+  margin-block-start: 2rem;
+}
+
+.today-activity { grid-area: report; min-width: 0; }
+.today-log { grid-area: log; min-width: 0; }
+.today-routine { grid-area: plan; }
+.today-breakdown, .today-topics, .today-manual ul { padding: 0; margin: 0; list-style: none; }
+.today-breakdown { margin-block-start: 0.55rem; border-block-start: 1px solid var(--line); }
+.today-breakdown > li { padding: 0.72rem 0 0.9rem; border-block-end: 1px solid var(--line); }
+.today-row, .today-topics li, .today-manual li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+}
+
+.today-row h3 { margin: 0; font-size: 1rem; font-weight: 680; }
+.today-row a { display: inline-flex; min-height: 1.8rem; align-items: center; text-underline-offset: 0.18em; }
+.today-row > span { text-align: end; }
+.today-bar { height: 0.25rem; margin-block-start: 0.32rem; background: var(--line); border-radius: 2rem; }
+.today-bar span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.today-topics { margin-block-start: 0.55rem; }
+.today-topics li { flex-wrap: wrap; padding-block: 0.14rem; overflow-wrap: anywhere; }
+.today-topics li > span:first-child { flex: 1 1 7rem; }
+.today-topics li > span:last-child { margin-inline-start: auto; text-align: end; }
+
+.today-disclosure { margin: 0; padding: 0 1rem; }
+.today-disclosure > summary { width: auto; padding-block: 0.85rem; color: var(--accent); font-weight: 680; }
+.today-disclosure > summary:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+.today-disclosure > form, .today-plan { margin: 0; padding-block: 0.15rem 1rem; }
+.today-plan > :first-child, .today-disclosure > p { margin-block-start: 0; }
+.today-disclosure input { max-width: none; }
+.today-disclosure select {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin-block-start: 0.3rem;
+  padding-inline: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--background);
+  color: var(--ink);
+  font: inherit;
+}
+
+.today-feedback { margin: 0.5rem 0 0; }
+.today-feedback:empty { margin: 0; }
+.today-manual { margin: 0.35rem 0 0; }
+.today-manual summary { color: var(--accent); }
+.today-manual li { border-block-end: 1px solid var(--line); padding-block: 0.55rem; overflow-wrap: anywhere; }
+.today-manual li > div { min-width: 0; }
+.today-manual small { display: block; }
+.today-manual button { font-size: 0.88rem; }
+
+@media (max-width: 46rem) {
+  .today-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "log" "report" "plan";
+    grid-template-rows: auto;
+    gap: 1.5rem;
+    margin-block-start: 1.25rem;
+  }
+  .today-metrics dd { font-size: 1.4rem; }
+  body:has(main[data-page="today"]) > .ask-launcher { position: static; display: block; margin: 0 1rem 1rem auto; }
+}
+
+@container (max-width: 17rem) {
+  .today-metrics { grid-template-columns: minmax(0, 1fr); }
+  .today-metrics div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; padding-inline: 0; }
+  .today-metrics div + div { border-inline-start: 0; border-block-start: 1px solid var(--line); }
+  .today-metrics dd { margin: 0; text-align: end; }
+}
