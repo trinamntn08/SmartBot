@@ -10,7 +10,7 @@ Last updated November 24, 2026.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. The reader opens inside the shared Workspace navigation. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
-- Project-local Codex configuration defines five agent roles and two reusable skills. The [setup guide](codex-setup.md) explains how to discover and use them.
+- Project-local Codex configuration defines five agent roles and two SmartBot workflows. The [design skill setup](codex-setup.md#design-skills) also installs pinned releases of Taste, Emil Kowalski's motion guidance, and Impeccable into the checkout.
 - The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
@@ -57,6 +57,8 @@ The 0.2.0 debug build passed in the main checkout. Lint reported zero errors and
 The local Codex app server reported the active project configuration with a three-subagent limit and discovered both project skills. All five role files passed TOML and required-field checks. Named-role selection can be verified when a task calls for delegation. Documentation links and Android ignore patterns passed local checks.
 
 Local validation for the SmartBot rename covered Markdown links and section anchors, all five role files, and both renamed skill files. A fresh Codex app server discovered `$smartbot-deliver-feature` and `$smartbot-review-change` from the SmartBot checkout.
+
+The design-skill setup started from matching local and live `main` at `99acc66` and was prepared on `chore/design-skills`. A fresh project installed all six folders with their license notices. A rerun kept the installed folders, and a separate check preserved a pre-existing incomplete folder. A new Codex app server discovered all six added skill folders and both SmartBot workflows. The Windows Impeccable launcher reported version 4.10.0 from a temporary cache. The installer and Taste browser checker passed syntax checks, and all eight planner and text import tests passed.
 
 ## Handoff
 

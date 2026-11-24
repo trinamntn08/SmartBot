@@ -24,6 +24,26 @@ Open the SmartBot repository root in Codex. Project instructions, custom agents,
 
 Example request: “Use `$smartbot-deliver-feature` to build the first Android slice. Delegate the Compose screens and planner implementation after agreeing on their shared states.” Give each agent the outcome, exclusive file paths, and expected checks. The primary agent owns shared types, Gradle files, integration, and final validation. If a client cannot select named roles, the primary agent can read the role and use its instructions directly or pass them to a supported worker for authorized delegation.
 
+## Design skills
+
+From the SmartBot repository root, run the setup with Python 3 and the Codex `skill-installer` helper available. It downloads the pinned upstream skill folders into this checkout. It keeps existing skill folders and leaves the user-wide Codex configuration alone. Reopen the project in Codex if the skills do not appear.
+
+```sh
+python scripts/install-design-skills.py
+```
+
+For a custom Codex installation, pass `--installer` with the path to `install-skill-from-github.py`. A fresh clone needs the setup command once. The downloaded files stay out of Git, and the script records their source revisions.
+
+| Invoke in Codex | Use it for |
+| --- | --- |
+| `$design-taste-frontend` | Visual direction and responsive browser checks for the web interface. [Taste](https://github.com/Leonxlnx/taste-skill) |
+| `$animate` | New interaction motion in the browser and in SmartBot's Android WebView. [Animate](https://github.com/emilkowalski/skills/tree/main/skills/animate) |
+| `$review-animations` | Review motion timing, interruptions, and reduced-motion behavior. [Animation review](https://github.com/emilkowalski/skills/tree/main/skills/review-animations) |
+| `$animate-expo` | Native React Native and Expo work if SmartBot adds that stack. [Expo motion](https://github.com/emilkowalski/skills/tree/main/skills/animate-expo) |
+| `$impeccable audit` | Review accessibility, responsive layout, and UI quality. `$impeccable critique` focuses on usability and visual hierarchy. [Impeccable](https://github.com/pbakaus/impeccable) |
+
+Apply the guidance to SmartBot's mobile-first layout and offline web app. Emil's web motion skill links to `pick-ui-library`, which the setup also installs for reference. Keep bundled example images and design tools out of the web assets. Taste's browser tools use Node and a local Chromium browser. Impeccable's launcher can fetch its platform engine on first use. The optional design hooks are separate from this setup.
+
 ## Session workflow
 
 1. At the start of a session, check `git status --short --branch`, `git worktree list`, and `git remote -v`. Read [current status](status.md) and the relevant product requirements. Fetch the configured remote before starting a step. On a clean branch that is only behind its upstream, update with `git merge --ff-only '@{upstream}'`. Start new work from the fetched integration branch.

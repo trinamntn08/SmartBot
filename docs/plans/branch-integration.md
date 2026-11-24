@@ -21,6 +21,8 @@ Run the Node, Python, and podcast service suites. Check navigation, offline PDF 
 - November 24, 2026. Books received the Workspace navigation links and the PDF and EPUB workflows. Chromium verified the browser flows at 320 CSS pixels. All 15 Node and seven Python tests passed.
 - November 24, 2026. The mobile UI merge retained the shared navigation and added route scroll reset. The Books flow passed the keyboard and offline browser checks. The library was inspected at 320 and 1280 CSS pixels.
 
+- November 24, 2026. The design skill installer and setup guide merged. The installer argument parser responded to `--help` and the downloaded skill directories are ignored.
+
 ## Handoff
 
-The design tooling and Podcasts merges, combined package verification, and main update are pending.
+The Podcasts merge, combined package verification, and main update are pending.
