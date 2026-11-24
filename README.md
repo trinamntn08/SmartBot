@@ -8,14 +8,14 @@ Read the [product and development plan](docs/product-plan.md) for the screens, d
 
 ## Browser preview
 
-From the repository root, fetch the remote and bring your preview branch up to date before each build and launch. Run these on a clean checkout of the branch you want to preview.
+Before each build and launch, [check every remote branch for relevant cloud work](docs/codex-setup.md#check-every-remote-branch). Then update the clean checkout of the branch you want to preview.
 
 ```powershell
-git fetch
+git fetch --all
 git merge --ff-only '@{upstream}'
 ```
 
-The browser preview serves `web/` directly. For a fresh Android package, run the [debug APK build](#development) after syncing.
+The browser preview serves `web/` from the worktree that started it. Confirm that worktree contains the requested branch or commit. For a fresh Android package, run the [debug APK build](#development) after syncing.
 
 On Windows with Python 3 installed, run [preview.cmd](preview.cmd) after syncing and any build. It starts or reuses the local server and opens the refresh link in your default browser. Keep the server window open while you use SmartBot.
 

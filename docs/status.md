@@ -62,6 +62,8 @@ The 0.2.0 debug build passed in the main checkout. Lint reported zero errors and
 
 ## Setup verification
 
+The remote branch check found all eight live `origin` branch tips in `main`. A check against the earlier Workspace checkout found the missing Books redesign commit `3bd8a40` on `origin/work`. The agent instructions and preview guide link to the [branch check](codex-setup.md#check-every-remote-branch).
+
 The local Codex app server reported the active project configuration with a three-subagent limit and discovered both project skills. All five role files passed TOML and required-field checks. Named-role selection can be verified when a task calls for delegation. Documentation links and Android ignore patterns passed local checks.
 
 Local validation for the SmartBot rename covered Markdown links and section anchors, all five role files, and both renamed skill files. A fresh Codex app server discovered `$smartbot-deliver-feature` and `$smartbot-review-change` from the SmartBot checkout.

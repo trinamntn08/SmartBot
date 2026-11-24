@@ -46,11 +46,31 @@ Apply the guidance to SmartBot's mobile-first layout and offline web app. Emil's
 
 ## Session workflow
 
-1. At the start of a session, check `git status --short --branch`, `git worktree list`, and `git remote -v`. Read [current status](status.md) and the relevant product requirements. Fetch the configured remote before starting a step. On a clean branch that is only behind its upstream, update with `git merge --ff-only '@{upstream}'`. Start new work from the fetched integration branch.
+1. At the start of a session, read [current status](status.md) and the relevant product requirements. Before editing, building, or launching a preview, [check every remote branch](#check-every-remote-branch). Start from the fetched integration branch or the branch requested for the task. On a clean branch that is only behind its upstream, update with `git merge --ff-only '@{upstream}'`.
 2. Give each parallel writing session a unique branch and a separate Git worktree or clone. Agree on file ownership, including shared documentation and contracts. Use the [implementation plan template](templates/implementation-plan.md) for dependent steps or multiple owners. Coordinate with the integration owner when sessions need to change the same file or land work on a shared branch.
 3. For every completed step, run the relevant checks and record the outcome, checks and their results, and any blocker or next action in the task plan or relevant project doc. Update [current status](status.md) when a milestone or active handoff changes. Use a [decision record](templates/decision.md) for consequential architecture choices. Stage only the step's files and documentation, review `git diff --cached` and `git diff --cached --check`, then make one focused commit.
 4. Push immediately. Use `git push -u <remote> <branch>` for a new branch and `git push <remote> <branch>` for later commits. Fetch again and run `git rev-list --left-right --count 'HEAD...@{upstream}'` to verify the branch is in sync. Both counts should be zero. If the upstream advanced, fetch and inspect the divergence, coordinate any conflicts, integrate both histories, and rerun the affected checks before retrying the push. Avoid force-pushing or discarding work from another session.
-5. Carry on once the step is synchronized. If a remote, access, or a conflict blocks sync, preserve the commit locally and report its branch, commit ID, and the blocker. At handoff, include the pushed branch and latest commit so the next session can resume from the remote.
+5. Carry on once the step is synchronized. If a remote, access, or a conflict blocks sync, preserve the commit locally and report its branch, commit ID, and the blocker. In cloud and local handoffs, include the pushed branch, commit ID, any pull request, what changed, and any pending checks. For builds and previews, include the branch and commit actually used.
+
+### Check every remote branch
+
+Run these checks from the checkout you intend to use. Repeat the live branch listing for each configured remote.
+
+```powershell
+git status --short --branch
+git worktree list
+git remote -v
+git fetch --all
+git ls-remote --heads origin
+git for-each-ref --format='%(objectname) %(refname)' refs/remotes
+git branch -r --no-merged HEAD
+```
+
+- Compare the live branch names and tips against your remote-tracking refs. Use the live list to distinguish active branches from aliases and refs for deleted branches. If the checkout fetches only selected branches, fetch the missing branch tips. For `origin`, run `git fetch origin 'refs/heads/*:refs/remotes/origin/*'` to fetch all heads, then repeat the branch check. If fetching fails, report which remote could not be checked.
+- Review the branches with commits outside the intended checkout for work relevant to the task. For example, use `git log --oneline HEAD..origin/work` and `git diff --stat 'HEAD...origin/work'`. Check the cloud handoff and relevant open pull requests as well, including pull requests from a fork when expected work is missing from the repository's branches.
+- For a named commit, run `git branch -r --contains <commit>` to locate it, then `git merge-base --is-ancestor <commit> HEAD` in the checkout you plan to use. Exit code 0 confirms it is included. If the change was squashed or cherry-picked, verify the equivalent changes in the checkout.
+- Use the branch that contains the required work, or integrate the relevant changes within the requested scope. Keep unrelated branches separate. If expected cloud work cannot be located or accessed, report the missing branch, commit, or pull request when known and what the current checkout contains.
+- Before a build or preview, confirm the source worktree with `git rev-parse --show-toplevel` and the commit with `git rev-parse HEAD`. If an existing preview server points to a different worktree, launch from the intended one and verify the requested feature before handing it off.
 
 ## Verification
 
