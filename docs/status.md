@@ -6,7 +6,7 @@ Last updated November 24, 2026.
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
-- **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** supports podcast search, public RSS imports, following, and local listening progress. See the [podcast pilot setup](plans/podcast-listening.md).
+- **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. The reader opens inside the shared Workspace navigation. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -15,6 +15,8 @@ Last updated November 24, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The Music redesign was checked in Chromium from 320 to 1440 CSS pixels in light and dark mode. The functional check used a controlled podcast feed and audio file to verify keyboard navigation, search and error recovery, RSS import, follow and refresh, playback and seek, resume, and the offline library. All 27 automated tests passed. The redesigned Android debug APK built and passed signature and bundled asset checks. Lint reported zero errors and seven warnings. Physical phone verification remains open.
 
 The Books redesign and PDF import now run inside Workspace. At 320 CSS pixels, Chromium verified keyboard navigation from Workspace to Books and back, return from an open book through the SmartBot header, offline reading position, offline PDF conversion, and both EPUB and original PDF export. All 15 Node and seven Python tests passed. See the [branch integration record](plans/branch-integration.md) for combined browser and Android verification.
 

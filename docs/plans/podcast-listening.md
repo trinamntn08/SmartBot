@@ -2,6 +2,8 @@
 
 Use the Music card to find, follow, and stream public podcasts. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
+Open **Music** to search by podcast name, open the suggested show, or expand **Add by RSS**. Opening a show brings its episodes into focus. **Followed shows** and **Continue listening** appear when there are saved shows or an unfinished episode.
+
 ## Pilot setup
 
 1. Create a [Vercel Hobby project](https://vercel.com/docs/plans/hobby) using the repository’s `podcast-service` root and Node.js 22. Add `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` as server environment variables for full name search.
@@ -17,6 +19,10 @@ Use the Music card to find, follow, and stream public podcasts. The browser uses
 ## Step record
 
 November 24, 2026. The workspace implementation passed the podcast API suite, the existing Node and Python tests, and Android debug build and lint. A Chromium check at 320 CSS pixels used a controlled feed and audio file to verify search, RSS import, follow and refresh, play, seek, rewind, resume after reload, retry, and offline access. The workspace disconnected before the final package and commit checks. This recovery commit reproduces the feature and was checked for JavaScript syntax and repository links. Rebuild the APK from this commit for the phone pilot.
+
+November 24, 2026. The Music redesign removed empty panels and routine notices, and gave search results and episodes separate views. Chromium verified the layout and exercised search, RSS, library navigation, playback, and offline access with controlled data. All 27 automated tests passed. Android build, lint, signature verification, and checks of all 222 bundled web files passed. Phone playback verification is pending.
+
+The design skill's landing-page gate flagged the shared app shell, hash routes, and compact discovery layout. The Music screen keeps the Workspace navigation and was verified through the running app at 320 to 1440 CSS pixels.
 
 ## Handoff
 

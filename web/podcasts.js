@@ -24,39 +24,63 @@ export function renderPodcasts(view, repository, player, focus) {
   cancelRequest?.();
   const panel = element('div', '', 'podcasts');
   panel.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
-    <h1 tabindex="-1">Music</h1>
-    <h2>Podcasts</h2>
-    <div class="podcast-continue card" hidden></div>
-    <section class="card" aria-label="Add a podcast">
-      <form data-podcast-search>
-        <label>Search for a podcast<input type="search" name="query" maxlength="120" required></label>
-        <button type="submit">Search</button>
-      </form>
-      <details>
-        <summary>Paste an RSS link</summary>
-        <form data-podcast-feed>
-          <label>Podcast RSS link<input name="url" type="url" maxlength="2048" placeholder="https://" required></label>
-          <button type="submit">Open feed</button>
+    <section class="podcast-hero" aria-labelledby="music-title">
+      <div class="podcast-hero-copy">
+        <h1 id="music-title" tabindex="-1">Music</h1>
+        <form data-podcast-search>
+          <div class="podcast-form-row">
+            <input type="search" name="query" maxlength="120" aria-label="Podcast name" placeholder="Podcast name" required>
+            <button type="submit">Search</button>
+          </div>
         </form>
-      </details>
-      <p class="podcast-example"></p>
-      <p class="podcast-notice">SmartBot plays audio from the publisher, who may include ads.</p>
+        <details class="podcast-rss">
+          <summary>Add by RSS</summary>
+          <form data-podcast-feed>
+            <div class="podcast-form-row">
+              <input name="url" type="url" maxlength="2048" aria-label="Podcast RSS link" placeholder="https://" required>
+              <button type="submit">Open feed</button>
+            </div>
+          </form>
+        </details>
+      </div>
+      <div class="podcast-hero-art">
+        <img src="./assets/podcast-studio.webp" width="1152" height="768" alt="">
+      </div>
     </section>
+    <section class="podcast-continue" aria-label="Continue listening" hidden></section>
+    <span class="podcast-announcement" role="status"></span>
     <p class="podcast-status" role="status"></p>
-    <div class="podcast-results"></div>
-    <div class="podcast-show"></div>
-    <section class="podcast-library" aria-labelledby="followed-podcasts">
-      <h2 id="followed-podcasts">Followed shows</h2>
-      <div class="podcast-followed"></div>
-    </section>`;
+    <section class="podcast-results" aria-labelledby="podcast-results-title" hidden>
+      <div class="podcast-section-heading">
+        <h2 id="podcast-results-title" tabindex="-1">Search results</h2>
+        <button type="button" class="quiet" data-clear-search>Clear search</button>
+      </div>
+      <div class="podcast-result-list"></div>
+    </section>
+    <div class="podcast-show" hidden></div>
+    <div class="podcast-shelves">
+      <section class="podcast-library" aria-labelledby="followed-podcasts" hidden>
+        <h2 id="followed-podcasts">Followed shows</h2>
+        <div class="podcast-followed"></div>
+      </section>
+      <section class="podcast-pick" aria-labelledby="suggested-podcast">
+        <h2 id="suggested-podcast">Suggested</h2>
+        <div class="podcast-example"></div>
+      </section>
+    </div>`;
   view.replaceChildren(panel);
   if (focus) panel.querySelector('h1').focus();
 
   const status = panel.querySelector('.podcast-status');
+  const announcement = panel.querySelector('.podcast-announcement');
   const results = panel.querySelector('.podcast-results');
+  const resultList = panel.querySelector('.podcast-result-list');
   const detail = panel.querySelector('.podcast-show');
-  const library = panel.querySelector('.podcast-followed');
+  const shelves = panel.querySelector('.podcast-shelves');
+  const library = panel.querySelector('.podcast-library');
+  const followedShows = panel.querySelector('.podcast-followed');
   const continuePanel = panel.querySelector('.podcast-continue');
+  const queryInput = panel.querySelector('[name="query"]');
   let follows = [];
   let selected;
   let discovery;
@@ -64,6 +88,7 @@ export function renderPodcasts(view, repository, player, focus) {
   async function run(action, trigger) {
     if (trigger) trigger.disabled = true;
     status.textContent = '';
+    announcement.textContent = '';
     try { await action(); }
     catch (error) { if (panel.isConnected) status.textContent = error.message; }
     finally { if (trigger) trigger.disabled = false; }
@@ -75,7 +100,7 @@ export function renderPodcasts(view, repository, player, focus) {
     discovery = controller;
     cancelRequest = () => controller.abort();
     await run(async () => {
-      status.textContent = message;
+      announcement.textContent = message;
       try { await action(controller.signal); }
       catch (error) {
         if (!controller.signal.aborted) throw error;
@@ -105,32 +130,52 @@ export function renderPodcasts(view, repository, player, focus) {
   function showDetails(show, moveFocus = false) {
     selected = show;
     const followed = follows.find(entry => entry.feedUrl === show.feedUrl);
-    const card = element('section', '', 'card');
+    const card = element('section', '', 'podcast-show-panel');
     const heading = element('h2', show.title);
     heading.tabIndex = -1;
-    card.append(heading, element('p', show.publisher, 'podcast-notice'));
+    const hasResults = resultList.childElementCount > 0;
+    const back = button(hasResults ? 'Back to results' : 'Back to shows', () => {
+      discovery?.abort();
+      detail.hidden = true;
+      selected = undefined;
+      status.textContent = '';
+      announcement.textContent = '';
+      results.hidden = !hasResults;
+      shelves.hidden = hasResults;
+      if (hasResults) results.querySelector('h2').focus();
+      else queryInput.focus();
+    });
+    back.className = 'quiet podcast-show-back';
+    card.append(back, heading, element('p', show.publisher, 'podcast-notice'));
     const actions = element('div', '', 'actions');
     const follow = button(followed ? 'Unfollow' : 'Follow show', trigger => run(async () => {
       if (followed) await repository.removeShow(show.feedUrl);
       else await repository.saveShow(show);
       await showLibrary();
-      if (!panel.isConnected) return;
+      if (!card.isConnected || detail.hidden) return;
       showDetails(follows.find(entry => entry.feedUrl === show.feedUrl) ?? show, true);
-      status.textContent = followed ? 'Show unfollowed.' : 'Show followed.';
+      announcement.textContent = followed ? 'Show unfollowed.' : 'Show followed.';
     }, trigger));
+    if (followed) follow.className = 'quiet';
     actions.append(follow);
-    if (followed) actions.append(button('Refresh episodes', trigger => openShow(show.feedUrl, trigger, true)));
+    if (followed) {
+      const refresh = button('Refresh episodes', trigger => openShow(show.feedUrl, trigger, true));
+      refresh.className = 'quiet';
+      actions.append(refresh);
+    }
     if (show.website) actions.append(publisherLink(show.website));
     card.append(actions);
     if (show.episodes.length) {
+      card.append(element('h3', 'Episodes'));
       const list = element('ul', '', 'podcast-list');
       list.setAttribute('role', 'list');
       for (const episode of show.episodes) {
         const row = element('li');
-        const copy = element('div');
+        const copy = element('div', '', 'podcast-row-copy');
         copy.append(element('strong', episode.title));
         if (episode.publishedAt != null) copy.append(element('p', date.format(episode.publishedAt), 'podcast-notice'));
         const play = button('Play', trigger => run(() => player.play(episodeToPlay(show, episode)), trigger));
+        play.className = 'quiet podcast-play';
         play.setAttribute('aria-label', `Play ${episode.title}`);
         row.append(copy, play);
         list.append(row);
@@ -138,32 +183,37 @@ export function renderPodcasts(view, repository, player, focus) {
       card.append(list);
     } else card.append(element('p', 'This feed has no episodes with public audio.'));
     detail.replaceChildren(card);
+    detail.hidden = false;
+    results.hidden = true;
+    shelves.hidden = true;
     if (moveFocus) heading.focus();
   }
 
   async function showLibrary() {
     follows = await repository.shows();
     if (!panel.isConnected) return;
+    library.hidden = !follows.length;
     if (!follows.length) {
-      library.replaceChildren(element('p', 'Follow a show to find it here.'));
+      followedShows.replaceChildren();
       return;
     }
-    const list = element('ul', '', 'podcast-list card');
+    const list = element('ul', '', 'podcast-list');
     list.setAttribute('role', 'list');
     for (const show of follows) {
       const row = element('li');
-      const copy = element('div');
+      const copy = element('div', '', 'podcast-row-copy');
       copy.append(element('strong', show.title), element('p', show.publisher, 'podcast-notice'));
       const open = button('Episodes', () => {
         discovery?.abort();
         status.textContent = '';
         showDetails(show, true);
       });
+      open.className = 'quiet';
       open.setAttribute('aria-label', `Episodes for ${show.title}`);
       row.append(copy, open);
       list.append(row);
     }
-    library.replaceChildren(list);
+    followedShows.replaceChildren(list);
   }
 
   function openShow(url, trigger, refresh = false) {
@@ -179,38 +229,66 @@ export function renderPodcasts(view, repository, player, focus) {
         show = follows.find(entry => entry.feedUrl === show.feedUrl) ?? show;
       }
       if (signal.aborted || !panel.isConnected) return;
-      status.textContent = refresh ? 'Episodes refreshed.' : '';
-      showDetails(show, selected?.feedUrl !== show.feedUrl || refresh);
+      const feedForm = trigger?.form;
+      const fromRss = feedForm?.matches('[data-podcast-feed]');
+      if (fromRss) feedForm.closest('details').open = false;
+      announcement.textContent = refresh ? 'Episodes refreshed.' : '';
+      showDetails(show, fromRss || selected?.feedUrl !== show.feedUrl || refresh);
     }, trigger);
   }
 
-  panel.querySelector('.podcast-example').append(button(franceinfo.title, trigger => openShow(franceinfo.feedUrl, trigger)));
+  const suggested = button(franceinfo.title, trigger => openShow(franceinfo.feedUrl, trigger));
+  suggested.className = 'podcast-pick-button';
+  suggested.setAttribute('aria-label', `View episodes for ${franceinfo.title}`);
+  const arrow = element('span', '', 'arrow');
+  arrow.setAttribute('aria-hidden', 'true');
+  suggested.append(arrow);
+  panel.querySelector('.podcast-example').append(suggested);
   panel.querySelector('[data-podcast-feed]').addEventListener('submit', event => {
     event.preventDefault();
     void openShow(event.currentTarget.elements.url.value.trim(), event.submitter);
   });
+  panel.querySelector('[data-clear-search]').addEventListener('click', () => {
+    discovery?.abort();
+    queryInput.value = '';
+    resultList.replaceChildren();
+    results.hidden = true;
+    shelves.hidden = false;
+    status.textContent = '';
+    queryInput.focus();
+  });
   panel.querySelector('[data-podcast-search]').addEventListener('submit', event => {
     event.preventDefault();
-    const query = event.currentTarget.elements.query.value.trim();
-    results.replaceChildren();
+    const query = queryInput.value.trim();
+    results.hidden = true;
+    resultList.replaceChildren();
+    detail.hidden = true;
+    detail.replaceChildren();
+    selected = undefined;
+    shelves.hidden = false;
     void discover('Searching for shows…', async signal => {
       const { shows, limited } = await searchPodcasts(query, signal);
       if (signal.aborted || !panel.isConnected) return;
-      status.textContent = limited ? 'Showing the starter result. Full search is unavailable.'
-        : shows.length ? `${shows.length} ${shows.length === 1 ? 'show' : 'shows'} found.` : 'No shows found. Try another name or paste its RSS link.';
-      if (!shows.length) return;
-      const list = element('ul', '', 'podcast-list card');
+      announcement.textContent = limited ? 'Full search is unavailable.' : 'Search complete.';
+      if (!shows.length) {
+        status.textContent = limited ? 'Search is unavailable. Try an RSS link.' : 'No podcasts found.';
+        return;
+      }
+      const list = element('ul', '', 'podcast-list');
       list.setAttribute('role', 'list');
       for (const show of shows) {
         const row = element('li');
-        const copy = element('div');
+        const copy = element('div', '', 'podcast-row-copy');
         copy.append(element('strong', show.title), element('p', show.publisher, 'podcast-notice'));
         const open = button('Episodes', trigger => openShow(show.feedUrl, trigger));
+        open.className = 'quiet';
         open.setAttribute('aria-label', `Episodes for ${show.title}`);
         row.append(copy, open);
         list.append(row);
       }
-      results.replaceChildren(list);
+      resultList.replaceChildren(list);
+      results.hidden = false;
+      shelves.hidden = true;
     }, event.submitter);
   });
 
@@ -218,8 +296,10 @@ export function renderPodcasts(view, repository, player, focus) {
     if (!panel.isConnected) return;
     continuePanel.hidden = !recent || recent.ended;
     if (continuePanel.hidden) return;
-    continuePanel.replaceChildren(element('strong', recent.episode.title),
-      button('Continue listening', trigger => run(() => player.play(recent.episode), trigger)));
+    const copy = element('div', '', 'podcast-row-copy');
+    copy.append(element('h2', 'Continue listening'), element('strong', recent.episode.title));
+    continuePanel.replaceChildren(copy,
+      button('Resume episode', trigger => run(() => player.play(recent.episode), trigger)));
   });
   player.connect();
   void run(showLibrary);

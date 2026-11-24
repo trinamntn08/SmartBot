@@ -38,7 +38,8 @@ export function createPodcastPlayer(repository, panel) {
     if (!seeking) seek.value = current.position;
     seek.setAttribute('aria-valuetext', time(Number(seek.value)));
     elapsed.textContent = `${time(current.position)}${current.duration ? ` / ${time(current.duration)}` : ''}`;
-    const status = current.error || (current.buffering ? 'Loading audio…' : '');
+    panel.setAttribute('aria-busy', String(Boolean(current.buffering)));
+    const status = current.error || '';
     if (message.textContent !== status) message.textContent = status;
   }
 
