@@ -78,6 +78,7 @@ async function showLibrary(panel) {
       info.append(title, detail);
       link.append(icon, info);
       item.append(link);
+      if (book.originalName) item.append(bookDownloads(book, title.id));
       list.append(item);
     }
   } catch {
@@ -88,15 +89,9 @@ async function showLibrary(panel) {
 async function showReader(panel, id) {
   panel.innerHTML = `<a class="back-link" href="#books"><span class="arrow" aria-hidden="true"></span>Back to books</a>
     <h1 tabindex="-1">Book</h1>
-    <div data-pdf-tools></div>
+    <button type="button" data-convert hidden>Convert to EPUB</button>
     <p class="book-error" role="alert" hidden></p>
-    <p class="book-file-status muted" data-file-status role="status"></p>
-    <p class="muted" data-conversion-note hidden></p>
     <section class="card book-reader" hidden aria-label="Book text">
-      <header class="book-reader-progress">
-        <p class="book-position muted" role="status"></p>
-        <progress aria-label="Reading progress"></progress>
-      </header>
       <p class="book-content"></p>
       <div class="actions book-pagination" hidden>
         <button type="button" class="quiet" data-step="-1">Previous section</button>
@@ -114,22 +109,19 @@ async function showReader(panel, id) {
     const heading = panel.querySelector('h1');
     heading.textContent = book.title;
     if (panel.isConnected) rememberOpenedBook(id);
-    if (book.originalName) configurePdf(panel, book);
-    if (!book.count) return;
+    if (!book.count) {
+      if (book.originalName) configureConversion(panel, id);
+      return;
+    }
 
-    const position = panel.querySelector('.book-position');
-    const progress = panel.querySelector('progress');
     const content = panel.querySelector('.book-content');
     const previous = panel.querySelector('[data-step="-1"]');
     const next = panel.querySelector('[data-step="1"]');
     panel.querySelector('.book-pagination').hidden = book.count < 2;
     let section = book.position;
-    progress.max = book.count;
 
     function renderSection() {
       content.textContent = book.sections[section];
-      position.textContent = `Section ${section + 1} of ${book.count}`;
-      progress.value = section + 1;
       previous.disabled = section === 0;
       next.disabled = section === book.count - 1;
     }
@@ -160,73 +152,54 @@ async function showReader(panel, id) {
   }
 }
 
-function configurePdf(panel, book) {
-  const tools = panel.querySelector('[data-pdf-tools]');
-  const originalButton = '<button type="button" class="quiet" data-original>Save original PDF</button>';
-  tools.innerHTML = book.count
-    ? `<details class="book-files">
-        <summary>Book files</summary>
-        <div class="actions">
-          <button type="button" data-epub>Save EPUB</button>
-          ${originalButton}
-        </div>
-      </details>`
-    : `<section class="card book-conversion" aria-labelledby="book-conversion-title">
-        <h2 id="book-conversion-title">PDF to EPUB</h2>
-        <p class="muted">Convert selectable text to a layout that fits your screen.</p>
-        <div class="actions">
-          <button type="button" data-convert>Convert to EPUB</button>
-          ${originalButton}
-        </div>
-      </section>`;
+function configureConversion(panel, id) {
   const convert = panel.querySelector('[data-convert]');
-  const epub = panel.querySelector('[data-epub]');
-  const original = panel.querySelector('[data-original]');
-  const status = panel.querySelector('[data-file-status]');
-  const note = panel.querySelector('[data-conversion-note]');
-  if (book.skippedPages) {
-    note.hidden = false;
-    note.textContent = `Some pages had no selectable text (${book.skippedPages}). You can find them in the original PDF.`;
-  }
-
-  convert?.addEventListener('click', async () => {
+  convert.hidden = false;
+  convert.addEventListener('click', async () => {
     convert.disabled = true;
+    convert.textContent = 'Converting…';
     showError(panel, '');
-    status.textContent = 'Preparing PDF…';
     try {
-      const result = await convertPdf(await getOriginal(book.id), (page, total) => {
-        status.textContent = `Converting page ${page} of ${total}…`;
-      });
-      await saveConversion(book.id, result);
+      const result = await convertPdf(await getOriginal(id));
+      await saveConversion(id, result);
       if (panel.isConnected) {
-        await showReader(panel, book.id);
+        await showReader(panel, id);
         panel.querySelector('h1').focus();
-        panel.querySelector('[data-file-status]').textContent = 'EPUB ready.';
       }
     } catch (error) {
-      status.textContent = '';
       showError(panel, error instanceof BookImportError ? error.message : 'Could not convert this PDF.');
     } finally {
       convert.disabled = false;
+      convert.textContent = 'Convert to EPUB';
     }
   });
+}
+
+function bookDownloads(book, titleId) {
+  const files = document.createElement('details');
+  files.className = 'book-files';
+  files.innerHTML = `<summary aria-describedby="${titleId}">Download files</summary>
+    <div class="actions">
+      ${book.count ? '<button type="button" data-epub>Save EPUB</button>' : ''}
+      <button type="button" class="quiet" data-original>Save original PDF</button>
+    </div>
+    <p class="book-error" role="alert" hidden></p>`;
+  const epub = files.querySelector('[data-epub]');
+  const original = files.querySelector('[data-original]');
 
   async function save(format) {
     if (savingFile) return;
     savingFile = true;
     original.disabled = true;
     if (epub) epub.disabled = true;
-    showError(panel, '');
-    status.textContent = `Preparing ${format}…`;
+    showError(files, '');
     try {
-      const file = format === 'EPUB' ? await makeEpub(book) : await getOriginal(book.id);
+      const file = format === 'EPUB' ? await makeEpub(await getBook(book.id)) : await getOriginal(book.id);
       const name = format === 'EPUB' ? `${book.title}.epub` : book.originalName;
       const mime = format === 'EPUB' ? 'application/epub+zip' : 'application/pdf';
-      const saved = await saveBookFile(file, name, mime);
-      status.textContent = saved ? `${format} export requested.` : '';
+      await saveBookFile(file, name, mime);
     } catch {
-      status.textContent = '';
-      showError(panel, `Could not save the ${format}.`);
+      showError(files, `Could not save the ${format}.`);
     } finally {
       savingFile = false;
       original.disabled = false;
@@ -236,6 +209,7 @@ function configurePdf(panel, book) {
 
   epub?.addEventListener('click', () => save('EPUB'));
   original.addEventListener('click', () => save('PDF'));
+  return files;
 }
 
 export function renderBooks(view, id, focus) {

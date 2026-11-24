@@ -8,13 +8,15 @@ Last updated November 24, 2026.
 - **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
-- **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. The reader opens inside the shared Workspace navigation. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
+- **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two SmartBot workflows. The [design skill setup](codex-setup.md#design-skills) also installs pinned releases of Taste, Emil Kowalski's motion guidance, and Impeccable into the checkout.
 - The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+At 320 CSS pixels, Chromium verified the simplified reader after offline PDF conversion with a skipped page. Section controls, offline resume, original PDF and EPUB downloads, text imports, and recovery from a blank PDF passed. The Ask SmartBot launcher reappeared on return to the library. All 20 Node and seven Python tests passed after integration with the Music redesign.
 
 The Music redesign was checked in Chromium from 320 to 1440 CSS pixels in light and dark mode. The functional check used a controlled podcast feed and audio file to verify keyboard navigation, search and error recovery, RSS import, follow and refresh, playback and seek, resume, and the offline library. All 27 automated tests passed. The redesigned Android debug APK built and passed signature and bundled asset checks. Lint reported zero errors and seven warnings. Physical phone verification remains open.
 
@@ -47,6 +49,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The combined reader and Music debug APK built successfully. The signature and all 222 bundled web files passed verification. Lint reported zero errors and nine warnings. Phone verification is pending.
 
 The combined Android 0.3.2 build includes Workspace, PDF Books, News, and Podcasts. The APK signature and all 220 bundled web assets were verified. Lint reported zero errors and nine warnings. Drive import and background podcast playback still need a phone check.
 

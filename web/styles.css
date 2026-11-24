@@ -695,35 +695,15 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
   border-radius: 0.1875rem;
 }
 
-.book-conversion { background: var(--accent-soft); }
-.book-conversion p { margin-block: 0.375rem 1rem; }
-
-@media (max-width: 26rem) {
-  .book-conversion .actions button { flex-basis: 100%; }
-}
-
-.book-files { margin-block: 0 0.75rem; }
-.book-files .actions { padding-block-end: 0.5rem; }
-.book-file-status:empty { margin: 0; }
+.book-files { margin: 0 1rem; }
 .book-error {
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   border: 1px solid var(--line);
   background: var(--surface);
 }
-.book-reader-progress {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.375rem 1rem;
-  padding-block-end: 0.75rem;
-  border-bottom: 1px solid var(--line);
-}
-.book-position { margin: 0; font-size: 0.875rem; font-weight: 600; }
-.book-reader progress { width: 6rem; height: 0.5rem; accent-color: var(--accent); }
 .book-content {
-  margin-block: 1rem 1.25rem;
+  margin: 0;
   font: 1.125rem/1.75 Georgia, serif;
   max-width: 68ch;
   white-space: pre-wrap;
@@ -731,6 +711,7 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 }
 .book-pagination {
   justify-content: space-between;
+  margin-block-start: 1.25rem;
   padding-block-start: 1rem;
   border-top: 1px solid var(--line);
 }
@@ -755,7 +736,9 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
   .section-copy h2 { font-size: 1.7rem; }
 }
 
-.has-assistant { padding-block-end: 4rem; }
+.has-assistant:not(.reading-book) { padding-block-end: 4rem; }
+
+.reading-book .ask-launcher { display: none; }
 
 .ask-launcher {
   position: fixed;
