@@ -47,7 +47,7 @@ News marks the feed **For you** after you open an article. Recent reading activi
 
 News draws on free-to-read sources from the US, France, and Vietnam. French coverage includes LinuxFr.org community posts, ActuIA, and La French Tech. English sources include Hacker News, Show HN, Y Combinator, GitHub Blog, and Viet Nam News’ BizHub. Dân trí supplies Vietnamese tech and business headlines. Star a headline to keep it available offline. [News source verification](docs/product-plan.md#verify-news-sources)
 
-NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
+NASA releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Previously saved Canada.ca releases remain in Saved. Loading new articles needs internet. Reading saved text works offline.
 
 Tap a Tuổi Trẻ headline to open the publisher’s full article with its original photos. Use Back to return to your list. The star beside the headline keeps the RSS summary on your device for offline reading. Live Vietnamese feeds use the Python preview or the Android APK. [Tuổi Trẻ RSS channels and terms](https://tuoitre.vn/rss.htm)
 

@@ -254,8 +254,7 @@ public final class MainActivity extends Activity {
     private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, Uri uri) {
         if (!isAppAsset(uri)) {
             String host = uri.getAuthority();
-            if ("https".equals(uri.getScheme()) && ("api.io.canada.ca".equals(host)
-                    || "www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
+            if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));

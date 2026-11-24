@@ -81,6 +81,12 @@ The local News repository remembers up to 120 distinct article opens from the pa
 
 Chromium at 320 CSS pixels verified the fresh edition, two publisher opens, an in-app read, a related story moving above the newest headline, More across Back, and offline reopening. Keyboard opt-out restored the freshness-based order, and resetting cleared activity without changing settings. The recommendation controls were checked at 320 and 1280 CSS pixels. All 26 Node and eight Python tests passed. The Android debug APK built, its signature and 224 bundled assets matched, and lint reported zero errors and nine warnings.
 
+### Retire Canada.ca feeds
+
+November 24, 2026. Current editions, starter headlines, and recommendation signals exclude Government of Canada releases. Previously saved releases retain their source links and downloaded text. Existing language and topic choices carry forward, with coverage drawn from the remaining feeds.
+
+At 320 CSS pixels, Chromium loaded 20 live headlines through More without a Canada.ca request, even with a retired feed snapshot and reading signal in local storage. A previously saved release opened with a controlled publisher response and reopened offline. All 29 Node and eight Python tests passed. The Android debug APK passed signature and 228 bundled asset checks. Lint reported zero errors and nine warnings. Phone testing is pending.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

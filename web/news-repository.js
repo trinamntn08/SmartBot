@@ -1,4 +1,4 @@
-import { feeds, starterStories, storyTopics } from './news-provider.js';
+import { feeds, isCanadaStory, starterStories, storyTopics } from './news-provider.js';
 import { newsPreferences } from './news-preferences.js';
 
 const storagePrefix = 'smartbot-news-';
@@ -41,7 +41,7 @@ export const newsRepository = {
     catch { return []; }
   },
   recordOpen(story, now = Date.now()) {
-    if (!this.personalized()) return;
+    if (!this.personalized() || isCanadaStory(story.url)) return;
     const key = openPrefix + story.url;
     if (read(key)?.at > now - activityWindow) return;
     // One key per article lets tabs record different opens without overwriting each other.

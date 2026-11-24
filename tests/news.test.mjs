@@ -2,14 +2,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
-import { feedStories, newsAffinity, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
+import { newsAffinity, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
 import { newsPreferences, newsTopics } from '../web/news-preferences.js';
 import { newsRepository } from '../web/news-repository.js';
 import { isCurrentPublisherLink, rssFeeds, rssStory } from '../web/news-rss.js';
 import { tuoitreStory } from '../web/tuoitre.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
-const story = starterStories.find(item => item.source === 'Affaires mondiales Canada');
+const story = {
+  title: 'Actualités de la semaine', url: 'https://example.org/weekly', date: '2026-11-23',
+  source: 'Publisher', language: 'fr', topic: 'general',
+};
+const archivedStory = {
+  ...story, title: 'Earlier Canada.ca release', source: 'Gouvernement du Canada',
+  url: 'https://www.canada.ca/fr/patrimoine-canadien/nouvelles/2026/10/release.html',
+};
 
 test('reading activity ranks unread related headlines without overriding filters or freshness', () => {
   const now = Date.parse('2026-11-24T12:00:00Z');
@@ -52,6 +59,8 @@ test('opened stories stay bounded and can be disabled and cleared without touchi
   const now = Date.parse('2026-11-24T12:00:00Z');
   const prefs = { languages: ['fr'], topics: ['world'] };
   newsRepository.savePreferences(prefs);
+  newsRepository.recordOpen(archivedStory, now);
+  assert.deepEqual(newsRepository.opens(now), []);
   newsRepository.recordOpen(story, now - 3600000);
   newsRepository.recordOpen(story, now);
   assert.equal(newsRepository.opens(now).length, 1);
@@ -73,8 +82,8 @@ test('opened stories stay bounded and can be disabled and cleared without touchi
 
 test('setting up reading preserves an earlier news pick and its read history', () => {
   const routine = newRoutine();
-  const news = { story, status: 'completed', minutes: 5 };
-  const readStories = { [story.url]: story.title };
+  const news = { story: archivedStory, status: 'completed', minutes: 5 };
+  const readStories = { [archivedStory.url]: archivedStory.title };
   routine.plans[day.date] = { ...day, news, readStories };
   savePreferences(routine, { title: 'Paper book', budget: 20, page: 7 });
   ensurePlan(routine, day);
@@ -83,16 +92,18 @@ test('setting up reading preserves an earlier news pick and its read history', (
   assert.equal(routine.plans[day.date].reading.minutes, 10);
 });
 
-test('live feed keeps approved language, topic, and publisher article links', () => {
-  const entry = { title: 'Du nouveau pour le sport', link: story.url, publishedDate: '2026-11-20' };
-  const entries = [entry, { ...entry, title: 'Arts et musique' }, { ...entry, link: 'https://example.org/paywall' }];
-  const output = feedStories(entries, { language: 'fr', topic: 'sports' });
-  assert.deepEqual(output.map(item => item.url), [story.url]);
-  assert.equal(feedStories(entries, { language: 'en', topic: 'sports' }).length, 0);
+test('archived Canada.ca headlines stay out of editions and recommendation signals', () => {
+  const open = { url: archivedStory.url, at: Date.now(), topics: ['general'], source: archivedStory.source };
+  const affinity = newsAffinity([open]);
+  assert.equal(affinity.seen.size, 0);
+  assert.deepEqual(shortlist([story, archivedStory, ...starterStories], { languages: ['fr'] }, affinity), [story]);
+  assert.ok(shortlist(starterStories).every(item => item.source === 'NASA'));
 });
 
 test('the shortlist keeps a bilingual topic mix, removes duplicates, and respects filters', () => {
-  const stories = [...starterStories, ...starterStories, ...Array.from({ length: 8 }, (_, i) =>
+  const sport = { ...story, url: 'https://example.org/sports', topic: 'sports' };
+  const tech = { ...story, url: 'https://example.org/tech', language: 'en', topic: 'tech' };
+  const stories = [...starterStories, ...starterStories, sport, tech, ...Array.from({ length: 8 }, (_, i) =>
     ({ ...story, date: '2026-11-23', url: 'https://example.org/' + i }))];
   const result = shortlist(stories);
   assert.equal(result.length, new Set(stories.map(item => item.url)).size);
@@ -101,7 +112,7 @@ test('the shortlist keeps a bilingual topic mix, removes duplicates, and respect
   assert.equal(firstPage.length, 10);
   assert.equal(new Set(firstPage.map(item => item.topic + item.language)).size, 4);
   assert.ok(result.slice(10).length > 0);
-  assert.deepEqual(shortlist(stories, { language: 'fr', topic: 'sports' }), starterStories.filter(item => item.language === 'fr' && item.topic === 'sports'));
+  assert.deepEqual(shortlist(stories, { language: 'fr', topic: 'sports' }), [sport]);
 });
 
 test('news preferences retain earlier choices and normalize multiple selections', () => {
@@ -111,20 +122,17 @@ test('news preferences retain earlier choices and normalize multiple selections'
     { languages: ['en', 'fr'], topics: ['culture', 'tech'] });
 });
 
-test('each suggested interest has a feed in each language', () => {
+test('selected feeds match the available language and topic coverage', () => {
   for (const language of ['en', 'fr', 'vi']) {
     for (const { id } of newsTopics) {
       const selected = selectedFeeds({ languages: [language], topics: [id] });
-      if (id === 'show-hn' && language !== 'en') {
-        assert.equal(selected.length, 0);
-        continue;
-      }
-      assert.ok(selected.some(feed => feed.topic === id || feed.related?.includes(id)), language + '/' + id);
       assert.ok(selected.every(feed => feed.language === language));
+      assert.ok(selected.every(feed => feed.topic === id || feed.related?.includes(id)), language + '/' + id);
     }
   }
   const feeds = selectedFeeds({ languages: ['fr'], topics: ['culture', 'tech'] });
-  assert.deepEqual(feeds.map(feed => feed.id), ['fr-culture', 'fr-tech', 'linuxfr-news', 'linuxfr-journals', 'actuia']);
+  assert.deepEqual(feeds.map(feed => feed.id), ['linuxfr-news', 'linuxfr-journals', 'actuia']);
+  assert.deepEqual(selectedFeeds({ languages: ['fr'], topics: ['sports'] }), []);
 });
 
 test('regional RSS entries use matching topics and trusted publisher or discussion URLs', () => {
@@ -196,11 +204,7 @@ test('Vietnamese entertainment uses one feed, with cinema as a separate interest
 });
 
 test('multiple interests show the union of matching headlines in the chosen language', () => {
-  const entry = { title: 'Festival de cinéma', link: story.url, publishedDate: '2026-11-20' };
-  const second = { ...entry, title: 'Recherche en intelligence artificielle', link: entry.link.replace('.html', '-2.html') };
-  const culture = feedStories([entry], { language: 'fr', topic: 'culture' });
-  const tech = feedStories([entry, second], { language: 'fr', topic: 'tech' });
-  assert.deepEqual(tech.map(item => item.title), [second.title]);
-  const result = shortlist([...culture, ...tech, ...starterStories], { languages: ['fr'], topics: ['culture', 'tech'] });
-  assert.deepEqual(result.map(item => item.url).sort(), [entry.link, second.link].sort());
+  const culture = { ...story, title: 'Festival de cinéma', topic: 'culture' };
+  const tech = { ...story, title: 'Recherche en intelligence artificielle', url: 'https://example.org/tech', topic: 'tech' };
+  assert.deepEqual(shortlist([culture, tech, ...starterStories], { languages: ['fr'], topics: ['culture', 'tech'] }), [culture, tech]);
 });
