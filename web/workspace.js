@@ -18,7 +18,7 @@ export function workspace() {
     <a class="feature-card" href="#books">
       <div class="feature-copy">
         <h2>Books</h2>
-        <p>Import a text file and pick up where you left off.</p>
+        <p>Import a PDF or text file and pick up where you left off.</p>
         <span class="feature-action">Open library <span class="arrow" aria-hidden="true"></span></span>
       </div>
       <img src="./assets/books.webp" alt="" width="1536" height="1024">

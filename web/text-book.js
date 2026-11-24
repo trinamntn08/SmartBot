@@ -3,7 +3,7 @@ const maxSectionLength = 5000;
 
 export class BookImportError extends Error {}
 
-function readingSections(text) {
+export function readingSections(text) {
   const sections = [];
   let remaining = text;
   while (remaining.length > maxSectionLength) {

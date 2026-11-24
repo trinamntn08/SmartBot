@@ -1,6 +1,6 @@
 # SmartBot status
 
-Last updated November 23, 2026.
+Last updated November 24, 2026.
 
 ## Current state
 
@@ -8,13 +8,15 @@ Last updated November 23, 2026.
 - **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
-- **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
+- **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. The reader opens inside the shared Workspace navigation. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two reusable skills. The [setup guide](codex-setup.md) explains how to discover and use them.
 - The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The Books redesign and PDF import now run inside Workspace. At 320 CSS pixels, Chromium verified keyboard navigation from Workspace to Books and back, return from an open book through the SmartBot header, offline reading position, offline PDF conversion, and both EPUB and original PDF export. All 15 Node and seven Python tests passed. The combined Android build is tracked in the branch integration check.
 
 At 320 CSS pixels, the Vietnamese Culture list expanded from ten to 50 unique headlines. Opening the digital culture passport story reached all 17 article paragraphs and two original images. Back restored the expanded edition. Offline reload preserved the saved summary and More worked on cached headlines. All 15 Node and seven Python tests passed. Android build, lint and signature checks passed. On-device Custom Tab verification is pending.
 

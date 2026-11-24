@@ -2,7 +2,7 @@
 
 SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-The app includes a plain-text book reader, news in three languages, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
+The app includes a book library with PDF-to-EPUB conversion, news in three languages, a daily reading routine, and an assistant for typed and spoken questions. See the [personal workspace plan](docs/plans/personal-workspace.md) for upcoming features.
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 
@@ -27,7 +27,15 @@ The web app needs an initial online load at a given address to cache its files f
 
 ## Read a book
 
-Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot displays the text in sections and saves the last section you opened. Use a UTF-8 file or a UTF-16 file with a byte order mark, up to 8 MB. The book and its position are stored on the device and are available offline.
+Open **Books** → **Add a book**, choose a PDF or text file, then select **Import book**. On Android, select **Drive** in the system file picker if it appears. In a browser, you can download a file from Drive first and then select it from your downloads.
+
+- For a PDF up to 20 MB, tap **Convert to EPUB**. Read the reflowed text in SmartBot, or open **Book files** and tap **Save EPUB** to use it in another reader. Use **Save original PDF** to get the original with its images and layout.
+- For a scan, run optical character recognition (OCR) before importing. Conversion uses the PDF’s selectable text, so complex layouts may read better in the original.
+- For a text file up to 8 MB, use UTF-8 or UTF-16 with a byte order mark.
+
+SmartBot stores the book and last section on the device. Conversion and reading work offline after import and the app’s initial load.
+
+Use **Back to Workspace** in the library or select **SmartBot** in the app header to return to the homepage.
 
 ## News
 
