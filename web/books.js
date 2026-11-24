@@ -13,14 +13,21 @@ function showError(panel, message) {
 
 async function showLibrary(panel) {
   panel.innerHTML = `<h1 tabindex="-1">Books</h1>
-    <form>
-      <label>Choose a PDF or text file <input type="file" name="book" accept=".pdf,application/pdf,.txt,text/plain" required></label>
-      <p>On Android, choose Google Drive from the file picker. In a browser, you can also import a file downloaded from Drive.</p>
-      <button type="submit">Import book</button>
-    </form>
-    <p role="alert" hidden></p>
-    <ul class="history" role="list" aria-label="Imported books"></ul>`;
+    <details class="card book-import" open>
+      <summary>Add a book</summary>
+      <form>
+        <label for="book-file">Choose a PDF or text file</label>
+        <p id="book-source" class="muted">Choose from your device or select Google Drive if it appears in the file picker.</p>
+        <input id="book-file" type="file" name="book" accept=".pdf,application/pdf,.txt,text/plain"
+          aria-describedby="book-source" required>
+        <button type="submit">Import book</button>
+      </form>
+    </details>
+    <p class="book-error" role="alert" hidden></p>
+    <p class="book-empty muted" hidden>No books yet. Add your first book above.</p>
+    <ul class="book-list history" role="list" aria-label="Imported books"></ul>`;
 
+  const importCard = panel.querySelector('details');
   const form = panel.querySelector('form');
   const button = form.querySelector('button');
   form.addEventListener('submit', async (event) => {
@@ -45,12 +52,30 @@ async function showLibrary(panel) {
   try {
     const books = await listBooks();
     const list = panel.querySelector('ul');
+    panel.querySelector('.book-empty').hidden = books.length > 0;
+    if (books.length && !importCard.matches(':focus-within')) importCard.open = false;
     for (const book of books) {
       const item = document.createElement('li');
-      item.className = 'card';
       const link = document.createElement('a');
+      link.className = 'card book-row';
       link.href = `#book=${book.id}`;
-      link.textContent = book.title;
+      const icon = document.createElement('span');
+      icon.className = 'book-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      const info = document.createElement('span');
+      const title = document.createElement('strong');
+      title.textContent = book.title;
+      title.id = `book-title-${book.id}`;
+      const detail = document.createElement('span');
+      detail.className = 'book-detail muted';
+      detail.id = `book-detail-${book.id}`;
+      const format = book.originalName ? 'PDF' : 'Text';
+      const position = book.count ? `Section ${book.position + 1} of ${book.count}` : 'Ready to convert';
+      detail.textContent = `${format} · ${position}`;
+      link.setAttribute('aria-labelledby', title.id);
+      link.setAttribute('aria-describedby', detail.id);
+      info.append(title, detail);
+      link.append(icon, info);
       item.append(link);
       list.append(item);
     }
@@ -60,22 +85,21 @@ async function showLibrary(panel) {
 }
 
 async function showReader(panel, id) {
-  panel.innerHTML = `<h1 tabindex="-1">Book</h1>
-    <p><a href="#books">Back to books</a></p>
-    <p role="alert" hidden></p>
-    <div class="actions" role="group" aria-label="Book files" hidden>
-      <button type="button" data-convert>Convert to EPUB</button>
-      <button type="button" data-epub>Save EPUB</button>
-      <button type="button" data-original>Save original PDF</button>
-    </div>
-    <p data-file-status role="status"></p>
-    <p data-conversion-note hidden></p>
-    <section hidden aria-label="Book text">
-      <p class="book-position" role="status"></p>
+  panel.innerHTML = `<a class="book-back" href="#books"><span aria-hidden="true">←</span> Back to books</a>
+    <h1 tabindex="-1">Book</h1>
+    <div data-pdf-tools></div>
+    <p class="book-error" role="alert" hidden></p>
+    <p class="book-file-status muted" data-file-status role="status"></p>
+    <p class="muted" data-conversion-note hidden></p>
+    <section class="card book-reader" hidden aria-label="Book text">
+      <header class="book-reader-progress">
+        <p class="book-position muted" role="status"></p>
+        <progress aria-label="Reading progress"></progress>
+      </header>
       <p class="book-content"></p>
-      <div class="actions">
+      <div class="actions book-pagination" hidden>
         <button type="button" data-step="-1">Previous section</button>
-        <button type="button" data-step="1">Next section</button>
+        <button type="button" class="primary" data-step="1">Next section</button>
       </div>
     </section>`;
 
@@ -92,14 +116,18 @@ async function showReader(panel, id) {
     if (!book.count) return;
 
     const position = panel.querySelector('.book-position');
+    const progress = panel.querySelector('progress');
     const content = panel.querySelector('.book-content');
     const previous = panel.querySelector('[data-step="-1"]');
     const next = panel.querySelector('[data-step="1"]');
+    panel.querySelector('.book-pagination').hidden = book.count < 2;
     let section = book.position;
+    progress.max = book.count;
 
     function renderSection() {
       content.textContent = book.sections[section];
       position.textContent = `Section ${section + 1} of ${book.count}`;
+      progress.value = section + 1;
       previous.disabled = section === 0;
       next.disabled = section === book.count - 1;
     }
@@ -131,20 +159,35 @@ async function showReader(panel, id) {
 }
 
 function configurePdf(panel, book) {
+  const tools = panel.querySelector('[data-pdf-tools]');
+  const originalButton = '<button type="button" data-original>Save original PDF</button>';
+  tools.innerHTML = book.count
+    ? `<details class="book-files">
+        <summary>Book files</summary>
+        <div class="actions">
+          <button type="button" class="primary" data-epub>Save EPUB</button>
+          ${originalButton}
+        </div>
+      </details>`
+    : `<section class="card book-conversion" aria-labelledby="book-conversion-title">
+        <h2 id="book-conversion-title">PDF to EPUB</h2>
+        <p class="muted">Convert selectable text to a layout that fits your screen.</p>
+        <div class="actions">
+          <button type="button" class="primary" data-convert>Convert to EPUB</button>
+          ${originalButton}
+        </div>
+      </section>`;
   const convert = panel.querySelector('[data-convert]');
   const epub = panel.querySelector('[data-epub]');
   const original = panel.querySelector('[data-original]');
   const status = panel.querySelector('[data-file-status]');
   const note = panel.querySelector('[data-conversion-note]');
-  convert.parentElement.hidden = false;
-  convert.hidden = book.count > 0;
-  epub.hidden = book.count === 0;
   if (book.skippedPages) {
     note.hidden = false;
     note.textContent = `Some pages had no selectable text (${book.skippedPages}). You can find them in the original PDF.`;
   }
 
-  convert.addEventListener('click', async () => {
+  convert?.addEventListener('click', async () => {
     convert.disabled = true;
     showError(panel, '');
     status.textContent = 'Preparing PDF…';
@@ -156,7 +199,7 @@ function configurePdf(panel, book) {
       if (panel.isConnected) {
         await showReader(panel, book.id);
         panel.querySelector('h1').focus();
-        panel.querySelector('[data-file-status]').textContent = 'Ready to read or save as EPUB.';
+        panel.querySelector('[data-file-status]').textContent = 'EPUB ready.';
       }
     } catch (error) {
       status.textContent = '';
@@ -170,7 +213,7 @@ function configurePdf(panel, book) {
     if (savingFile) return;
     savingFile = true;
     original.disabled = true;
-    epub.disabled = true;
+    if (epub) epub.disabled = true;
     showError(panel, '');
     status.textContent = `Preparing ${format}…`;
     try {
@@ -185,11 +228,11 @@ function configurePdf(panel, book) {
     } finally {
       savingFile = false;
       original.disabled = false;
-      epub.disabled = false;
+      if (epub) epub.disabled = false;
     }
   }
 
-  epub.addEventListener('click', () => save('EPUB'));
+  epub?.addEventListener('click', () => save('EPUB'));
   original.addEventListener('click', () => save('PDF'));
 }
 
