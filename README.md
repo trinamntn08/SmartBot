@@ -2,7 +2,7 @@
 
 SmartBot is a mobile-first personal workspace for books, news, questions, and daily routines. Today suggests a short plan you can edit to fit the 15–30 minutes you want to spend.
 
-The current app includes a plain-text book reader and a daily reading routine. A GPT assistant with text and voice input, news, and vocabulary are described in the [personal workspace plan](docs/plans/personal-workspace.md).
+The current app includes a book library with PDF-to-EPUB conversion and a daily reading routine. A GPT assistant with text and voice input, news, and vocabulary are described in the [personal workspace plan](docs/plans/personal-workspace.md).
 
 Read the [product and development plan](docs/product-plan.md) for the screens, daily planning rules, architecture, and implementation milestones.
 
@@ -16,7 +16,13 @@ The web app needs an initial online load at a given address to cache its files f
 
 ## Read a book
 
-Open **Books**, choose a `.txt` file, then select **Import book**. SmartBot displays the text in sections and saves the last section you opened. Use a UTF-8 file or a UTF-16 file with a byte order mark, up to 8 MB. The book and its position are stored on the device and are available offline.
+Open **Books**, choose a PDF or text file, then select **Import book**. On Android, select **Drive** in the system file picker if it appears. In a browser, you can download a file from Drive first and then select it from your downloads.
+
+- For a PDF up to 20 MB, tap **Convert to EPUB**. Read the reflowed text in SmartBot, or tap **Save EPUB** to use it in another reader. Tap **Save original PDF** to get the original with its images and layout.
+- For a scan, run optical character recognition (OCR) before importing. Conversion uses the PDF’s selectable text, so complex layouts may read better in the original.
+- For a text file up to 8 MB, use UTF-8 or UTF-16 with a byte order mark.
+
+SmartBot stores the book and last section on the device. Conversion and reading work offline after import and the app’s initial load.
 
 ## Install on Android
 

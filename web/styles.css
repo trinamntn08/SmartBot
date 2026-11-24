@@ -20,7 +20,7 @@ nav, .actions {
   gap: 0.5rem 1rem;
 }
 
-nav[hidden], nav > [hidden] { display: none; }
+nav[hidden], nav > [hidden], .actions[hidden] { display: none; }
 
 nav > a, .add-book {
   display: inline-flex;

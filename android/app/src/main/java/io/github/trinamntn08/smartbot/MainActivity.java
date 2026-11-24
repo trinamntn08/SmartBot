@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
+import android.util.Base64;
 import android.view.WindowInsets;
 import android.webkit.ServiceWorkerClient;
 import android.webkit.ServiceWorkerController;
@@ -21,20 +22,32 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
+import androidx.webkit.JavaScriptReplyProxy;
 import androidx.webkit.WebViewAssetLoader;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 public final class MainActivity extends Activity {
     private static final int OPEN_BOOK = 1;
+    private static final int SAVE_BOOK = 2;
+    private static final int MAX_EXPORT_LENGTH = 28 * 1024 * 1024;
     private static final String ASSET_PATH = "/assets/";
     private static final String APP_URL = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN
             + ASSET_PATH + "index.html";
 
     private WebView webView;
     private ValueCallback<Uri[]> selectedBook;
+    private String pendingExport;
+    private JavaScriptReplyProxy exportReply;
 
     @Override
     @SuppressWarnings("SetJavaScriptEnabled") // SmartBot only loads its own bundled web app.
@@ -69,6 +82,13 @@ public final class MainActivity extends Activity {
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(webView, "SmartBotFiles",
+                    Collections.singleton("https://" + WebViewAssetLoader.DEFAULT_DOMAIN),
+                    (view, message, origin, isMainFrame, reply) -> {
+                        if (isMainFrame) chooseExport(message.getData(), reply);
+                    });
+        }
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
@@ -101,7 +121,8 @@ public final class MainActivity extends Activity {
         if (selectedBook != null) return false;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType("text/plain")
+                .setType("*/*")
+                .putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"text/plain", "application/pdf"})
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
             selectedBook = callback;
@@ -113,10 +134,76 @@ public final class MainActivity extends Activity {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    private void chooseExport(String payload, JavaScriptReplyProxy reply) {
+        if (exportReply != null || payload == null || payload.length() > MAX_EXPORT_LENGTH) {
+            reportExport(reply, "failed");
+            return;
+        }
+        try {
+            JSONObject export = new JSONObject(payload);
+            String type = export.getString("type");
+            if (!"application/pdf".equals(type) && !"application/epub+zip".equals(type)) {
+                reportExport(reply, "failed");
+                return;
+            }
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType(type)
+                    .putExtra(Intent.EXTRA_TITLE, export.getString("name"));
+            pendingExport = export.getString("data");
+            exportReply = reply;
+            startActivityForResult(intent, SAVE_BOOK);
+        } catch (JSONException | ActivityNotFoundException error) {
+            pendingExport = null;
+            exportReply = null;
+            reportExport(reply, "failed");
+        }
+    }
+
+    private static void reportExport(JavaScriptReplyProxy reply, String result) {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            reply.postMessage(result);
+        }
+    }
+
+    private void finishExport(int resultCode, Intent data) {
+        if (exportReply == null) return;
+        Uri file = resultCode == RESULT_OK && data != null ? data.getData() : null;
+        JavaScriptReplyProxy reply = exportReply;
+        String encoded = pendingExport;
+        pendingExport = null;
+        if (file == null || !"content".equals(file.getScheme())) {
+            exportReply = null;
+            reportExport(reply, "cancelled");
+            return;
+        }
+        new Thread(() -> {
+            String outcome = "failed";
+            try (OutputStream output = getContentResolver().openOutputStream(file, "wt")) {
+                if (output != null) {
+                    output.write(Base64.decode(encoded, Base64.DEFAULT));
+                    outcome = "saved";
+                }
+            } catch (IOException | IllegalArgumentException | SecurityException error) {
+                outcome = "failed";
+            }
+            String result = outcome;
+            runOnUiThread(() -> {
+                exportReply = null;
+                if (!isDestroyed()) reportExport(reply, result);
+            });
+        }, "book-export").start();
+    }
+
     @Override
     @SuppressWarnings("deprecation")
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SAVE_BOOK) {
+            finishExport(resultCode, data);
+            return;
+        }
         if (requestCode != OPEN_BOOK || selectedBook == null) return;
 
         ValueCallback<Uri[]> callback = selectedBook;

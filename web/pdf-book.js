@@ -1,0 +1,72 @@
+import { BookImportError, readingSections } from './text-book.js';
+
+const maxPdfBytes = 20 * 1024 * 1024;
+const pdfAssets = new URL('./vendor/pdfjs/', import.meta.url);
+
+export async function importPdf(file) {
+  if (file.size > maxPdfBytes) throw new BookImportError('Choose a PDF up to 20 MB.');
+  const header = await file.slice(0, 1024).text();
+  if (!header.includes('%PDF-')) throw new BookImportError('This file is not a valid PDF.');
+
+  return {
+    title: file.name.slice(0, -4).trim() || 'Untitled book',
+    sections: [],
+    original: file,
+  };
+}
+
+function pageText(items) {
+  const text = [];
+  let previous;
+  for (const item of items) {
+    if (typeof item.str !== 'string') continue;
+    if (item.str) {
+      const lineHeight = Math.max(previous?.height || 0, item.height);
+      const verticalGap = previous && Math.abs(previous.transform[5] - item.transform[5]);
+      if (verticalGap > lineHeight * 1.5) {
+        text.push('\n\n');
+      } else if (previous?.hasEOL || verticalGap > lineHeight * 0.5) {
+        text.push(' ');
+      }
+      text.push(item.str);
+    }
+    if (item.str || item.hasEOL) previous = item;
+  }
+  return text.join('').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+}
+
+export async function convertPdf(file, onProgress) {
+  const { getDocument, GlobalWorkerOptions, PasswordResponses } = await import('./vendor/pdfjs/pdf.min.js');
+  GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.js', pdfAssets).href;
+  const task = getDocument({
+    data: await file.arrayBuffer(),
+    cMapUrl: new URL('cmaps/', pdfAssets).href,
+    standardFontDataUrl: new URL('standard_fonts/', pdfAssets).href,
+    useWasm: false,
+    useSystemFonts: false,
+    isEvalSupported: false,
+  });
+
+  try {
+    const pdf = await task.promise;
+    const pages = [];
+    for (let number = 1; number <= pdf.numPages; number += 1) {
+      const page = await pdf.getPage(number);
+      const text = pageText((await page.getTextContent()).items);
+      if (text) pages.push(text);
+      page.cleanup();
+      onProgress(number, pdf.numPages);
+    }
+    if (!pages.length) {
+      throw new BookImportError('This PDF has no selectable text. Run OCR on it, then import the resulting PDF.');
+    }
+    return { sections: readingSections(pages.join('\n\n')), skippedPages: pdf.numPages - pages.length };
+  } catch (error) {
+    if (error.code === PasswordResponses.NEED_PASSWORD) {
+      throw new BookImportError('Unlock this PDF before converting it.');
+    }
+    throw error;
+  } finally {
+    await task.destroy();
+  }
+}

@@ -3,10 +3,13 @@ let connection;
 function openLibrary() {
   if (!connection) {
     connection = new Promise((resolve, reject) => {
-      const request = indexedDB.open('smartbot-library', 1);
-      request.onupgradeneeded = () => {
-        request.result.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
-        request.result.createObjectStore('sections');
+      const request = indexedDB.open('smartbot-library', 2);
+      request.onupgradeneeded = ({ oldVersion }) => {
+        if (oldVersion < 1) {
+          request.result.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
+          request.result.createObjectStore('sections');
+        }
+        request.result.createObjectStore('originals');
       };
       request.onsuccess = () => {
         const database = request.result;
@@ -42,11 +45,37 @@ export function listBooks() {
   });
 }
 
-export function addBook({ title, sections }) {
-  return runTransaction(['books', 'sections'], 'readwrite', (transaction) => {
-    const request = transaction.objectStore('books').add({ title, position: 0, count: sections.length });
-    request.onsuccess = () => transaction.objectStore('sections').add(sections, request.result);
+export function addBook({ title, sections, original }) {
+  return runTransaction(['books', 'sections', 'originals'], 'readwrite', (transaction) => {
+    const request = transaction.objectStore('books').add({
+      title, position: 0, count: sections.length, originalName: original?.name,
+    });
+    request.onsuccess = () => {
+      transaction.objectStore('sections').add(sections, request.result);
+      if (original) transaction.objectStore('originals').add(original, request.result);
+    };
     return () => request.result;
+  });
+}
+
+export function getOriginal(id) {
+  return runTransaction('originals', 'readonly', (transaction) => {
+    const request = transaction.objectStore('originals').get(id);
+    return () => request.result;
+  });
+}
+
+export function saveConversion(id, { sections, skippedPages }) {
+  return runTransaction(['books', 'sections'], 'readwrite', (transaction) => {
+    const books = transaction.objectStore('books');
+    const request = books.get(id);
+    request.onsuccess = () => {
+      const book = request.result;
+      if (!book?.originalName || book.count > 0) return;
+      books.put({ ...book, count: sections.length, skippedPages });
+      transaction.objectStore('sections').put(sections, id);
+    };
+    return () => undefined;
   });
 }
 
