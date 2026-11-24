@@ -387,6 +387,24 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 }
 
 .history p { margin: 0.35rem 0 0; }
+
+.podcast-player { max-width: 44rem; margin-block-start: 1rem; }
+.podcast-player .actions { align-items: center; margin-block: 0.6rem 0; }
+.podcast-player input { max-width: none; padding: 0; accent-color: var(--accent); }
+.podcast-player [role="status"], .podcast-status:empty { margin: 0; }
+.podcast-player [role="status"]:not(:empty) { margin-block-start: 0.25rem; }
+.podcast-continue { margin-block-end: 1rem; }
+.podcast-continue strong { display: block; margin-block-end: 0.5rem; }
+.podcasts form:first-child { margin-block-start: 0; }
+.podcast-notice { color: var(--muted); }
+.podcast-example { margin-block-end: 0; }
+.podcast-example button { background: var(--surface); color: var(--accent); }
+.podcast-show, .podcast-library { margin-block-start: 1rem; }
+.podcast-list { margin-block: 0.65rem 0; padding-inline-start: 0; list-style: none; }
+.podcast-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.45rem 1rem; }
+.podcast-list li + li { border-block-start: 1px solid var(--line); margin-block-start: 0.65rem; padding-block-start: 0.65rem; }
+.podcast-list p { margin: 0.2rem 0; }
+.podcast-list.card { padding-inline-start: clamp(1rem, 3vw, 1.5rem); }
 .news-heading, .news-tools, .news-reader-tools {
   display: flex;
   align-items: center;

@@ -31,10 +31,11 @@ import java.util.Collections;
 public final class MainActivity extends Activity {
     private static final int OPEN_BOOK = 1;
     private static final String ASSET_PATH = "/assets/";
-    private static final String APP_URL = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN
-            + ASSET_PATH + "index.html";
+    private static final String APP_ORIGIN = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN;
+    private static final String APP_URL = APP_ORIGIN + ASSET_PATH + "index.html";
 
     private WebView webView;
+    private PodcastBridge podcasts;
     private ValueCallback<Uri[]> selectedBook;
 
     @Override
@@ -64,6 +65,7 @@ public final class MainActivity extends Activity {
         });
 
         webView = new WebView(this);
+        podcasts = new PodcastBridge(this, webView, APP_ORIGIN);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -107,8 +109,14 @@ public final class MainActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         setContentView(container);
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
-            webView.loadUrl(APP_URL);
+            webView.loadUrl(PodcastPlaybackService.OPEN_MUSIC.equals(getIntent().getAction()) ? APP_URL + "#music" : APP_URL);
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (PodcastPlaybackService.OPEN_MUSIC.equals(intent.getAction())) webView.loadUrl(APP_URL + "#music");
     }
 
     @SuppressWarnings("deprecation")
@@ -196,6 +204,7 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        podcasts.close();
         if (selectedBook != null) selectedBook.onReceiveValue(null);
         ((FrameLayout) webView.getParent()).removeView(webView);
         webView.destroy();

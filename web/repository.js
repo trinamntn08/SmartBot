@@ -1,5 +1,6 @@
 import { newRoutine } from './planner.js';
 import { savedNewsRepository } from './news-repository.js';
+import { podcastRepository } from './podcast-repository.js';
 
 export async function openRepository() {
   const database = await new Promise((resolve, reject) => {
@@ -12,6 +13,7 @@ export async function openRepository() {
 
   return {
     savedNews: savedNewsRepository(database),
+    podcasts: podcastRepository(database),
     // A single transaction keeps plan outcomes and reading progress in sync across tabs.
     update(change) {
       return new Promise((resolve, reject) => {

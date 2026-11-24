@@ -1,12 +1,12 @@
 # SmartBot status
 
-Last updated November 23, 2026.
+Last updated November 24, 2026.
 
 ## Current state
 
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines when available. More reveals the next ten. Under **Settings → News**, select English, French, or Vietnamese and any combination of 18 suggested topics. NASA and Canada.ca articles open in SmartBot. Tuổi Trẻ headlines open the publisher’s full article and photos online. Their row stars keep summaries available offline. The News header opens the saved collection across all topics and languages. Earlier News plan records remain in Progress.
-- **Workspace** is the home screen. Its five cards open Books, News, and previews for Languages, Music, and Movies.
+- **Workspace** is the home screen. Its five cards open Books, News, Music, and previews for Languages and Movies. **Music** supports podcast search, public RSS imports, following, and local listening progress. See the [podcast pilot setup](plans/podcast-listening.md).
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports plain-text files and resumes at the last section. The Android 0.2.0 debug APK includes the reader and a system file picker.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -57,5 +57,7 @@ The local Codex app server reported the active project configuration with a thre
 Local validation for the SmartBot rename covered Markdown links and section anchors, all five role files, and both renamed skill files. A fresh Codex app server discovered `$smartbot-deliver-feature` and `$smartbot-review-change` from the SmartBot checkout.
 
 ## Handoff
+
+The podcast feature requires a hosted metadata service for Android and Podcast Index credentials for full name search. Live publisher playback and lock-screen verification remain pending.
 
 On the pilot phone, check the book picker and offline resume, refresh News, star an article, then reopen it offline. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and portability.
