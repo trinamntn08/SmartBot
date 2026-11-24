@@ -61,6 +61,8 @@ Four text import tests covered encoding, line breaks, Unicode section boundaries
 
 ## Android APK verification
 
+The November 24 phone pilot APK (0.3.2) was rebuilt from `main` at `a505431`. Gradle build, signature, ZIP alignment, and byte-for-byte verification of all 228 bundled web files passed. Lint reported zero errors and nine warnings. Installation and launch on a physical phone remain pending.
+
 The combined reader and Music debug APK built successfully. The signature and all 222 bundled web files passed verification. Lint reported zero errors and nine warnings. Phone verification is pending.
 
 The combined Android 0.3.2 build includes Workspace, PDF Books, News, and Podcasts. The APK signature and all 220 bundled web assets were verified. Lint reported zero errors and nine warnings. Drive import and background podcast playback still need a phone check.
