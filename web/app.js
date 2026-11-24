@@ -116,6 +116,7 @@ function render(focusHeading = false) {
   const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
   const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
+  document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
     link.hidden = !routine.settings && (link.hash === '#activities' || (link.hash === '#progress' && !Object.keys(routine.plans).length));

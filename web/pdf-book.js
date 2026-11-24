@@ -35,7 +35,7 @@ function pageText(items) {
   return text.join('').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
 }
 
-export async function convertPdf(file, onProgress) {
+export async function convertPdf(file) {
   const { getDocument, GlobalWorkerOptions, PasswordResponses } = await import('./vendor/pdfjs/pdf.min.js');
   GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.js', pdfAssets).href;
   const task = getDocument({
@@ -55,7 +55,6 @@ export async function convertPdf(file, onProgress) {
       const text = pageText((await page.getTextContent()).items);
       if (text) pages.push(text);
       page.cleanup();
-      onProgress(number, pdf.numPages);
     }
     if (!pages.length) {
       throw new BookImportError('This PDF has no selectable text. Run OCR on it, then import the resulting PDF.');
