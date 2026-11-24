@@ -104,6 +104,7 @@ function progress() {
 }
 
 function render(focusHeading = false) {
+  if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
   const bookId = Number(/^book=([1-9]\d*)$/.exec(route)?.[1]);
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
