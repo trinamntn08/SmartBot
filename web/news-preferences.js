@@ -4,13 +4,18 @@ export const newsLanguages = [
   { id: 'vi', label: 'Tiếng Việt' },
 ];
 
-// Use the publisher's subject feeds or a specialist department for each interest.
+// Canada.ca subject and department fields are used by the government feed adapter.
 export const newsTopics = [
   { id: 'general', label: 'General news' },
   { id: 'culture', label: 'Culture', subject: 'artsandmedia', related: ['showbiz'] },
   { id: 'showbiz', label: 'Showbiz & celebrities' },
   { id: 'movies', label: 'Movies', department: 'nationalfilmboard', related: ['showbiz'] },
   { id: 'tech', label: 'Tech', subject: 'scienceandinnovation' },
+  { id: 'startups', label: 'Startups' },
+  { id: 'ai', label: 'AI' },
+  { id: 'programming', label: 'Programming' },
+  { id: 'open-source', label: 'Open source' },
+  { id: 'show-hn', label: 'Show HN (English)' },
   { id: 'sports', label: 'Sports', department: 'canadianheritage' },
   { id: 'science', label: 'Science', subject: 'scienceandinnovation' },
   { id: 'space', label: 'Space', department: 'spaceagency' },
@@ -32,5 +37,5 @@ export function newsPreferences(value) {
     .filter(id => Array.isArray(multiple) ? multiple.includes(id) : single === id);
   const languages = valid(newsLanguages, value?.languages, value?.language);
   const topics = valid(newsTopics, value?.topics, value?.topic);
-  return { languages: languages.length ? languages : ['en', 'fr'], topics };
+  return { languages: languages.length ? languages : newsLanguages.map(choice => choice.id), topics };
 }

@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 import socket
+from urllib.parse import urlsplit
 from urllib.request import urlopen
 import webbrowser
 
@@ -25,6 +26,9 @@ API = "/api/assistant"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
+NEWS_FEEDS = json.loads((WEB_ROOT / "news-feeds.json").read_text(encoding="utf-8"))
+NEWS_FEED_PREFIX = "/api/news/"
+TUOITRE_FEED_PREFIX = "/api/tuoitre/"
 
 
 def preview_worker(directory):
@@ -53,24 +57,35 @@ class PreviewServer(ThreadingHTTPServer):
 
 
 class PreviewHandler(SimpleHTTPRequestHandler):
-    def send_head(self):
-        if self.path.startswith("/api/tuoitre/"):
-            section = self.path.removeprefix("/api/tuoitre/")
-            if not self.local_request() or not re.fullmatch(r"[a-z-]{1,32}", section):
-                return self.send_error(403)
-            connection = HTTPSConnection("tuoitre.vn", timeout=8)
-            try:
-                connection.request("GET", f"/rss/{section}.rss")
-                response = connection.getresponse()
-                if response.status != 200:
-                    return self.send_error(502)
+    def read_news_feed(self, url):
+        publisher = urlsplit(url)
+        connection = HTTPSConnection(publisher.netloc, timeout=8)
+        try:
+            connection.request("GET", publisher.path, headers={"User-Agent": "SmartBot RSS Reader/1.0"})
+            response = connection.getresponse()
+            if response.status == 200:
                 body = response.read(512 * 1024 + 1)
-                if len(body) > 512 * 1024:
-                    return self.send_error(502)
-            except (OSError, HTTPException):
+                if len(body) <= 512 * 1024:
+                    return body
+        except (OSError, HTTPException):
+            pass
+        finally:
+            connection.close()
+        return None
+
+    def send_head(self):
+        if self.path.startswith((NEWS_FEED_PREFIX, TUOITRE_FEED_PREFIX)):
+            if not self.local_request():
+                return self.send_error(403)
+            section = self.path.removeprefix(TUOITRE_FEED_PREFIX)
+            url = NEWS_FEEDS.get(self.path.removeprefix(NEWS_FEED_PREFIX))
+            if re.fullmatch(r"[a-z-]{1,32}", section):
+                url = f"https://tuoitre.vn/rss/{section}.rss"
+            if url is None:
+                return self.send_error(403)
+            body = self.read_news_feed(url)
+            if body is None:
                 return self.send_error(502)
-            finally:
-                connection.close()
             content_type = "text/plain; charset=utf-8"
         elif self.path == REFRESH:
             body, content_type = REFRESH_PAGE.read_bytes(), "text/html; charset=utf-8"

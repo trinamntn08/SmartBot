@@ -55,6 +55,14 @@ November 23, 2026. **Full Vietnamese originals and longer editions.** Online Tuá
 
 Mobile-width Chromium verified 50 distinct Culture headlines, 17 paragraphs and two images on the reported digital passport article, return navigation, and offline reading and pagination. All 22 automated tests passed. The Android debug build, signature and lint checks passed with seven existing lint warnings. A physical Android reading check is pending.
 
+### Regional technology and startup news
+
+November 24, 2026. **Outcome.** News mixes 11 additional feeds from the US, France, and Vietnam with its existing sources. The [News requirements](../product-plan.md#news) guide the mix of Hacker News discussions, projects from Show HN, and regional technology and business reporting. Settings adds Startups, AI, Programming, Open source, and Show HN. Readers without a saved language choice start with English, French, and Vietnamese.
+
+**Implementation.** The browser preview and Android package use the same feed allowlist. The RSS adapter uses headlines, publisher categories, and descriptions to match interests. It stores the headline and attribution for bookmarks. Original articles and Hacker News discussions open online. When available, the first page includes a recent headline from the added feeds in each selected language. Existing preferences and saved articles use their original records. [Feed allowlist](../../web/news-feeds.json)
+
+**Verification.** All 11 live feeds returned usable headlines. At 320 CSS pixels, Chromium showed all three languages on the first page, loaded 20 distinct headlines with More, preserved a Show HN selection after reload, opened a discussion, and reopened a starred headline offline. The live French AI filter returned ten first-page results, and Vietnamese Startups returned four. A simulated publisher failure preserved the cached edition. All 22 Node and eight Python tests passed. The Android debug build and signature passed, all 224 bundled web assets matched, and lint reported zero errors and nine warnings.
+
 ## Handoff
 
-The News slice is ready for a phone check alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.
+Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

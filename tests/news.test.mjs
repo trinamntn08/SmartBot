@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
 import { feedStories, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
 import { newsPreferences, newsTopics } from '../web/news-preferences.js';
+import { rssFeeds, rssStory } from '../web/news-rss.js';
 import { tuoitreStory } from '../web/tuoitre.js';
 
 const day = { date: '2026-11-23', timeZone: 'Europe/Paris' };
@@ -43,7 +45,7 @@ test('the shortlist keeps a bilingual topic mix, removes duplicates, and respect
 
 test('news preferences retain earlier choices and normalize multiple selections', () => {
   assert.deepEqual(newsPreferences({ language: 'fr', topic: 'sports' }), { languages: ['fr'], topics: ['sports'] });
-  assert.deepEqual(newsPreferences({ language: '', topic: '' }), { languages: ['en', 'fr'], topics: [] });
+  assert.deepEqual(newsPreferences(null), { languages: ['en', 'fr', 'vi'], topics: [] });
   assert.deepEqual(newsPreferences({ languages: ['fr', 'en', 'fr'], topics: ['tech', 'culture', 'other'] }),
     { languages: ['en', 'fr'], topics: ['culture', 'tech'] });
 });
@@ -52,12 +54,58 @@ test('each suggested interest has a feed in each language', () => {
   for (const language of ['en', 'fr', 'vi']) {
     for (const { id } of newsTopics) {
       const selected = selectedFeeds({ languages: [language], topics: [id] });
+      if (id === 'show-hn' && language !== 'en') {
+        assert.equal(selected.length, 0);
+        continue;
+      }
       assert.ok(selected.some(feed => feed.topic === id || feed.related?.includes(id)), language + '/' + id);
       assert.ok(selected.every(feed => feed.language === language));
     }
   }
   const feeds = selectedFeeds({ languages: ['fr'], topics: ['culture', 'tech'] });
-  assert.deepEqual(feeds.map(feed => feed.subject), ['artsandmedia', 'scienceandinnovation']);
+  assert.deepEqual(feeds.map(feed => feed.id), ['fr-culture', 'fr-tech', 'next-ink', 'le-monde-pixels']);
+});
+
+test('regional RSS entries use matching topics and trusted publisher or discussion URLs', () => {
+  const catalog = JSON.parse(readFileSync(new URL('../web/news-feeds.json', import.meta.url), 'utf8'));
+  assert.deepEqual(Object.keys(catalog).sort(), rssFeeds.map(feed => feed.id).sort());
+  for (const feed of rssFeeds) assert.equal(new URL(catalog[feed.id]).origin, 'https://' + feed.host);
+
+  const hn = rssFeeds.find(feed => feed.id === 'hacker-news');
+  const item = { title: 'Show HN: an open-source Postgres tool', link: 'http://example.org/',
+    comments: 'https://news.ycombinator.com/item?id=123', published: 'Tue, 24 Nov 2026 18:00:00 GMT' };
+  const project = rssStory(hn, item);
+  assert.equal(project.url, item.comments);
+  assert.equal(project.linkKind, 'discussion');
+  assert.deepEqual(project.topics, ['tech', 'programming', 'open-source', 'show-hn']);
+  assert.equal(rssStory(hn, { ...item, comments: 'https://news.ycombinator.com/from?id=123' }), null);
+  assert.equal(rssStory(hn, { ...item, published: 'unknown' }), null);
+
+  const next = rssFeeds.find(feed => feed.id === 'next-ink');
+  const danTri = rssFeeds.find(feed => feed.id === 'dan-tri-business');
+  const french = rssStory(next, { ...item, title: 'Un autre modèle', categories: ['IA et algorithmes'],
+    link: 'https://next.ink/123/a/#comment' });
+  const vietnamese = rssStory(danTri, { ...item, title: 'Doanh nghiệp mở rộng hoạt động',
+    link: 'https://dantri.com.vn/kinh-doanh/a.htm', description: 'Nhà sáng lập nói về kế hoạch gọi vốn.' });
+  assert.equal(french.url, 'https://next.ink/123/a/');
+  assert.deepEqual(shortlist([project, french, vietnamese], { topics: ['ai', 'startups'] }), [french, vietnamese]);
+  assert.equal(vietnamese.description, undefined);
+  assert.deepEqual(rssStory(next, { ...item, title: "J'ai acheté un portable", link: french.url }).topics, ['tech']);
+  assert.equal(rssStory(next, { ...item, link: 'https://next.ink.example.org/article' }), null);
+});
+
+test('the default edition surfaces regional publishers when general feeds are busy', () => {
+  const recent = '2026-11-24T18:00:00Z';
+  const general = Array.from({ length: 15 }, (_, i) => ({
+    ...story, date: recent, url: 'https://example.org/' + i,
+  }));
+  const regional = ['hacker-news', 'next-ink', 'dan-tri-tech'].map(id => {
+    const feed = rssFeeds.find(feed => feed.id === id);
+    return rssStory(feed, { title: 'New software', link: 'https://' + feed.host + '/item?id=1',
+      published: '2026-11-23T18:00:00Z' });
+  });
+  const firstPage = shortlist([...general, ...regional]).slice(0, 10);
+  assert.ok(regional.every(article => firstPage.includes(article)));
 });
 
 test('Vietnamese entertainment uses one feed, with cinema as a separate interest', () => {

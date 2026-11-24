@@ -1,5 +1,6 @@
 import { newsPreferences, newsTopics } from './news-preferences.js';
 import { fetchTuoitre, tuoitreFeeds } from './tuoitre.js';
+import { fetchPublisherFeed, rssFeeds } from './news-rss.js';
 
 export const newsPageSize = 10;
 
@@ -37,12 +38,16 @@ export const feeds = ['en', 'fr'].flatMap(language =>
     .map(({ id: topic, subject, department, related }) => ({ id: language + '-' + topic, language, topic, subject, department, related })));
 feeds.push({ id: 'nasa', language: 'en', topic: 'general' });
 feeds.push(...tuoitreFeeds);
+feeds.push(...rssFeeds);
 
 export function selectedFeeds({ languages, topics }) {
   const interests = topics.length ? topics : ['general', 'sports'];
-  return feeds.filter(feed => languages.includes(feed.language) && (feed.id === 'nasa'
-    ? interests.some(id => ['general', 'space', 'science', 'tech'].includes(id))
-    : interests.includes(feed.topic) || feed.related?.some(topic => interests.includes(topic))));
+  return feeds.filter(feed => {
+    if (!languages.includes(feed.language)) return false;
+    if (!topics.length && feed.provider === 'rss') return true;
+    if (feed.id === 'nasa') return interests.some(id => ['general', 'space', 'science', 'tech'].includes(id));
+    return interests.includes(feed.topic) || feed.related?.some(topic => interests.includes(topic));
+  });
 }
 
 export function isCanadaStory(url) {
@@ -82,6 +87,7 @@ export function feedStories(entries, { language, topic }) {
 
 export async function fetchFeed(feed, signal) {
   const options = { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
+  if (feed.provider === 'rss') return fetchPublisherFeed(feed, options);
   if (feed.language === 'vi') return fetchTuoitre(feed, options);
   if (feed.id === 'nasa') {
     const response = await fetch('https://www.nasa.gov/news-release/feed/', options);
@@ -131,10 +137,18 @@ export function shortlist(articles, preferences) {
     selected.set(story.url, story);
     return true;
   }
-  // Reserve first-page places for each language, topic and publisher.
+  // Reserve first-page places for each language and favor recent stories in the default edition.
+  const recent = sorted.filter(story => Date.parse(sorted[0].date) - Date.parse(story.date) < 7 * 86400000);
   for (const language of languages) {
     const first = sorted.find(story => story.language === language && add(story));
     if (first) groups.add(first.language + '-' + first.topic);
+  }
+  if (!topics.length) {
+    for (const language of languages) {
+      const first = recent.find(story => story.language === language && story.linkKind
+        && (selected.has(story.url) || add(story)));
+      if (first) groups.add(first.language + '-' + first.topic);
+    }
   }
   for (const story of sorted) {
     if (selected.size >= newsPageSize) break;
@@ -142,9 +156,9 @@ export function shortlist(articles, preferences) {
     if (!groups.has(group) && add(story)) groups.add(group);
   }
   const sources = new Set(sorted.filter(story => selected.has(story.url)).map(story => story.source));
-  for (const story of sorted) {
+  for (const story of recent) {
     if (selected.size >= newsPageSize) break;
-    if (!sources.has(story.source) && Date.parse(sorted[0].date) - Date.parse(story.date) < 7 * 86400000) {
+    if (!sources.has(story.source)) {
       if (add(story)) sources.add(story.source);
     }
   }

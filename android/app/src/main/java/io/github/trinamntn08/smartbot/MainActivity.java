@@ -70,10 +70,11 @@ public final class MainActivity extends Activity {
         WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler(ASSET_PATH, new WebViewAssetLoader.AssetsPathHandler(getApplicationContext()))
                 .build();
+        NewsFeed newsFeed = new NewsFeed(getAssets());
         ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
-                return appAsset(assetLoader, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request.getUrl());
             }
         });
 
@@ -102,7 +103,7 @@ public final class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return appAsset(assetLoader, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request.getUrl());
             }
 
             @Override
@@ -110,7 +111,7 @@ public final class MainActivity extends Activity {
                 Uri uri = request.getUrl();
                 if (isAppAsset(uri)) return false;
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
-                        && isPublisher(uri.getAuthority())) {
+                        && (isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority()))) {
                     try {
                         Intent article = new Intent(Intent.ACTION_VIEW, uri);
                         Bundle extras = new Bundle();
@@ -250,7 +251,7 @@ public final class MainActivity extends Activity {
                 || "www.nasa.gov".equals(host) || "tuoitre.vn".equals(host);
     }
 
-    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, Uri uri) {
+    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, Uri uri) {
         if (!isAppAsset(uri)) {
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("api.io.canada.ca".equals(host)
@@ -259,9 +260,14 @@ public final class MainActivity extends Activity {
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
-        String feedPrefix = ASSET_PATH + "api/tuoitre/";
-        if (uri.getPath().startsWith(feedPrefix)) {
-            return TuoitreFeed.read(uri.getPath().substring(feedPrefix.length()));
+        String feedPrefix = ASSET_PATH + "api/news/";
+        if (uri.getEncodedPath().startsWith(feedPrefix)) {
+            String id = uri.getEncodedQuery() == null ? uri.getEncodedPath().substring(feedPrefix.length()) : null;
+            return newsFeed.readPublisher(id);
+        }
+        String tuoitrePrefix = ASSET_PATH + "api/tuoitre/";
+        if (uri.getPath().startsWith(tuoitrePrefix)) {
+            return NewsFeed.readTuoitre(uri.getPath().substring(tuoitrePrefix.length()));
         }
         if ((ASSET_PATH + "sw.js").equals(uri.getPath())) {
             // The APK already supplies these files offline. Avoid caching them across APK updates.

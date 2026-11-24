@@ -39,9 +39,11 @@ Use **Back to Workspace** in the library or select **SmartBot** in the app heade
 
 ## News
 
-Open **Settings → News** in the browser or Android app. Select any combination of English, Français, and Tiếng Việt. Choose from 18 topics, including **Showbiz & celebrities**, **Movies**, and **Sports**, or select **All topics**. Changes save automatically on this device.
+Open **Settings → News** in the browser or Android app. Select any combination of English, Français, and Tiếng Việt. Choose interests such as **Startups**, **AI**, **Programming**, and **Open source**. Select English and **Show HN (English)** to see community projects. **All topics** includes a mix from the available feeds. Changes save automatically on this device.
 
 Open **Workspace → News** for the first ten matching headlines. Tap **More** for the next ten while more stories are available. The star in the News header opens all your saved articles, including those outside your current preferences.
+
+The local preview and Android app bring together sources from the US, France, and Vietnam. English sources include Hacker News, Show HN, Y Combinator, Ars Technica, VnExpress International, and BizHub. French sources include Next and Le Monde, and Dân trí supplies Vietnamese tech and business headlines. These headlines open the publisher or Hacker News discussion. Star any of them to keep the headline available offline. [Hacker News](https://news.ycombinator.com/) · [Ars Technica feeds](https://arstechnica.com/rss-feeds/) · [Le Monde feeds](https://www.lemonde.fr/le-monde-et-vous/article/2025/07/14/les-flux-rss-du-monde-fr_5498778_3237.html) · [Dân trí feeds](https://dantri.com.vn/rss.htm) · [VnExpress International feeds](https://e.vnexpress.net/rss) · [BizHub feeds](https://bizhub.vietnamnews.vn/inforrss/rss.html)
 
 NASA and Government of Canada releases open as text, with a source link in the byline. Starred articles keep their downloaded text on this device, independently of the eight-story recent cache. Loading new articles needs internet. Reading saved text works offline.
 

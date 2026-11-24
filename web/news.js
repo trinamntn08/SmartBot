@@ -19,10 +19,11 @@ function backLink(route, title) {
 
 function storyRows(stories, stars, saved = false) {
   return stories.map(story => {
-    const original = isTuoitreStory(story.url);
+    const original = story.linkKind || isTuoitreStory(story.url);
+    const savedLabel = story.linkKind ? 'Saved headline' : 'Saved summary';
     const href = original && navigator.onLine ? story.url : '#' + (saved ? 'saved-story=' : 'story=') + encodeURIComponent(story.url);
     return `<li><div><a class="news-headline" rel="noreferrer" href="${escapeHtml(href)}" lang="${story.language}">${escapeHtml(story.title)}</a>
-      <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}${original && saved && navigator.onLine ? ` · <a href="#saved-story=${escapeHtml(encodeURIComponent(story.url))}">Saved summary</a>` : ''}</small></div>
+      <small>${escapeHtml(story.source)} · ${story.language.toUpperCase()} · ${storyDate(story.date)}${original && saved && navigator.onLine ? ` · <a href="#saved-story=${escapeHtml(encodeURIComponent(story.url))}">${savedLabel}</a>` : ''}</small></div>
       ${original ? `<button class="news-star" type="button" data-url="${escapeHtml(story.url)}" aria-label="Save for later: ${escapeHtml(story.title)}" aria-pressed="${stars.has(story.url)}">${starIcon}</button>` : ''}
     </li>`;
   }).join('');
@@ -236,7 +237,13 @@ export async function renderStory(view, savedNews, plans, url, fromSaved, focus)
   }
 
   if (body) showBody();
-  else store.saveArticle(story, null);
+  if (story.linkKind) {
+    panel.querySelector('.news-info a').textContent = story.linkKind === 'discussion'
+      ? 'Discussion on Hacker News' : 'Full article at ' + story.source;
+    if (!navigator.onLine) status.textContent = 'Offline · Cached headline';
+    return;
+  }
+  if (!body) store.saveArticle(story, null);
   if (typeof story.summary === 'string') {
     const summary = document.createElement('p');
     summary.textContent = story.summary;
