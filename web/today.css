@@ -99,7 +99,6 @@ main[data-page="today"] { max-width: 68rem; container-type: inline-size; }
     margin-block-start: 1.25rem;
   }
   .today-metrics dd { font-size: 1.4rem; }
-  body:has(main[data-page="today"]) > .ask-launcher { position: static; display: block; margin: 0 1rem 1rem auto; }
 }
 
 @container (max-width: 17rem) {

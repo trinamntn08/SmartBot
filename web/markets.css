@@ -237,7 +237,6 @@ main[data-page="markets"] {
 
 @media (max-width: 38rem) {
   .market-summary dl { grid-template-columns: repeat(auto-fit, minmax(min(100%, 7em), 1fr)); }
-  body:has(main[data-page="markets"]) > .ask-launcher { position: static; display: block; margin: 0 1rem 1rem auto; }
 }
 
 @media (forced-colors: active) {

@@ -774,19 +774,37 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 
 .reading-book .ask-launcher { display: none; }
 
-.ask-launcher {
+.ask-launcher-area {
   position: fixed;
   z-index: 1;
-  inset-inline-end: max(1rem, env(safe-area-inset-right));
-  inset-block-end: max(1rem, env(safe-area-inset-bottom));
-  padding: 0.75rem 1.2rem;
+  inset: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right))
+    max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.ask-launcher {
+  --launcher-size: 2.75rem;
+  position: absolute;
+  top: calc((100% - var(--launcher-size)) * var(--launcher-y, 1));
+  left: calc((100% - var(--launcher-size)) * var(--launcher-x, 1));
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--launcher-size);
+  height: var(--launcher-size);
+  padding: 0;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 50%;
   background: var(--accent);
   color: var(--on-accent);
-  font-weight: 750;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
   box-shadow: 0 0.4rem 1.4rem rgb(0 0 0 / 18%);
 }
+
+.ask-launcher:active { cursor: grabbing; }
 
 .assistant {
   position: fixed;

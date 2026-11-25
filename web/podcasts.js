@@ -23,8 +23,7 @@ export function renderPodcasts(view, repository, player, focus) {
   unsubscribe?.();
   cancelRequest?.();
   const panel = element('div', '', 'podcasts');
-  panel.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
-    <section class="podcast-hero" aria-labelledby="music-title">
+  panel.innerHTML = `<section class="podcast-hero" aria-labelledby="music-title">
       <div class="podcast-hero-copy">
         <h1 id="music-title" tabindex="-1">Music</h1>
         <form data-podcast-search>
