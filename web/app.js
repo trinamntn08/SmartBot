@@ -12,7 +12,10 @@ import { renderToday } from './today.js';
 import { renderMarkets } from './markets.js';
 
 const view = document.querySelector('#view');
-const nav = document.querySelector('nav');
+const nav = document.querySelector('.header-nav');
+const navLinks = document.querySelectorAll('.app-header a');
+const navOverflow = nav.querySelector('.nav-overflow');
+const navToggle = navOverflow.querySelector('summary');
 const errorMessage = document.querySelector('#error');
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   weekday: 'long', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
@@ -147,7 +150,7 @@ function render(focusHeading = false) {
   view.dataset.page = page;
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
-  for (const link of nav.querySelectorAll('a')) {
+  for (const link of navLinks) {
     link.hidden = !routine.settings && (link.hash === '#activities' || (link.hash === '#progress' && !Object.keys(routine.plans).length));
     if (link.hash === `#${page}`) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -274,7 +277,28 @@ function refreshOnDateChange() {
   if (routine && localDay().date !== displayedDate) refresh();
 }
 
+navOverflow.addEventListener('click', (event) => {
+  if (event.target.closest('a')) {
+    navOverflow.open = false;
+    navToggle.focus();
+  }
+});
+navOverflow.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && navOverflow.open) {
+    event.preventDefault();
+    navOverflow.open = false;
+    navToggle.focus();
+  }
+});
+navOverflow.addEventListener('focusout', (event) => {
+  if (event.relatedTarget && !navOverflow.contains(event.relatedTarget)) navOverflow.open = false;
+});
+document.addEventListener('click', (event) => {
+  if (navOverflow.open && !navOverflow.contains(event.target)) navOverflow.open = false;
+});
+
 window.addEventListener('hashchange', () => {
+  navOverflow.open = false;
   if (routine) {
     showError('');
     render(true);
