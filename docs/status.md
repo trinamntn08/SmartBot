@@ -1,13 +1,13 @@
 # SmartBot status
 
-Last updated November 24, 2026.
+Last updated November 25, 2026.
 
 ## Current state
 
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines from free-to-read sources, with more stories in batches of ten. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
-- **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
+- **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. The default Android APK uses the Apple Podcasts catalog and opens public HTTPS feeds directly. Followed shows and resuming playback appear when available. [Podcast listening](plans/podcast-listening.md)
 - **Markets** charts 30 or 90 days of unadjusted USD closing prices for eight U.S. stocks and ETFs. The local preview reads the Alpha Vantage key from its environment. Each downloaded series remains available offline in that browser. [Markets setup](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
@@ -88,6 +88,6 @@ The design-skill setup started from matching local and live `main` at `99acc66` 
 
 ## Handoff
 
-The podcast feature requires a hosted metadata service for Android and Podcast Index credentials for full name search. Live publisher playback and lock-screen verification remain pending.
+Live catalog search, publisher playback, and lock-screen verification on a physical Android device remain pending.
 
 On the pilot phone, check the book picker and offline resume, refresh News, star an article, then reopen it offline. Verify Ask SmartBot against a live provider using the [setup instructions](../README.md#ask-smartbot). The [personal workspace plan](plans/personal-workspace.md) tracks passage context and portability.

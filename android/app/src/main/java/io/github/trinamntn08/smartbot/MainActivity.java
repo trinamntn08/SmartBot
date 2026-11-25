@@ -74,7 +74,7 @@ public final class MainActivity extends Activity {
         ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request);
             }
         });
 
@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request);
             }
 
             @Override
@@ -251,13 +251,20 @@ public final class MainActivity extends Activity {
                 || "www.nasa.gov".equals(host) || "tuoitre.vn".equals(host);
     }
 
-    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, Uri uri) {
+    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed,
+            WebResourceRequest request) {
+        Uri uri = request.getUrl();
         if (!isAppAsset(uri)) {
+            if (PodcastDiscovery.isHostedRequest(uri)) return null;
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+        }
+        String podcastPath = ASSET_PATH + "api/podcasts/";
+        if (uri.getEncodedPath().startsWith(podcastPath)) {
+            return PodcastDiscovery.read(uri.getEncodedPath().substring(podcastPath.length()), request);
         }
         String feedPrefix = ASSET_PATH + "api/news/";
         if (uri.getEncodedPath().startsWith(feedPrefix)) {

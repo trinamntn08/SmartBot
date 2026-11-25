@@ -70,7 +70,9 @@ npm --prefix podcast-service ci
 npm --prefix podcast-service start
 ```
 
-Set `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` in the service environment to enable full name search. The franceinfo suggestion and pasted feeds work independently. To use podcasts on Android without a computer running, see the [podcast pilot setup](docs/plans/podcast-listening.md#pilot-setup).
+Set `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` in the local service environment to enable full name search. The franceinfo suggestion and pasted feeds work independently of those credentials.
+
+On Android, the default APK searches Apple Podcasts and opens public HTTPS feeds directly. Set `SMARTBOT_PODCAST_API` at build time to use a hosted catalog and feed service. [Hosted podcast service setup](docs/plans/podcast-listening.md#optional-hosted-service)
 
 ## Ask SmartBot
 
