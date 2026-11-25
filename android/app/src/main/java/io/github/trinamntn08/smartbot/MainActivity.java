@@ -264,6 +264,7 @@ public final class MainActivity extends Activity {
             WebResourceRequest request) {
         Uri uri = request.getUrl();
         if (!isAppAsset(uri)) {
+            if (PodcastDiscovery.isHostedRequest(uri)) return null;
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
@@ -271,6 +272,10 @@ public final class MainActivity extends Activity {
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
         if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
+        String podcastPath = ASSET_PATH + "api/podcasts/";
+        if (uri.getEncodedPath().startsWith(podcastPath)) {
+            return PodcastDiscovery.read(uri.getEncodedPath().substring(podcastPath.length()), request);
+        }
         String feedPrefix = ASSET_PATH + "api/news/";
         if (uri.getEncodedPath().startsWith(feedPrefix)) {
             String id = uri.getEncodedQuery() == null ? uri.getEncodedPath().substring(feedPrefix.length()) : null;

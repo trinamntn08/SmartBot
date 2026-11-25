@@ -27,4 +27,4 @@ Run the Node, Python, and podcast service suites. Check navigation, offline PDF 
 
 ## Handoff
 
-Use the regular Workspace preview for the combined app. Phone verification of the Drive picker and background podcast playback remains open. Android podcast discovery needs the service configuration in the [podcast plan](podcast-listening.md#pilot-setup).
+Use the regular Workspace preview for the combined app. Phone verification of the Drive picker and background podcast playback remains open. Android podcast discovery works with the default APK and supports an [optional hosted service](podcast-listening.md#optional-hosted-service).

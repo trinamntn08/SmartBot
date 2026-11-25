@@ -4,7 +4,9 @@ Use the Music card to find, follow, and stream public podcasts. The browser uses
 
 Open **Music** to search by podcast name, open the suggested show, or expand **Add by RSS**. Opening a show brings its episodes into focus. **Followed shows** and **Continue listening** appear when there are saved shows or an unfinished episode.
 
-## Pilot setup
+## Optional hosted service
+
+The default Android APK searches the Apple Podcasts catalog and downloads public HTTPS RSS feeds on the device. It uses the device's country for search, with the United States as the default when the device has no region set. The existing hosted service remains available for deployments that use Podcast Index.
 
 1. Create a [Vercel Hobby project](https://vercel.com/docs/plans/hobby) using the repository’s `podcast-service` root and Node.js 22. Add `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` as server environment variables for full name search.
 2. Set a [Vercel firewall rate limit](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) of 60 requests per minute per IP for paths starting with `/api/podcasts/`. The service limits requests per instance as well. If using a published browser frontend, set its exact origin in `SMARTBOT_PODCAST_ORIGINS` and set the service’s HTTPS origin in the `smartbot-podcast-service` meta tag in `web/index.html`.
@@ -26,6 +28,8 @@ The design skill's landing-page gate flagged the shared app shell, hash routes, 
 
 November 24, 2026. The player uses labeled play, pause, and retry icons in a 54-pixel desktop bar and an 81-pixel phone layout. Chromium verified the icons, keyboard activation, seek, and rewind at 320, 390, and 1440 CSS pixels. All 22 web tests passed. The Android debug build, lint, signature, and updated asset checks passed. Lint reported zero errors and seven warnings. Physical phone verification remains open.
 
+November 25, 2026. Android 0.3.3 adds discovery to the default APK. Mobile-width Chromium verified name search, a SoundCloud-format RSS link, episode ordering, stable playback IDs, refreshing followed shows, and offline access with controlled responses. All 39 automated tests passed. The APK passed build, alignment, signature, and checks of all 233 bundled web files. It uses the same signing certificate as the previous pilot. Lint reported zero errors and six warnings. The cloud environment could not reach the live catalog or publisher feed endpoints.
+
 ## Handoff
 
-The authenticated Vercel deployment, live publisher playback, and lock-screen verification on a physical phone are pending.
+Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
