@@ -1,55 +1,3 @@
-const tradingViewHost = 'https://www.tradingview-widget.com';
-
-export function mountPriceWidget(container, symbol, theme, signal) {
-  return new Promise((resolve) => {
-    const loader = document.createElement('iframe');
-    loader.hidden = true;
-    loader.setAttribute('sandbox', 'allow-scripts');
-    loader.title = 'Market chart loader';
-    loader.src = `./market-widget.html#${new URLSearchParams({ symbol, theme })}`;
-    let chart;
-    const timeout = setTimeout(() => finish(false), 10000);
-
-    function finish(loaded) {
-      clearTimeout(timeout);
-      window.removeEventListener('message', receiveUrl);
-      signal.removeEventListener('abort', abort);
-      loader.remove();
-      if (!loaded) chart?.remove();
-      resolve(loaded);
-    }
-
-    function abort() { finish(false); }
-
-    function receiveUrl(event) {
-      const source = event.data?.marketWidget;
-      if (event.origin !== 'null' || event.source !== loader.contentWindow || source === undefined) return;
-      window.removeEventListener('message', receiveUrl);
-      let url;
-      try { url = new URL(source); } catch { finish(false); return; }
-      if (url.origin !== tradingViewHost || url.pathname !== '/embed-widget/symbol-overview/' || url.username || url.password) {
-        finish(false);
-        return;
-      }
-      loader.remove();
-      chart = document.createElement('iframe');
-      chart.title = `${symbol.split(':')[1]} price chart by TradingView`;
-      chart.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      chart.src = url.href;
-      chart.addEventListener('load', () => finish(true), { once: true });
-      container.append(chart);
-    }
-
-    if (signal.aborted) {
-      finish(false);
-      return;
-    }
-    signal.addEventListener('abort', abort, { once: true });
-    window.addEventListener('message', receiveUrl);
-    container.append(loader);
-  });
-}
-
 export function validatePrices(data, symbol) {
   if (!data || data.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 280) {
     throw new Error('The market data response was incomplete.');
@@ -72,15 +20,20 @@ export async function fetchMarketHistory(symbol, signal) {
     signal, cache: 'no-store', headers: { 'X-SmartBot-Market': 'daily' },
   });
   if (!response.ok) throw new Error('Daily closing prices could not be downloaded.');
-  const data = await response.json();
-  if (!['Success', 'RowLimit'].includes(data?.query_execution_status) || !Array.isArray(data.rows)) {
+  const { data } = await response.json();
+  if (!['success', 'row_limit'].includes(data?.status) || !Array.isArray(data.rows)) {
     throw new Error('No closing prices were returned.');
   }
-  const prices = data.rows.map((row) => ({
-    date: row?.date,
-    close: typeof row?.close === 'string' || typeof row?.close === 'number' ? Number(row.close) : NaN,
-  })).filter(({ date, close }) => typeof date === 'string' && Number.isFinite(close) && close > 0)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const prices = [];
+  for (const row of data.rows) {
+    if (!Array.isArray(row)) continue;
+    const [date, value] = row;
+    const close = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
+    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}(?:$|[T ])/.test(date) && close > 0 && close <= 1e9) {
+      prices.push({ date: date.slice(0, 10), close });
+    }
+  }
+  prices.sort((a, b) => a.date.localeCompare(b.date));
   return validatePrices({ symbol, prices }, symbol);
 }
 

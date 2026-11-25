@@ -10,28 +10,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 final class MarketFeed {
     private static final int MAX_RESPONSE = 128 * 1024;
-    private static final String ENDPOINT = "https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks";
+    private static final String ENDPOINT = "https://www.dolthub.com/api/v2/databases/post-no-preference/stocks/sql";
 
     static WebResourceResponse read(WebResourceRequest request) {
-        boolean hasMarketHeader = request.getRequestHeaders().entrySet().stream().anyMatch(header ->
-                "X-SmartBot-Market".equalsIgnoreCase(header.getKey()) && "daily".equals(header.getValue()));
-        if (!"GET".equals(request.getMethod()) || !hasMarketHeader) return response(403, "Forbidden", new byte[0]);
+        if (!"GET".equals(request.getMethod())) return response(403, "Forbidden", new byte[0]);
         List<String> symbols = request.getUrl().getQueryParameters("symbol");
         if (symbols.size() != 1 || !symbols.get(0).matches("[A-Z]{1,5}")) {
             return response(400, "Invalid symbol", new byte[0]);
         }
 
-        String query = "SELECT CAST(date AS CHAR) AS date, close FROM ohlcv WHERE act_symbol = '"
-                + symbols.get(0) + "' AND date >= CURRENT_DATE - INTERVAL 400 DAY ORDER BY date DESC LIMIT 280";
+        LocalDate start = LocalDate.now(ZoneOffset.UTC).minusDays(400);
+        String query = "SELECT date, close FROM ohlcv WHERE act_symbol = '"
+                + symbols.get(0) + "' AND date >= '" + start + "' ORDER BY date DESC LIMIT 280";
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(Uri.parse(ENDPOINT).buildUpon().appendQueryParameter("q", query).build().toString());
+            URL url = new URL(Uri.parse(ENDPOINT).buildUpon()
+                    .appendQueryParameter("ref", "master")
+                    .appendQueryParameter("timeout_ms", "6000")
+                    .appendQueryParameter("q", query)
+                    .build().toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(8000);

@@ -1,4 +1,4 @@
-import { fetchMarketHistory, fetchPrices, mountPriceWidget } from './market-provider.js';
+import { fetchMarketHistory, fetchPrices } from './market-provider.js';
 import { marketRepository } from './market-repository.js';
 import { renderPriceChart } from './market-chart.js';
 
@@ -35,7 +35,6 @@ export function renderMarkets(view, focusHeading) {
         <p></p>
       </header>
       <p class="market-status" role="status"></p>
-      <div class="market-widget" hidden></div>
       <div class="market-history" hidden>
         <div class="market-quote"></div>
         <figure class="market-chart"></figure>
@@ -56,9 +55,9 @@ export function renderMarkets(view, focusHeading) {
         </details>
         <p class="market-source">Source · <a></a></p>
       </div>
-      <div class="market-footer">
-        <p><a class="market-link" rel="nofollow">TradingView</a><span class="market-delay"> · Prices may be delayed</span></p>
-        <button class="market-retry" type="button" hidden>Retry chart</button>
+      <div class="market-actions" hidden>
+        <button class="market-retry" type="button">Retry chart</button>
+        <a class="market-link" rel="nofollow">Open on TradingView</a>
       </div>
     </section>`;
   const panel = view.querySelector('.market-panel');
@@ -66,13 +65,12 @@ export function renderMarkets(view, focusHeading) {
   const name = panel.querySelector('#market-instrument-name');
   const exchangeLabel = panel.querySelector('.market-instrument p');
   const period = panel.querySelector('.market-period');
-  const widget = panel.querySelector('.market-widget');
   const history = panel.querySelector('.market-history');
+  const actions = panel.querySelector('.market-actions');
   const retry = panel.querySelector('.market-retry');
   const status = panel.querySelector('[role="status"]');
   const historyLink = history.querySelector('a');
   const link = panel.querySelector('.market-link');
-  const delay = panel.querySelector('.market-delay');
   let range = '30';
   let prices;
   let request;
@@ -82,7 +80,6 @@ export function renderMarkets(view, focusHeading) {
     const [label, url] = historySources[record.source];
     historyLink.textContent = label;
     historyLink.href = url;
-    link.parentElement.hidden = true;
     status.textContent = message;
     history.hidden = false;
     renderPriceChart(history, prices, range);
@@ -98,12 +95,8 @@ export function renderMarkets(view, focusHeading) {
     exchangeLabel.textContent = `${selected} · ${exchange}`;
     const saved = marketRepository.get(selected);
     prices = undefined;
-    widget.replaceChildren();
-    widget.hidden = true;
-    retry.hidden = true;
+    actions.hidden = true;
     history.hidden = true;
-    delay.hidden = false;
-    link.parentElement.hidden = true;
     link.href = `https://www.tradingview.com/symbols/${ticker.value.replace(':', '-')}/`;
     const online = navigator.onLine !== false;
     const savedMessage = 'Showing saved closing prices.';
@@ -124,32 +117,19 @@ export function renderMarkets(view, focusHeading) {
     } catch {
       if (signal.aborted) return;
     }
-    if (saved) {
-      status.textContent = savedMessage;
-      retry.hidden = false;
-      return;
+    if (!saved) {
+      try {
+        const latest = await fetchPrices(selected, signal);
+        if (signal.aborted) return;
+        marketRepository.save(selected, latest, 'alphaVantage');
+        showHistory({ prices: latest, source: 'alphaVantage' });
+        return;
+      } catch {
+        if (signal.aborted) return;
+      }
     }
-
-    widget.hidden = false;
-    link.parentElement.hidden = false;
-    const embedded = await mountPriceWidget(widget, ticker.value, 'dark', signal);
-    if (signal.aborted) return;
-    if (embedded) {
-      status.textContent = '';
-      return;
-    }
-    widget.hidden = true;
-    delay.hidden = true;
-    try {
-      const latest = await fetchPrices(selected, signal);
-      if (signal.aborted) return;
-      marketRepository.save(selected, latest, 'alphaVantage');
-      showHistory({ prices: latest, source: 'alphaVantage' });
-    } catch {
-      if (signal.aborted) return;
-      status.textContent = 'The price chart is unavailable right now.';
-    }
-    retry.hidden = false;
+    status.textContent = saved ? savedMessage : 'Daily closing prices are unavailable right now.';
+    actions.hidden = false;
   }
 
   function reload() { void load(); }

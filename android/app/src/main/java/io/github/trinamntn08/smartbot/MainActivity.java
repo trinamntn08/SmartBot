@@ -44,8 +44,6 @@ public final class MainActivity extends Activity {
     private static final String ASSET_PATH = "/assets/";
     private static final String APP_ORIGIN = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN;
     private static final String APP_URL = APP_ORIGIN + ASSET_PATH + "index.html";
-    private static final String MARKET_WIDGET_HOST = "www.tradingview-widget.com";
-    private static final String MARKET_WIDGET_PATH = "/embed-widget/symbol-overview/";
 
     private WebView webView;
     private PodcastBridge podcasts;
@@ -112,7 +110,6 @@ public final class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (isAppAsset(uri)) return false;
-                if (!request.isForMainFrame() && isMarketWidget(uri)) return false;
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
                         && (isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
                         || isMarketSource(uri))) {
@@ -255,32 +252,11 @@ public final class MainActivity extends Activity {
                 || "www.nasa.gov".equals(host) || "tuoitre.vn".equals(host);
     }
 
-    private static boolean isMarketWidget(Uri uri) {
-        return "https".equals(uri.getScheme()) && MARKET_WIDGET_HOST.equals(uri.getAuthority())
-                && MARKET_WIDGET_PATH.equals(uri.getPath());
-    }
-
     private static boolean isMarketSource(Uri uri) {
         String path = uri.getPath();
         return ("www.tradingview.com".equals(uri.getAuthority()) && path != null && path.startsWith("/symbols/"))
                 || ("www.dolthub.com".equals(uri.getAuthority()) && "/repositories/post-no-preference/stocks".equals(path))
                 || "www.alphavantage.co".equals(uri.getAuthority());
-    }
-
-    private static boolean isMarketResource(Uri uri) {
-        String host = uri.getAuthority();
-        String path = uri.getPath();
-        if ("wss".equals(uri.getScheme())) {
-            return "widgetdata.tradingview.com".equals(host) && path != null && path.startsWith("/socket.io/");
-        }
-        if (!"https".equals(uri.getScheme())) return false;
-        return isMarketWidget(uri)
-                || (MARKET_WIDGET_HOST.equals(host) && path != null && path.startsWith("/static/"))
-                || ("s3.tradingview.com".equals(host)
-                    && "/external-embedding/embed-widget-symbol-overview.js".equals(path))
-                || "widgetdata.tradingview.com".equals(host)
-                || "widget-sheriff.tradingview-widget.com".equals(host)
-                || "s3-symbol-logo.tradingview.com".equals(host);
     }
 
     private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed,
@@ -290,7 +266,6 @@ public final class MainActivity extends Activity {
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
-            if (isMarketResource(uri)) return null;
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }

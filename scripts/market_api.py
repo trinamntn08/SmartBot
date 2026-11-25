@@ -1,6 +1,6 @@
 """Read daily U.S. stock prices for the local preview."""
 
-from datetime import date
+from datetime import date, timedelta
 from http.client import HTTPException, HTTPSConnection
 import json
 from math import isfinite
@@ -26,13 +26,15 @@ def validate_symbol(symbol):
 
 def market_history(symbol):
     validate_symbol(symbol)
-    query = urlencode({"q": (
-        "SELECT CAST(date AS CHAR) AS date, close FROM ohlcv "
-        f"WHERE act_symbol = '{symbol}' AND date >= CURRENT_DATE - INTERVAL 400 DAY "
-        "ORDER BY date DESC LIMIT 280"
-    )})
+    start = date.today() - timedelta(days=400)
+    query = urlencode({
+        "ref": "master", "timeout_ms": 6000,
+        "q": ("SELECT date, close FROM ohlcv "
+              f"WHERE act_symbol = '{symbol}' AND date >= '{start}' "
+              "ORDER BY date DESC LIMIT 280"),
+    })
     try:
-        with urlopen(f"https://www.dolthub.com/api/v1alpha1/post-no-preference/stocks?{query}", timeout=8) as response:
+        with urlopen(f"https://www.dolthub.com/api/v2/databases/post-no-preference/stocks/sql?{query}", timeout=8) as response:
             body = response.read(MAX_RESPONSE + 1)
         if len(body) > MAX_RESPONSE:
             raise ValueError("Market history response was too large")

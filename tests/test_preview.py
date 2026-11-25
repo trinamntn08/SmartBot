@@ -31,16 +31,17 @@ class PreviewTests(unittest.TestCase):
                         self.assertEqual(error.exception.code, status)
                     upstream.assert_not_called()
 
-                    payload = {"query_execution_status": "Success", "rows": [{"date": "2026-11-24", "close": "572.00"}]}
+                    payload = {"data": {"status": "success", "rows": [["2026-11-24", "572.00"]]}}
                     read = upstream.return_value.__enter__.return_value.read
                     read.return_value = json.dumps(payload).encode()
                     request = Request(url + "SPY", headers=headers)
                     with urlopen(request, timeout=2) as result:
                         self.assertEqual(json.load(result), payload)
                     target = urlsplit(upstream.call_args.args[0])
-                    self.assertEqual(target.netloc + target.path, "www.dolthub.com/api/v1alpha1/post-no-preference/stocks")
+                    self.assertEqual(target.netloc + target.path, "www.dolthub.com/api/v2/databases/post-no-preference/stocks/sql")
                     query = parse_qs(target.query)
-                    self.assertEqual(list(query), ["q"])
+                    self.assertEqual(set(query), {"ref", "timeout_ms", "q"})
+                    self.assertEqual(query["ref"], ["master"])
                     self.assertIn("act_symbol = 'SPY'", query["q"][0])
                     self.assertTrue(query["q"][0].endswith("LIMIT 280"))
 

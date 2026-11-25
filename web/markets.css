@@ -62,17 +62,15 @@ main[data-page="markets"] {
 .market-panel a { text-underline-offset: 0.19em; }
 .market-panel .market-status { margin: 0.65rem 0; color: var(--market-muted); font-size: 0.9rem; }
 .market-status:empty { display: none; }
-.market-widget iframe { display: block; width: 100%; height: clamp(17.5rem, 42vw, 22rem); border: 0; }
-.market-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.45rem; }
+.market-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.65rem 1rem; margin-block-start: 0.8rem; font-size: 0.84rem; }
 
-.market-footer p, .market-source {
+.market-source {
   margin: 0.7rem 0 0;
   color: var(--market-muted);
   font-size: 0.82rem;
 }
 
 .market-retry {
-  margin-block-start: 0.65rem;
   border-color: var(--market-line);
   background: var(--market-highlight);
   color: var(--market-ink);
