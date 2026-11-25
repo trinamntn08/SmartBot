@@ -310,16 +310,102 @@ async function toggleRecording() {
   }
 }
 
-if (typeof dialog.showModal === 'function') {
+function initializeLauncher() {
+  const positionKey = 'smartbot.assistant.launcherPosition';
+  const area = launcher.parentElement;
+  const dragThreshold = 6;
+  const keyboardStep = 24;
+  let position = [1, 1];
+  let drag;
+  let suppressClick = false;
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(positionKey));
+    if (Array.isArray(saved) && saved.length === 2
+        && saved.every(value => Number.isFinite(value) && value >= 0 && value <= 1)) {
+      position = saved;
+    }
+  } catch {
+    // The launcher can still be moved when storage is unavailable.
+  }
+
+  function place([x, y]) {
+    launcher.style.setProperty('--launcher-x', x);
+    launcher.style.setProperty('--launcher-y', y);
+  }
+
+  function positionAt(left, top, bounds) {
+    const fraction = (offset, travel) => travel > 0 ? Math.min(1, Math.max(0, offset / travel)) : 0;
+    return [fraction(left, bounds.width - launcher.offsetWidth), fraction(top, bounds.height - launcher.offsetHeight)];
+  }
+
+  function save(next) {
+    position = next;
+    place(position);
+    try {
+      localStorage.setItem(positionKey, JSON.stringify(position));
+    } catch {
+      // Keep the position for the current page.
+    }
+  }
+
+  place(position);
   launcher.hidden = false;
   document.body.classList.add('has-assistant');
+
+  launcher.addEventListener('pointerdown', event => {
+    if (drag || !event.isPrimary || event.button !== 0) return;
+    const button = launcher.getBoundingClientRect();
+    suppressClick = false;
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY,
+      offsetX: event.clientX - button.left, offsetY: event.clientY - button.top };
+    launcher.setPointerCapture(event.pointerId);
+  });
+
+  launcher.addEventListener('pointermove', event => {
+    if (drag?.id !== event.pointerId) return;
+    if (!drag.position && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < dragThreshold) return;
+    const bounds = area.getBoundingClientRect();
+    drag.position = positionAt(event.clientX - drag.offsetX - bounds.left,
+      event.clientY - drag.offsetY - bounds.top, bounds);
+    place(drag.position);
+  });
+
+  launcher.addEventListener('pointerup', event => {
+    if (drag?.id !== event.pointerId) return;
+    if (drag.position) {
+      suppressClick = true;
+      save(drag.position);
+    }
+    drag = undefined;
+  });
+
+  launcher.addEventListener('lostpointercapture', event => {
+    if (drag?.id !== event.pointerId) return;
+    drag = undefined;
+    place(position);
+  });
+
+  const offsets = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  launcher.addEventListener('keydown', event => {
+    if (drag || !Object.hasOwn(offsets, event.key)) return;
+    event.preventDefault();
+    const [x, y] = offsets[event.key];
+    const bounds = area.getBoundingClientRect();
+    const button = launcher.getBoundingClientRect();
+    save(positionAt(button.left - bounds.left + x * keyboardStep, button.top - bounds.top + y * keyboardStep, bounds));
+  });
+
+  launcher.addEventListener('click', event => {
+    if (suppressClick && event.detail > 0) return;
+    dialog.showModal();
+    launcher.setAttribute('aria-expanded', 'true');
+    loadProviders();
+  });
 }
+
+if (typeof dialog.showModal === 'function') initializeLauncher();
 recordButton.hidden = !canRecord;
-launcher.addEventListener('click', () => {
-  dialog.showModal();
-  launcher.setAttribute('aria-expanded', 'true');
-  loadProviders();
-});
 dialog.querySelector('.assistant-close').addEventListener('click', () => dialog.close());
 dialog.addEventListener('close', () => {
   cancelRecording();

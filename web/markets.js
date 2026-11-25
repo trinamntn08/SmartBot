@@ -17,8 +17,7 @@ const historySources = {
 };
 
 export function renderMarkets(view, focusHeading) {
-  view.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
-    <div class="market-heading">
+  view.innerHTML = `<div class="market-heading">
       <h1 tabindex="-1">Markets</h1>
       <div class="market-ticker">
         <label for="market-symbol">Watchlist</label>

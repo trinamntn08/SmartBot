@@ -35,13 +35,13 @@ Open **Books** → **Add a book**, choose a PDF or text file, then select **Impo
 
 SmartBot stores the book and last section on the device. Conversion and reading work offline after import and the app’s initial load.
 
-Use **Back to Workspace** in the library or select **SmartBot** in the app header to return to the homepage.
+Use **Workspace** or **SmartBot** in the top bar to return to the homepage.
 
 ## News
 
 Open **Settings → News** in the browser or Android app. Select any combination of English, Français, and Tiếng Việt. Choose interests such as **Startups**, **AI**, **Programming**, and **Open source**. Select English and **Show HN (English)** to see community projects. **All topics** includes a mix from the available feeds. Changes save automatically on this device.
 
-Open **Workspace → News** for the first ten matching headlines. Tap **More** for the next ten while more stories are available. The star in the News header opens all your saved articles, including those outside your current preferences.
+Open **News** for the first ten matching headlines. Scroll to the end to load the next ten while more stories are available. The star in the News header opens all your saved articles, including those outside your current preferences.
 
 News marks the feed **For you** after you open an article. Recent reading activity helps it rank related, unread stories within your language and topic choices. Turn **Personalize headlines** off in **Settings → News** to use the freshness-based feed, or use **Reset recommendations** to clear what News learned. Reading activity stays on this device.
 
@@ -87,7 +87,7 @@ Set at least one provider key in the environment that runs the Python preview se
 | OpenAI | `SMARTBOT_OPENAI_API_KEY` or `OPENAI_API_KEY` | `SMARTBOT_OPENAI_MODEL` defaults to `gpt-4o-mini`. `SMARTBOT_OPENAI_TRANSCRIPTION_MODEL` defaults to `gpt-4o-mini-transcribe`. |
 | Gemini | `SMARTBOT_GEMINI_API_KEY` or `GEMINI_API_KEY` | `SMARTBOT_GEMINI_MODEL` defaults to `gemini-2.5-flash`. Use an audio-capable model for voice. |
 
-In a browser, select **Ask SmartBot** at the bottom of any screen. Type a question and select the send arrow or press Enter. Use Shift+Enter for a new line. To ask by voice, select the microphone, allow access, then select stop to transcribe. You can edit the transcript before sending. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
+In a browser, tap the floating **Ask SmartBot** gear to open the composer. Drag the gear anywhere on the screen or focus it and use the arrow keys. The browser remembers its position. Type a question and select the send arrow or press Enter. Use Shift+Enter for a new line. To ask by voice, select the microphone, allow access, then select stop to transcribe. You can edit the transcript before sending. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
 
 The assistant requires the Python preview server and outbound HTTPS to `api.openai.com` or `generativelanguage.googleapis.com`. The preview listens on loopback for personal use. In a restricted cloud environment, allow the hostname for the provider you choose. The bundled Android APK directs you to the browser preview for the assistant.
 

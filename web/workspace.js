@@ -39,8 +39,7 @@ export function workspace() {
 }
 
 export function sectionPreview({ id, title, detail }) {
-  return `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
-    <h1 tabindex="-1">${title}</h1>
+  return `<h1 tabindex="-1">${title}</h1>
     <div class="section-preview">
       ${sectionImage(id)}
       <p>${detail}</p>

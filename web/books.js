@@ -13,8 +13,7 @@ function showError(panel, message) {
 }
 
 async function showLibrary(panel) {
-  panel.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Back to Workspace</a>
-    <h1 tabindex="-1">Books</h1>
+  panel.innerHTML = `<h1 tabindex="-1">Books</h1>
     <details class="card book-import" open>
       <summary>Add a book</summary>
       <form>
