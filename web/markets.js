@@ -1,17 +1,8 @@
 import { fetchMarketHistory, fetchPrices } from './market-provider.js';
 import { marketRepository } from './market-repository.js';
 import { renderPriceChart } from './market-chart.js';
+import { defaultMarkets, searchMarkets } from './market-symbols.js';
 
-const listings = [
-  ['AMEX:SPY', 'S&P 500 ETF'],
-  ['NASDAQ:QQQ', 'Nasdaq-100 ETF'],
-  ['NASDAQ:AAPL', 'Apple'],
-  ['NASDAQ:AMZN', 'Amazon'],
-  ['NASDAQ:GOOGL', 'Alphabet'],
-  ['NASDAQ:MSFT', 'Microsoft'],
-  ['NASDAQ:NVDA', 'NVIDIA'],
-  ['NASDAQ:TSLA', 'Tesla'],
-];
 const ranges = [
   ['7', '1W', '1 week'], ['30', '1M', '1 month'], ['90', '3M', '3 months'],
   ['180', '6M', '6 months'], ['ytd', 'YTD', 'Year to date'], ['365', '1Y', '1 year'],
@@ -20,20 +11,35 @@ const historySources = {
   archive: ['S&P 500 archive on GitHub', 'https://github.com/Johnbrick123/sp500-data'],
   dolthub: ['post-no-preference on DoltHub', 'https://www.dolthub.com/repositories/post-no-preference/stocks'],
   alphaVantage: ['Alpha Vantage', 'https://www.alphavantage.co/'],
+  bitstamp: ['Bitstamp', 'https://www.bitstamp.net/api/'],
+  bitcoinArchive: ['Bitstamp daily candles on GitHub', 'https://github.com/daniegitx1/btc-price-history'],
+  coinbaseArchive: ['Coinbase daily candles on GitHub', 'https://github.com/akpasz/btc-data'],
 };
 
 export function renderMarkets(view, focusHeading) {
   view.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
     <div class="market-heading">
       <h1 tabindex="-1">Markets</h1>
-      <label class="market-ticker">Stock or ETF
-        <select name="symbol">${listings.map(([symbol, name]) => `<option value="${symbol}">${symbol.split(':')[1]} · ${name}</option>`).join('')}</select>
-      </label>
+      <div class="market-ticker">
+        <label for="market-symbol">Watchlist</label>
+        <select id="market-symbol" name="symbol"></select>
+      </div>
     </div>
+    <form class="market-search" role="search" aria-label="Market symbols">
+      <label for="market-search-input" class="market-search-label">Search Markets</label>
+      <input id="market-search-input" type="search" placeholder="Symbol, company, or crypto"
+        enterkeyhint="search" autocomplete="off" spellcheck="false" maxlength="100"
+        aria-controls="market-search-results">
+      <ul id="market-search-results" class="market-search-results" hidden></ul>
+      <p class="market-search-status" role="status"></p>
+    </form>
     <section class="market-panel" aria-labelledby="market-instrument-name">
-      <header class="market-instrument">
-        <h2 id="market-instrument-name"></h2>
-        <p></p>
+      <header class="market-instrument-row">
+        <div class="market-instrument">
+          <h2 id="market-instrument-name"></h2>
+          <p></p>
+        </div>
+        <button type="button" class="market-remove" hidden>Remove</button>
       </header>
       <p class="market-status" role="status"></p>
       <div class="market-history" hidden>
@@ -63,8 +69,13 @@ export function renderMarkets(view, focusHeading) {
     </section>`;
   const panel = view.querySelector('.market-panel');
   const ticker = view.querySelector('[name="symbol"]');
+  const search = view.querySelector('.market-search');
+  const searchInput = search.querySelector('input');
+  const results = search.querySelector('ul');
+  const searchStatus = search.querySelector('[role="status"]');
   const name = panel.querySelector('#market-instrument-name');
   const exchangeLabel = panel.querySelector('.market-instrument p');
+  const remove = panel.querySelector('.market-remove');
   const period = panel.querySelector('.market-period');
   const history = panel.querySelector('.market-history');
   const actions = panel.querySelector('.market-actions');
@@ -75,6 +86,95 @@ export function renderMarkets(view, focusHeading) {
   let range = '30';
   let prices;
   let request;
+  let searchRequest;
+  let listings;
+  let matches = [];
+
+  function setListings(selected) {
+    listings = [...defaultMarkets, ...marketRepository.watchlist()];
+    ticker.replaceChildren(...listings.map(({ symbol, label, name }) =>
+      new Option(name === label ? label : `${label} · ${name}`, symbol)));
+    if (listings.some(({ symbol }) => symbol === selected)) ticker.value = selected;
+  }
+
+  function clearSearch() {
+    searchRequest?.abort();
+    searchInput.value = '';
+    searchStatus.textContent = '';
+    matches = [];
+    results.replaceChildren();
+    results.hidden = true;
+  }
+
+  async function updateSearch() {
+    searchRequest?.abort();
+    const controller = new AbortController();
+    searchRequest = controller;
+    const query = searchInput.value;
+    matches = [];
+    results.replaceChildren();
+    results.hidden = true;
+    searchStatus.textContent = '';
+    if (!query.trim()) return;
+    const found = await searchMarkets(query, listings.slice(defaultMarkets.length));
+    if (controller.signal.aborted) return;
+    matches = found;
+    for (const listing of matches) {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      const symbol = document.createElement('strong');
+      const detail = document.createElement('span');
+      const action = document.createElement('span');
+      button.type = 'button';
+      symbol.textContent = listing.label;
+      detail.textContent = listing.name === listing.label ? listing.market : `${listing.name} · ${listing.market}`;
+      action.textContent = listings.some(({ symbol }) => symbol === listing.symbol) ? 'Open' : 'Add';
+      button.append(symbol, detail, action);
+      button.addEventListener('click', () => void choose(listing));
+      item.append(button);
+      results.append(item);
+    }
+    results.hidden = !matches.length;
+    if (!matches.length) searchStatus.textContent = 'No matches. For crypto, try a pair like ETH/USD.';
+  }
+
+  async function choose(listing) {
+    const { symbol, label } = listing;
+    if (listings.some(item => item.symbol === symbol)) {
+      openListing(symbol);
+      return;
+    }
+    searchRequest?.abort();
+    const controller = new AbortController();
+    searchRequest = controller;
+    const { signal } = controller;
+    try {
+      if (!marketRepository.get(symbol)) {
+        if (navigator.onLine === false) {
+          searchStatus.textContent = 'Connect to the internet to add this symbol.';
+          return;
+        }
+        searchStatus.textContent = `Checking price history for ${label}…`;
+        const record = await fetchMarketHistory(symbol, signal);
+        if (signal.aborted) return;
+        marketRepository.save(symbol, record.prices, record.source);
+      }
+      if (!marketRepository.setSaved(listing, true)) {
+        searchStatus.textContent = 'This device could not save your watchlist.';
+        return;
+      }
+      openListing(symbol);
+    } catch {
+      if (!signal.aborted) searchStatus.textContent = `Price history for ${label} is unavailable. Try another symbol or try again later.`;
+    }
+  }
+
+  function openListing(symbol) {
+    clearSearch();
+    setListings(symbol);
+    ticker.focus();
+    reload();
+  }
 
   function showHistory(record, message = '') {
     prices = record.prices;
@@ -91,17 +191,19 @@ export function renderMarkets(view, focusHeading) {
     const controller = new AbortController();
     request = controller;
     const { signal } = controller;
-    const [exchange, selected] = ticker.value.split(':');
-    name.textContent = listings[ticker.selectedIndex][1];
-    exchangeLabel.textContent = `${selected} · ${exchange}`;
+    const { symbol: selected, name: title, label, market, tradingView } = listings[ticker.selectedIndex];
+    name.textContent = title;
+    exchangeLabel.textContent = `${label} · ${market}`;
+    remove.hidden = ticker.selectedIndex < defaultMarkets.length;
+    remove.setAttribute('aria-label', `Remove ${label} from watchlist`);
     const saved = marketRepository.get(selected);
     prices = undefined;
     actions.hidden = true;
     history.hidden = true;
-    link.href = `https://www.tradingview.com/symbols/${ticker.value.replace(':', '-')}/`;
+    link.href = `https://www.tradingview.com/symbols/${tradingView}/`;
     const online = navigator.onLine !== false;
     if (saved) showHistory(saved);
-    else status.textContent = `Loading ${selected} chart…`;
+    else status.textContent = `Loading ${label} chart…`;
     const bundled = await marketRepository.bundled(selected);
     if (signal.aborted) return;
     const bundledDate = bundled?.prices.at(-1).date;
@@ -115,21 +217,21 @@ export function renderMarkets(view, focusHeading) {
       status.textContent = current ? savedMessage : 'Connect to the internet to load the price chart.';
       return;
     }
-    if (!force && current?.source === 'archive' && current.fresh) return;
+    if (!force && current?.fresh && current.source !== 'dolthub' && current.source !== 'alphaVantage') return;
 
     try {
       const latest = await fetchMarketHistory(selected, signal);
       if (signal.aborted) return;
-      if (current && latest.at(-1).date < current.prices.at(-1).date) {
+      if (current && latest.prices.at(-1).date < current.prices.at(-1).date) {
         throw new Error('The market archive is older than the prices on this device.');
       }
-      marketRepository.save(selected, latest, 'archive');
-      showHistory({ prices: latest, source: 'archive' });
+      marketRepository.save(selected, latest.prices, latest.source);
+      showHistory(latest);
       return;
     } catch {
       if (signal.aborted) return;
     }
-    if (!current) {
+    if (!current && !selected.endsWith('-USD')) {
       try {
         const latest = await fetchPrices(selected, signal);
         if (signal.aborted) return;
@@ -146,7 +248,26 @@ export function renderMarkets(view, focusHeading) {
 
   function reload() { void load(); }
 
-  ticker.addEventListener('change', reload);
+  ticker.addEventListener('change', () => {
+    clearSearch();
+    reload();
+  });
+  searchInput.addEventListener('input', () => void updateSearch());
+  search.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (matches.length) void choose(matches[0]);
+  });
+  search.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && searchInput.value) {
+      clearSearch();
+      searchInput.focus();
+    }
+  });
+  remove.addEventListener('click', () => {
+    const selected = listings[ticker.selectedIndex];
+    if (marketRepository.setSaved(selected, false)) openListing(defaultMarkets[0].symbol);
+    else status.textContent = 'This device could not update your watchlist.';
+  });
   period.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button || range === button.value || !prices) return;
@@ -158,10 +279,12 @@ export function renderMarkets(view, focusHeading) {
   retry.addEventListener('click', () => void load(true));
   window.addEventListener('online', reload);
   window.addEventListener('offline', reload);
+  setListings();
   if (focusHeading) view.querySelector('h1').focus();
   reload();
   return () => {
     request?.abort();
+    searchRequest?.abort();
     window.removeEventListener('online', reload);
     window.removeEventListener('offline', reload);
   };

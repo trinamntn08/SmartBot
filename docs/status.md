@@ -9,7 +9,7 @@ Last updated November 25, 2026.
 - **News** opens to ten matching headlines from free-to-read sources and appends the next ten as you scroll to the end. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. The default Android APK uses the Apple Podcasts catalog and opens public HTTPS feeds directly. Followed shows and resuming playback appear when available. [Podcast listening](plans/podcast-listening.md)
 - The header links directly to every Workspace section and uses an icon for Settings. The current section is highlighted, and the links wrap on narrow screens.
-- **Markets** occupies one standard Workspace card. A dark quote panel shows the latest close, daily change, six chart ranges, and a range summary for eight U.S. stocks and ETFs. Inspect individual prices by touch or keyboard. The app includes closing prices through November 24, 2026, and checks the public S&P 500 archive for updates. The most recent available history stays on the device for offline use. [Markets](../README.md#markets)
+- **Markets** occupies one standard Workspace card. Search for a stock, ETF, or USD crypto pair, and add it to the saved watchlist. Eight equities and BTC/USD are available by default with bundled closing prices through November 24, 2026. Charts show six ranges, a daily change, and a price history table. Downloaded prices reopen offline. [Markets](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -18,6 +18,8 @@ Last updated November 25, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified search by company, ETF name, and crypto pair, plus adding, removing, duplicate prevention, and offline reopening. Netflix, VOO, Ethereum, Solana, and BTC/USD loaded real histories. BTC/USD closed at $59,743.50 on November 24 and showed 365 closes in the one-year range. A clean profile also displayed BTC/USD with the feeds blocked. The layout fit 320 CSS pixels at 200% text size. A controlled Bitstamp response verified fractional prices, incomplete-candle exclusion, and error recovery. Direct Bitstamp requests are blocked in the cloud environment. All 25 web, 11 Python, and five podcast service tests passed. [BTC/USD archive](https://github.com/daniegitx1/btc-price-history)
 
 The November 25 integration brought updated Markets charts, default Android podcast discovery, direct section navigation, and scroll-based News pagination into `main`. All 25 web, 10 Python, and five podcast service tests passed. At 320 CSS pixels, Chromium verified keyboard navigation, the bundled NVIDIA chart with updates blocked, and News expanding from 10 to 20 to 23 unique headlines and restoring that count on return. With the Android asset origin and controlled native endpoint responses, Chromium displayed podcast search results and an RSS episode.
 
@@ -80,6 +82,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The November 25 Markets watchlist APK passed Gradle build, ZIP alignment, same-certificate signature verification, and byte-for-byte checks of all 243 web assets. The APK includes 400 Bitcoin daily closes and the catalogue of 785 stocks and ETFs. Lint reported zero errors and six warnings. The Android adapter fetched real Bitcoin and Ethereum archive responses on a host JVM. A physical phone check is pending.
 
 The November 25 SmartBot 0.3.3 debug APK was built from `dca67c0` on `main`. Gradle build, signature, ZIP alignment, and byte-for-byte comparison of all 240 web assets passed. Lint reported zero errors and six warnings. Installation, live podcast discovery, and playback on a physical phone remain pending.
 

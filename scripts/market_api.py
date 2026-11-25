@@ -13,6 +13,8 @@ from urllib.request import Request, urlopen
 MAX_RESPONSE = 128 * 1024
 MAX_ARCHIVE_RANGE = 2 * 1024 * 1024
 ARCHIVE_URL = "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet"
+BITCOIN_CSV = "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv"
+COINBASE_HISTORY = "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json"
 
 
 class MarketError(Exception):
@@ -47,6 +49,30 @@ def market_archive(start, end):
         return body, content_range, etag
     except (OSError, HTTPException, ValueError):
         raise MarketError(502, "Daily closing prices could not be downloaded.") from None
+
+
+def crypto_history(symbol, source):
+    if not re.fullmatch(r"[A-Z0-9]{2,12}-USD", symbol):
+        raise MarketError(400, "Choose a valid cryptocurrency paired with USD.")
+    if source == "bitstamp":
+        pair = symbol.replace("-", "").lower()
+        url = f"https://www.bitstamp.net/api/v2/ohlc/{pair}/?step=86400&limit=400&exclude_current_candle=true"
+        content_type, limit = "application/json", MAX_RESPONSE
+    elif source == "archive" and symbol == "BTC-USD":
+        url, content_type, limit = BITCOIN_CSV, "text/csv", MAX_ARCHIVE_RANGE
+    elif source == "archive" and symbol in {"ETH-USD", "SOL-USD", "PAXG-USD"}:
+        url, content_type, limit = COINBASE_HISTORY, "application/json", MAX_ARCHIVE_RANGE
+    else:
+        raise MarketError(400, "The requested cryptocurrency source is unavailable.")
+
+    try:
+        with urlopen(Request(url, headers={"User-Agent": "SmartBot"}), timeout=10) as response:
+            body = response.read(limit + 1)
+            if response.status != 200 or not 0 < len(body) <= limit:
+                raise ValueError("Unexpected cryptocurrency history")
+        return body, content_type
+    except (OSError, HTTPException, ValueError):
+        raise MarketError(502, "Cryptocurrency closing prices could not be downloaded.") from None
 
 
 def daily_prices(symbol):

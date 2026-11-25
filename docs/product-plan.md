@@ -16,7 +16,7 @@ One day might look like 5 minutes of news, 10 minutes of reading, and 10 minutes
 
 ## What the app feels like
 
-The app opens on **Workspace**, with cards for Books, News, Languages, Music, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Music** opens podcasts. **Markets** opens stock and ETF charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
+The app opens on **Workspace**, with cards for Books, News, Languages, Music, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Music** opens podcasts. **Markets** opens stock, ETF, and crypto charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
 
 | Screen | What you see and do |
 | --- | --- |
@@ -26,7 +26,7 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Music, Mo
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
 | Music | Find and follow podcasts, stream public episodes, and resume from a position stored on your device. |
-| Markets | Choose a U.S. stock or ETF, see its closing price and daily change, and inspect a daily closing-price chart and range summary. Reopen downloaded prices offline. |
+| Markets | Search and save supported stocks, ETFs, and USD crypto pairs. Select BTC/USD from the default watchlist, inspect its daily closes and range summary, and reopen downloaded prices offline. |
 | Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |
 | Progress | Review a seven-day history and simple totals such as articles read, book sessions, and new words studied. Show skipped or unfinished items neutrally. |
 | Settings | Change the daily budget, reminder time, and display preferences. Provide local export, restore, and data deletion controls. Add a connections area when the first account integration ships. |

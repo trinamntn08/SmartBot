@@ -16,6 +16,43 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_crypto_history_uses_fixed_public_sources_for_usd_pairs(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/crypto?"
+            headers = {"X-SmartBot-Market": "daily"}
+            try:
+                with patch("market_api.urlopen") as upstream:
+                    for query in ("symbol=../BTC-USD&source=bitstamp", "symbol=ETH-USD&source=other",
+                                  "symbol=ETH-USD&symbol=BTC-USD&source=archive", "symbol=XRP-USD&source=archive"):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(Request(url + query, headers=headers), timeout=2)
+                        self.assertEqual(error.exception.code, 400)
+                    upstream.assert_not_called()
+
+                    response = upstream.return_value.__enter__.return_value
+                    response.status = 200
+                    response.read.return_value = b'{"data":{"pair":"DOGE/USD","ohlc":[]}}'
+                    request = Request(url + "symbol=DOGE-USD&source=bitstamp", headers=headers)
+                    with urlopen(request, timeout=2) as result:
+                        self.assertEqual(result.headers["Content-Type"], "application/json")
+                        self.assertEqual(json.load(result)["data"]["pair"], "DOGE/USD")
+                    target = upstream.call_args.args[0].full_url
+                    self.assertEqual(target, "https://www.bitstamp.net/api/v2/ohlc/dogeusd/"
+                                     "?step=86400&limit=400&exclude_current_candle=true")
+
+                    response.read.return_value = b"date_utc,open,high,low,close\n"
+                    request = Request(url + "symbol=BTC-USD&source=archive", headers=headers)
+                    with urlopen(request, timeout=2) as result:
+                        self.assertEqual(result.headers["Content-Type"], "text/csv")
+                        self.assertEqual(result.read(), response.read.return_value)
+                    self.assertEqual(upstream.call_args.args[0].full_url,
+                                     "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv")
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
     def test_market_archive_proxies_only_bounded_ranges_from_the_public_dataset(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})

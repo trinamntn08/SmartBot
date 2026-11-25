@@ -1,11 +1,38 @@
 import { validatePrices } from './market-provider.js';
+import { defaultMarkets, marketSymbol } from './market-symbols.js';
 
 const prefix = 'smartbot-market:';
 const cacheDuration = 4 * 60 * 60 * 1000;
-const sources = new Set(['archive', 'dolthub', 'alphaVantage']);
+const watchlistKey = 'smartbot-market-watchlist';
+const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitcoinArchive', 'coinbaseArchive']);
+const defaults = new Set(defaultMarkets.map(({ symbol }) => symbol));
 let snapshot;
 
 export const marketRepository = {
+  watchlist() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(watchlistKey));
+      const seen = new Set(defaults);
+      return saved.flatMap(({ symbol, name }) => {
+        const listing = marketSymbol(symbol, name);
+        if (!listing || seen.has(symbol)) return [];
+        seen.add(symbol);
+        return [listing];
+      });
+    } catch {
+      return [];
+    }
+  },
+  setSaved(listing, saved) {
+    const watchlist = this.watchlist().filter(({ symbol }) => symbol !== listing.symbol);
+    if (saved) watchlist.push(listing);
+    try {
+      localStorage.setItem(watchlistKey, JSON.stringify(watchlist.map(({ symbol, name }) => ({ symbol, name }))));
+      return true;
+    } catch {
+      return false;
+    }
+  },
   get(symbol) {
     try {
       const saved = JSON.parse(localStorage.getItem(prefix + symbol));
@@ -25,9 +52,13 @@ export const marketRepository = {
         return response.json();
       });
       const data = await snapshot;
+      if (!Object.hasOwn(data.series, symbol)) return null;
       const prices = validatePrices({ symbol, prices: data.series[symbol] }, symbol);
-      if (prices.at(-1).date !== data.asOf) throw new Error('Included market history is incomplete.');
-      return { prices, source: 'archive', bundled: true };
+      const bitcoin = symbol === 'BTC-USD';
+      if (prices.at(-1).date !== (bitcoin ? data.bitcoinAsOf : data.asOf)) {
+        throw new Error('Included market history is incomplete.');
+      }
+      return { prices, source: bitcoin ? 'bitcoinArchive' : 'archive', bundled: true };
     } catch {
       snapshot = undefined;
       return null;

@@ -1,5 +1,5 @@
 export function validatePrices(data, symbol) {
-  if (!data || data.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 280) {
+  if (!data || data.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 400) {
     throw new Error('The market data response was incomplete.');
   }
   let previous = '';
@@ -15,9 +15,13 @@ export function validatePrices(data, symbol) {
 }
 
 export async function fetchMarketHistory(symbol, signal) {
+  if (symbol.endsWith('-USD')) {
+    const { cryptoHistory } = await import('./market-crypto.js');
+    return cryptoHistory(symbol, signal);
+  }
   const { archivePrices } = await import('./market-archive.js');
   const prices = await archivePrices(symbol, signal);
-  return validatePrices({ symbol, prices }, symbol);
+  return { prices: validatePrices({ symbol, prices }, symbol), source: 'archive' };
 }
 
 export async function fetchPrices(symbol, signal) {

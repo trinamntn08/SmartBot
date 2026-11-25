@@ -17,7 +17,7 @@ import webbrowser
 from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
-from market_api import MarketError, daily_prices, market_archive
+from market_api import MarketError, crypto_history, daily_prices, market_archive
 
 
 HOST = "127.0.0.1"
@@ -26,6 +26,7 @@ WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 API = "/api/assistant"
 MARKET_API = "/api/markets/daily"
 MARKET_ARCHIVE_API = "/api/markets/archive"
+MARKET_CRYPTO_API = "/api/markets/crypto"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
@@ -121,7 +122,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition("?")
-        if path in (MARKET_ARCHIVE_API, MARKET_API):
+        if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_API):
             if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
@@ -146,14 +147,20 @@ class PreviewHandler(SimpleHTTPRequestHandler):
             if path == MARKET_API:
                 self.send_json(200, daily_prices(parameter("symbol")))
                 return
-            body, content_range, etag = market_archive(parameter("start"), parameter("end"))
+            if path == MARKET_CRYPTO_API:
+                body, content_type = crypto_history(parameter("symbol"), parameter("source"))
+                status, extra_headers = 200, {}
+            else:
+                body, content_range, etag = market_archive(parameter("start"), parameter("end"))
+                content_type = "application/octet-stream"
+                status, extra_headers = 206, {"Content-Range": content_range, "ETag": etag}
         except MarketError as error:
             self.send_json(error.status, {"error": str(error)})
             return
-        self.send_response(206)
-        self.send_header("Content-Type", "application/octet-stream")
-        self.send_header("Content-Range", content_range)
-        self.send_header("ETag", etag)
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        for header, value in extra_headers.items():
+            self.send_header(header, value)
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()

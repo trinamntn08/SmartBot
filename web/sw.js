@@ -2,12 +2,13 @@ importScripts('./vendor/pdfjs/cache-files.js');
 
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v32'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v33'}`;
 const files = [
   'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'today.css', 'today.js', 'activity.js', 'activity-repository.js',
   'markets.css', 'markets.js', 'market-chart.js', 'market-provider.js', 'market-repository.js', 'assets/markets.webp',
-  'market-archive.js', 'vendor/market-parquet/parquet.js', 'assets/market-closes.json',
+  'market-archive.js', 'market-crypto.js', 'market-symbols.js', 'vendor/market-parquet/parquet.js',
+  'assets/market-closes.json', 'assets/market-catalog.json',
   'books.js', 'library-repository.js', 'text-book.js', 'pdf-book.js', 'epub-book.js',
   'vendor/pdfjs/pdf.min.js', 'vendor/pdfjs/pdf.worker.min.js', 'vendor/jszip/jszip.min.js', ...pdfDataFiles,
   'news.js', 'news-provider.js', 'news-repository.js', 'news-preferences.js', 'news-rss.js', 'tuoitre.js',

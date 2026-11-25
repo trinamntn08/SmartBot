@@ -3,7 +3,7 @@ const sections = [
   { id: 'languages', title: 'Languages', summary: 'French, English, and Japanese', detail: 'Vocabulary decks are in development.' },
   { id: 'music', title: 'Music', summary: 'Find and listen to podcasts' },
   { id: 'movies', title: 'Movies', summary: 'Films and your watchlist', detail: 'Film browsing and watchlists are in development.' },
-  { id: 'markets', title: 'Markets', summary: 'Stock and ETF price charts' },
+  { id: 'markets', title: 'Markets', summary: 'Stock, ETF, and crypto charts' },
 ];
 
 export function findSection(route) {

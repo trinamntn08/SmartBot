@@ -17,6 +17,10 @@ final class MarketFeed {
     private static final int MAX_RANGE = 2 * 1024 * 1024;
     private static final String ARCHIVE_URL =
             "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet";
+    private static final String BITCOIN_CSV =
+            "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv";
+    private static final String COINBASE_HISTORY =
+            "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json";
 
     static WebResourceResponse read(WebResourceRequest request) {
         if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
@@ -46,23 +50,15 @@ final class MarketFeed {
                 throw new IOException("Market archive range mismatch");
             }
 
-            ByteArrayOutputStream body = new ByteArrayOutputStream(length);
-            try (InputStream stream = connection.getInputStream()) {
-                byte[] buffer = new byte[4096];
-                int count;
-                while ((count = stream.read(buffer)) != -1) {
-                    if (body.size() + count > length) throw new IOException("Market archive range exceeded");
-                    body.write(buffer, 0, count);
-                }
-            }
-            if (body.size() != length) throw new IOException("Incomplete market archive range");
+            byte[] body = readBody(connection, length);
+            if (body.length != length) throw new IOException("Incomplete market archive range");
             Map<String, String> headers = new HashMap<>();
             headers.put("Content-Length", String.valueOf(length));
             headers.put("Content-Range", contentRange);
             headers.put("ETag", etag);
             headers.put("Cache-Control", "no-store");
             return new WebResourceResponse("application/octet-stream", null, 206, "Partial Content", headers,
-                    new ByteArrayInputStream(body.toByteArray()));
+                    new ByteArrayInputStream(body));
         } catch (IOException error) {
             return error(502, "Market archive unavailable");
         } finally {
@@ -70,16 +66,75 @@ final class MarketFeed {
         }
     }
 
+    static WebResourceResponse crypto(WebResourceRequest request) {
+        if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
+        String symbol = parameter(request, "symbol");
+        String source = parameter(request, "source");
+        if (!symbol.matches("[A-Z0-9]{2,12}-USD")) return error(400, "Invalid cryptocurrency pair");
+        String mimeType = "application/json";
+        String url;
+        int limit = MAX_RANGE;
+        if ("bitstamp".equals(source)) {
+            String pair = symbol.replace("-", "").toLowerCase(java.util.Locale.ROOT);
+            url = "https://www.bitstamp.net/api/v2/ohlc/" + pair + "/?step=86400&limit=400&exclude_current_candle=true";
+            limit = 128 * 1024;
+        } else if ("archive".equals(source) && "BTC-USD".equals(symbol)) {
+            url = BITCOIN_CSV;
+            mimeType = "text/csv";
+        } else if ("archive".equals(source) && symbol.matches("(ETH|SOL|PAXG)-USD")) {
+            url = COINBASE_HISTORY;
+        } else {
+            return error(400, "Invalid cryptocurrency source");
+        }
+        HttpURLConnection connection = null;
+        try {
+            connection = connect(new URL(url));
+            connection.setRequestProperty("User-Agent", "SmartBot");
+            if (connection.getResponseCode() != 200) throw new IOException("Cryptocurrency history unavailable");
+            byte[] body = readBody(connection, limit);
+            if (body.length == 0) throw new IOException("Empty cryptocurrency history");
+            return new WebResourceResponse(mimeType, "UTF-8", 200, "OK",
+                    java.util.Collections.singletonMap("Cache-Control", "no-store"), new ByteArrayInputStream(body));
+        } catch (IOException error) {
+            return error(502, "Cryptocurrency history unavailable");
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private static String parameter(WebResourceRequest request, String name) {
+        List<String> values = request.getUrl().getQueryParameters(name);
+        return values.size() == 1 ? values.get(0) : "";
+    }
+
+    private static byte[] readBody(HttpURLConnection connection, int limit) throws IOException {
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        try (InputStream stream = connection.getInputStream()) {
+            byte[] buffer = new byte[4096];
+            int count;
+            while ((count = stream.read(buffer)) != -1) {
+                if (body.size() + count > limit) throw new IOException("Market response too large");
+                body.write(buffer, 0, count);
+            }
+        }
+        return body.toByteArray();
+    }
+
     private static int offset(List<String> values) {
         return values.size() == 1 && values.get(0).matches("[0-9]{1,9}") ? Integer.parseInt(values.get(0)) : -1;
     }
 
     private static HttpURLConnection open(URL url, String range) throws IOException {
+        HttpURLConnection connection = connect(url);
+        connection.setRequestProperty("Range", "bytes=" + range);
+        return connection;
+    }
+
+    private static HttpURLConnection connect(URL url) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setInstanceFollowRedirects(false);
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(10000);
-        connection.setRequestProperty("Range", "bytes=" + range);
         connection.setRequestProperty("Accept-Encoding", "identity");
         return connection;
     }

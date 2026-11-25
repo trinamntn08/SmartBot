@@ -1,9 +1,14 @@
 const dollars = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
 const signedDollars = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', signDisplay: 'exceptZero' });
+const smallDollars = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 8 });
+const signedSmallDollars = new Intl.NumberFormat(undefined, {
+  style: 'currency', currency: 'USD', signDisplay: 'exceptZero', maximumFractionDigits: 8,
+});
 const percent = new Intl.NumberFormat(undefined, { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 2 });
 const dates = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const shortDates = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 const axisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+const smallAxisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 8 });
 const dayLength = 86400000;
 const plotWidth = 720;
 const plotHeight = 260;
@@ -11,6 +16,10 @@ const plotInset = 8;
 
 function trend(change) {
   return change < 0 ? 'down' : change > 0 ? 'up' : 'flat';
+}
+
+function formatPrice(price) {
+  return (price < 0.01 ? smallDollars : dollars).format(price);
 }
 
 function visiblePrices(series, range) {
@@ -22,14 +31,15 @@ function visiblePrices(series, range) {
 }
 
 function chartScale(low, high) {
-  const spread = Math.max(high - low, high * 0.004, 0.04);
+  const fractional = high < 0.01;
+  const spread = Math.max(high - low, high * 0.004, fractional ? 1e-9 : 0.04);
   const increment = 10 ** Math.floor(Math.log10(spread / 4));
   const step = [1, 2, 2.5, 5, 10].find(factor => factor * increment >= spread / 4) * increment;
   const floor = Math.max(0, Math.floor((low - spread * 0.06) / step) * step);
   const ceiling = Math.ceil((high + spread * 0.06) / step) * step;
   const ticks = Array.from({ length: Math.round((ceiling - floor) / step) + 1 }, (_, index) => ceiling - index * step);
   const y = value => plotInset + (plotHeight - 2 * plotInset) * (ceiling - value) / (ceiling - floor);
-  return { ticks, y };
+  return { ticks, y, fractional };
 }
 
 function chartPoints(prices, y) {
@@ -44,11 +54,12 @@ function chartPoints(prices, y) {
 
 function renderQuote(quote, latest, previous) {
   const change = previous ? latest.close - previous.close : 0;
+  const changeFormat = latest.close < 0.01 ? signedSmallDollars : signedDollars;
   const dailyChange = previous ? `<span class="market-day-change" data-trend="${trend(change)}">
-    ${signedDollars.format(change)} (${percent.format(change / previous.close)})
+    ${changeFormat.format(change)} (${percent.format(change / previous.close)})
   </span>` : '';
   quote.innerHTML = `<div class="market-price-row">
-      <strong>${dollars.format(latest.close)}</strong>${dailyChange}
+      <strong>${formatPrice(latest.close)}</strong>${dailyChange}
     </div>
     <p>Closed <time datetime="${latest.date}">${dates.format(Date.parse(latest.date))}</time> · USD${previous ? ' · Change vs. prior close' : ''}</p>`;
 }
@@ -60,13 +71,14 @@ function renderGraph(figure, points, scale, change, previous) {
   const bottom = plotHeight - plotInset;
   const referenceY = previous ? scale.y(previous.close) : null;
   const dateLabels = [first.time];
+  const axis = scale.fractional ? smallAxisPrices : axisPrices;
   if (last.time - first.time >= 4 * dayLength) dateLabels.push((first.time + last.time) / 2);
   if (last.time !== first.time) dateLabels.push(last.time);
   figure.innerHTML = `<figcaption class="market-chart-caption">
       <span>Daily closing prices</span>
       <span class="market-point-reading" aria-hidden="true"></span>
     </figcaption>
-    <div class="market-graph" data-trend="${trend(change)}">
+    <div class="market-graph" data-trend="${trend(change)}" data-fractional="${scale.fractional}">
       <div class="market-plot">
         <svg viewBox="0 0 ${plotWidth} ${plotHeight}" preserveAspectRatio="none" aria-hidden="true" focusable="false">
           <defs><linearGradient id="market-area-fill" x2="0" y2="1">
@@ -85,7 +97,7 @@ function renderGraph(figure, points, scale, change, previous) {
           value="${points.length - 1}" aria-label="Explore daily closing prices">` : ''}
       </div>
       <div class="market-axis" aria-hidden="true">${scale.ticks.map(tick =>
-        `<span style="top:${scale.y(tick) / plotHeight * 100}%">${axisPrices.format(tick)}</span>`).join('')}</div>
+        `<span style="top:${scale.y(tick) / plotHeight * 100}%">${axis.format(tick)}</span>`).join('')}</div>
       <div class="market-dates" aria-hidden="true">${dateLabels.map(time => `<span>${shortDates.format(time)}</span>`).join('')}</div>
     </div>`;
 
@@ -97,14 +109,14 @@ function renderGraph(figure, points, scale, change, previous) {
 
   function inspect(index) {
     const point = points[index];
-    reading.textContent = `${shortDates.format(point.time)} · ${dollars.format(point.close)}`;
+    reading.textContent = `${shortDates.format(point.time)} · ${formatPrice(point.close)}`;
     marker.setAttribute('d', `M ${point.x},${point.y} h 0`);
     crosshair.setAttribute('x1', point.x);
     crosshair.setAttribute('x2', point.x);
     crosshair.toggleAttribute('hidden', index === points.length - 1);
     if (slider) {
       slider.value = index;
-      slider.setAttribute('aria-valuetext', `${dates.format(point.time)}, ${dollars.format(point.close)}`);
+      slider.setAttribute('aria-valuetext', `${dates.format(point.time)}, ${formatPrice(point.close)}`);
     }
   }
 
@@ -136,10 +148,10 @@ export function renderPriceChart(view, series, range) {
   renderQuote(view.querySelector('.market-quote'), latest, previous);
   renderGraph(view.querySelector('.market-chart'), chartPoints(prices, scale.y), scale, change,
     range === '7' || range === '30' ? previous : null);
-  view.querySelector('.market-summary dl').innerHTML = `<div><dt>Previous close</dt><dd>${previous ? dollars.format(previous.close) : '—'}</dd></div>
+  view.querySelector('.market-summary dl').innerHTML = `<div><dt>Previous close</dt><dd>${previous ? formatPrice(previous.close) : '—'}</dd></div>
     <div><dt>Range change</dt><dd data-trend="${trend(change)}">${prices.length > 1 ? percent.format(change) : '—'}</dd></div>
-    <div><dt>Lowest close</dt><dd>${dollars.format(low)}</dd></div>
-    <div><dt>Highest close</dt><dd>${dollars.format(high)}</dd></div>`;
+    <div><dt>Lowest close</dt><dd>${formatPrice(low)}</dd></div>
+    <div><dt>Highest close</dt><dd>${formatPrice(high)}</dd></div>`;
   view.querySelector('.market-table tbody').innerHTML = prices.slice().reverse().map(({ date, close }) => `<tr>
-    <td><time datetime="${date}">${dates.format(Date.parse(date))}</time></td><td>${dollars.format(close)}</td></tr>`).join('');
+    <td><time datetime="${date}">${dates.format(Date.parse(date))}</time></td><td>${formatPrice(close)}</td></tr>`).join('');
 }

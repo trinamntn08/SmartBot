@@ -256,7 +256,9 @@ public final class MainActivity extends Activity {
         String path = uri.getPath();
         return ("www.tradingview.com".equals(uri.getAuthority()) && path != null && path.startsWith("/symbols/"))
                 || ("www.dolthub.com".equals(uri.getAuthority()) && "/repositories/post-no-preference/stocks".equals(path))
-                || ("github.com".equals(uri.getAuthority()) && "/Johnbrick123/sp500-data".equals(path))
+                || ("github.com".equals(uri.getAuthority()) && ("/Johnbrick123/sp500-data".equals(path)
+                    || "/daniegitx1/btc-price-history".equals(path) || "/akpasz/btc-data".equals(path)))
+                || ("www.bitstamp.net".equals(uri.getAuthority()) && "/api/".equals(path))
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
@@ -272,6 +274,7 @@ public final class MainActivity extends Activity {
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
         if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
+        if ((ASSET_PATH + "api/markets/crypto").equals(uri.getPath())) return MarketFeed.crypto(request);
         String podcastPath = ASSET_PATH + "api/podcasts/";
         if (uri.getEncodedPath().startsWith(podcastPath)) {
             return PodcastDiscovery.read(uri.getEncodedPath().substring(podcastPath.length()), request);
