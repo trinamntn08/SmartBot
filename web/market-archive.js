@@ -1,4 +1,5 @@
 import { decompressZstd, parquetMetadataAsync, parquetReadObjects } from './vendor/market-parquet/parquet.js';
+import { hasCandle } from './market-provider.js';
 
 const maxRange = 2 * 1024 * 1024;
 const maxTransfer = 6 * 1024 * 1024;
@@ -60,7 +61,7 @@ export async function archivePrices(symbol, signal) {
   const metadata = await parquetMetadataAsync(file, { initialFetchSize: 256 * 1024 });
   // The archive is sorted by ticker. The reader skips unrelated row groups.
   const rows = await parquetReadObjects({
-    file, metadata, columns: ['date', 'close'], filter: { ticker: { $eq: symbol } },
+    file, metadata, columns: ['date', 'open', 'high', 'low', 'close'], filter: { ticker: { $eq: symbol } },
     compressors: { ZSTD: input => decompressZstd(input) },
   });
   const valid = rows.filter(({ date, close }) => date instanceof Date && Number.isFinite(date.getTime())
@@ -68,5 +69,13 @@ export async function archivePrices(symbol, signal) {
   valid.sort((a, b) => a.date - b.date);
   const latest = valid.at(-1)?.date.getTime();
   return valid.filter(({ date }) => date.getTime() >= latest - 400 * dayLength).slice(-280)
-    .map(({ date, close }) => ({ date: date.toISOString().slice(0, 10), close: Math.round(close * 100) / 100 }));
+    .map(({ date, open, high, low, close }) => {
+      const price = { date: date.toISOString().slice(0, 10), close: Math.round(close * 100) / 100 };
+      if (hasCandle({ open, high, low, close })) {
+        price.open = Math.round(open * 100) / 100;
+        price.high = Math.round(high * 100) / 100;
+        price.low = Math.round(low * 100) / 100;
+      }
+      return price;
+    });
 }

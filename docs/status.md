@@ -9,7 +9,7 @@ Last updated November 25, 2026.
 - **News** opens to ten matching headlines from free-to-read sources and appends the next ten as you scroll to the end. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. The default Android APK uses the Apple Podcasts catalog and opens public HTTPS feeds directly. Followed shows and resuming playback appear when available. [Podcast listening](plans/podcast-listening.md)
 - The top bar links directly to Workspace and its sections, including Books, and uses a gear for Settings. The current section is highlighted, and the links wrap on narrow screens.
-- **Markets** occupies one standard Workspace card. Search for a stock, ETF, or USD crypto pair, and add it to the saved watchlist. Eight equities and BTC/USD are available by default with bundled closing prices through November 24, 2026. Charts show six ranges, a daily change, and a price history table. Downloaded prices reopen offline. [Markets](../README.md#markets)
+- **Markets** searches U.S. stocks and ETFs, Vietnamese stocks on HOSE, HNX, and UPCoM, and USD crypto pairs. Eight U.S. equities and BTC/USD ship with daily candles through November 24, 2026. Switch between the line and candlestick chart, choose one of six ranges, and reopen the last chart with cached prices. Vietnamese charts use VND and load daily prices from DNSE. [Markets](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Workspace** and **SmartBot** in the top bar return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -18,6 +18,8 @@ Last updated November 25, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+At 320 CSS pixels, Chromium checked the Line and Candles controls, touch and keyboard inspection, and restoration of the symbol, range, and chart type on re-entry and offline restart. Search found HOSE, HNX, and UPCoM listings by symbol and matched Vietnamese names with and without accents. A controlled DNSE response verified VND display and watchlist caching. The cloud network denied the live DNSE request. The public Parquet archive returned complete candle histories for the eight starter equities and Netflix. All 25 web, 12 Python, and five podcast service tests passed.
 
 Chromium verified touch, mouse, and keyboard movement of the assistant gear, position persistence, and direct top bar navigation at widths from 320 to 1440 CSS pixels. Settings, offline Books import and EPUB export, News scrolling, bundled Bitcoin prices, and adding and removing a watchlist entry also passed. The assistant and the added watchlist symbol used controlled responses. All 25 web, 11 Python, and five podcast service tests passed.
 
@@ -84,6 +86,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The Markets candlestick build passed Gradle build, ZIP alignment, and signature verification with the same certificate as the previous APK. All 245 bundled web files matched, including 2,616 daily candles and the searchable directory of 1,579 Vietnamese stocks. Lint reported zero errors and six warnings. Live Vietnamese quotes in the Android app still need a phone check.
 
 The SmartBot 0.3.3 debug build with the movable assistant gear passed Gradle build, ZIP alignment, same-certificate signature verification, and byte-for-byte checks of all 243 web files. Lint found zero errors and six warnings. Physical phone verification remains pending.
 

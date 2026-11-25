@@ -9,6 +9,7 @@ from threading import Thread
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -16,6 +17,46 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_vietnamese_stock_history_uses_a_bounded_request_to_dnse(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/vietnam?symbol="
+
+            def request(query):
+                return Request(url + query, headers={"X-SmartBot-Market": "daily"})
+
+            try:
+                with patch("market_api.urlopen") as upstream:
+                    for invalid, status in ((url + "FPT", 403), (request("../FPT"), 400),
+                                            (request("FPT&symbol=VNM"), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(invalid, timeout=2)
+                        self.assertEqual(error.exception.code, status)
+                    upstream.assert_not_called()
+
+                    response = upstream.return_value.__enter__.return_value
+                    response.status = 200
+                    response.read.return_value = b'{"t":[1780000000],"o":[71],"h":[75],"l":[70],"c":[74]}'
+                    with urlopen(request("FPT"), timeout=2) as result:
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result)["c"], [74])
+                    target = urlsplit(upstream.call_args.args[0].full_url)
+                    self.assertEqual((target.scheme, target.netloc, target.path),
+                                     ("https", "services.entrade.com.vn", "/chart-api/v2/ohlcs/stock"))
+                    params = parse_qs(target.query)
+                    self.assertEqual(params["symbol"], ["FPT"])
+                    self.assertEqual(params["resolution"], ["1D"])
+                    self.assertEqual(int(params["to"][0]) - int(params["from"][0]), 400 * 86400)
+
+                    response.read.return_value = b"x" * (128 * 1024 + 1)
+                    with self.assertRaises(HTTPError) as error:
+                        urlopen(request("FPT"), timeout=2)
+                    self.assertEqual(error.exception.code, 502)
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
     def test_crypto_history_uses_fixed_public_sources_for_usd_pairs(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
@@ -115,14 +156,16 @@ class PreviewTests(unittest.TestCase):
                     upstream = connect.return_value.getresponse.return_value
                     upstream.status = 200
                     upstream.read.return_value = json.dumps({"Time Series (Daily)": {
-                        "2026-11-23": {"4. close": "675.25"}, "2026-11-20": {"4. close": "660.10"},
+                        "2026-11-23": {"1. open": "670", "2. high": "680", "3. low": "669", "4. close": "675.25"},
+                        "2026-11-20": {"4. close": "660.10"},
                         "2026-11-19": {"4. close": "NaN"}, "2026-11-31": {"4. close": "700"},
                     }}).encode()
                     with patch.dict("os.environ", {"SMARTBOT_ALPHA_VANTAGE_API_KEY": "test-key"}):
                         with urlopen(request("SPY"), timeout=2) as result:
                             self.assertEqual(result.headers["Cache-Control"], "no-store")
                             self.assertEqual(json.load(result), {"symbol": "SPY", "prices": [
-                                {"date": "2026-11-20", "close": 660.10}, {"date": "2026-11-23", "close": 675.25},
+                                {"date": "2026-11-20", "close": 660.10},
+                                {"date": "2026-11-23", "close": 675.25, "open": 670, "high": 680, "low": 669},
                             ]})
                         connect.assert_called_once_with("www.alphavantage.co", timeout=8)
                         connect.return_value.request.assert_called_once_with(

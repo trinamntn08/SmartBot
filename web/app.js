@@ -10,6 +10,7 @@ import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
 import { renderMarkets } from './markets.js';
+import { marketRepository } from './market-repository.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('nav');
@@ -145,6 +146,7 @@ function render(focusHeading = false) {
   const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
   const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
+  marketRepository.setOpen(page === 'markets');
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
@@ -298,6 +300,9 @@ if (hasNativePodcastPlayer) setInterval(() => { if (!document.hidden) void loadA
 try {
   repository = await openRepository();
   podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'), recordAutomatically);
+  if (!location.hash && marketRepository.wasOpen() && marketRepository.lastChart()?.symbol) {
+    history.replaceState(null, '', '#markets');
+  }
   await refresh();
 } catch {
   view.setAttribute('aria-busy', 'false');

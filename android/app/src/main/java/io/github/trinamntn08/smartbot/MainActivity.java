@@ -259,6 +259,7 @@ public final class MainActivity extends Activity {
                 || ("github.com".equals(uri.getAuthority()) && ("/Johnbrick123/sp500-data".equals(path)
                     || "/daniegitx1/btc-price-history".equals(path) || "/akpasz/btc-data".equals(path)))
                 || ("www.bitstamp.net".equals(uri.getAuthority()) && "/api/".equals(path))
+                || ("www.dnse.com.vn".equals(uri.getAuthority()) && "/".equals(path))
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
@@ -275,6 +276,7 @@ public final class MainActivity extends Activity {
         }
         if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
         if ((ASSET_PATH + "api/markets/crypto").equals(uri.getPath())) return MarketFeed.crypto(request);
+        if ((ASSET_PATH + "api/markets/vietnam").equals(uri.getPath())) return MarketFeed.vietnam(request);
         String podcastPath = ASSET_PATH + "api/podcasts/";
         if (uri.getEncodedPath().startsWith(podcastPath)) {
             return PodcastDiscovery.read(uri.getEncodedPath().substring(podcastPath.length()), request);

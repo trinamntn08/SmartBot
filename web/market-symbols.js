@@ -16,52 +16,70 @@ const cryptoNames = [
 ];
 const equitySymbol = /^[A-Z][A-Z0-9]{0,8}(?:-[A-Z])?$/;
 const cryptoSymbol = /^[A-Z0-9]{2,12}-USD$/;
+const vietnamSymbol = /^(HOSE|HNX|UPCOM):([A-Z0-9]{3})$/;
 
 export function marketSymbol(symbol, name = symbol, exchange = '') {
-  const crypto = typeof symbol === 'string' && cryptoSymbol.test(symbol);
-  if (typeof symbol !== 'string' || (!crypto && !equitySymbol.test(symbol))
-      || typeof name !== 'string' || !name.trim() || name.length > 160) return null;
+  if (typeof symbol !== 'string' || typeof name !== 'string' || !name.trim() || name.length > 160) return null;
+  const crypto = cryptoSymbol.test(symbol);
+  const vietnam = vietnamSymbol.exec(symbol);
+  if (!crypto && !vietnam && !equitySymbol.test(symbol)) return null;
+  const label = vietnam ? vietnam[2] : crypto ? symbol.replace('-', '/') : symbol;
+  if (vietnam) exchange = vietnam[1];
   return {
-    symbol, name, exchange, label: crypto ? symbol.replace('-', '/') : symbol,
+    symbol, name, label, currency: vietnam ? 'VND' : 'USD',
     market: crypto ? 'Crypto' : exchange || 'U.S. stock or ETF',
-    tradingView: crypto ? `BITSTAMP-${symbol.replace('-', '')}` : [exchange, symbol.replace('-', '.')].filter(Boolean).join('-'),
+    tradingView: crypto ? `BITSTAMP-${symbol.replace('-', '')}` : [exchange, label.replace('-', '.')].filter(Boolean).join('-'),
   };
 }
 
 export const defaultMarkets = Object.freeze(starters.map(args => marketSymbol(...args)));
 const knownCrypto = cryptoNames.map(([symbol, name]) => marketSymbol(`${symbol}-USD`, name));
-let catalog;
+const catalogs = new Map();
 
-async function equityCatalog() {
-  try {
-    catalog ??= fetch('./assets/market-catalog.json').then(async response => {
+async function equityCatalog(file) {
+  if (!catalogs.has(file)) {
+    const request = fetch(`./assets/${file}`).then(async response => {
       if (!response.ok) throw new Error('Market symbol list unavailable.');
-      return Object.entries(await response.json()).map(args => marketSymbol(...args)).filter(Boolean);
+      return Object.entries(await response.json()).flatMap(([symbol, entry]) => {
+        const [name, ...aliases] = Array.isArray(entry) ? entry : [entry];
+        const listing = marketSymbol(symbol, name);
+        return listing ? [{ ...listing, aliases }] : [];
+      });
+    }).catch(() => {
+      catalogs.delete(file);
+      return [];
     });
-    return await catalog;
-  } catch {
-    catalog = undefined;
-    return [];
+    catalogs.set(file, request);
   }
+  return catalogs.get(file);
+}
+
+function normalizeSearch(text) {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toUpperCase().replaceAll('Đ', 'D');
 }
 
 export async function searchMarkets(text, saved) {
-  const query = text.trim().toUpperCase();
+  const query = normalizeSearch(text.trim());
   if (!query) return [];
   const typedPair = /^([A-Z0-9]{2,12})(?:[-/]|\s+)?USD$/.exec(query);
   const symbolQuery = typedPair ? `${typedPair[1]}-USD` : query.replace('.', '-');
-  const available = [...defaultMarkets, ...saved, ...knownCrypto, ...await equityCatalog()];
+  const [us, vietnam] = await Promise.all([
+    equityCatalog('market-catalog.json'), equityCatalog('market-vietnam-catalog.json'),
+  ]);
+  const savedBySymbol = new Map(saved.map(listing => [listing.symbol, listing]));
+  const available = [...defaultMarkets, ...knownCrypto, ...us, ...vietnam, ...saved];
   const matches = [];
   const seen = new Set();
   for (const listing of available) {
     if (seen.has(listing.symbol)) continue;
     seen.add(listing.symbol);
-    const name = listing.name.toUpperCase();
-    const base = listing.symbol.replace(/-USD$/, '');
-    const rank = listing.symbol === symbolQuery || base === symbolQuery ? 0 : name === query ? 1
-      : listing.symbol.startsWith(symbolQuery) ? 2 : name.startsWith(query) ? 3
-      : name.includes(query) ? 4 : -1;
-    if (rank >= 0) matches.push({ listing, rank });
+    const names = [listing.name, ...(listing.aliases ?? [])].map(normalizeSearch);
+    const base = listing.label.replace(/\/USD$/, '');
+    const rank = listing.symbol === symbolQuery || base === symbolQuery ? 0 : names.includes(query) ? 1
+      : listing.symbol.startsWith(symbolQuery) || base.startsWith(symbolQuery) ? 2
+      : names.some(name => name.startsWith(query)) ? 3
+      : names.some(name => name.includes(query)) ? 4 : -1;
+    if (rank >= 0) matches.push({ listing: savedBySymbol.get(listing.symbol) ?? listing, rank });
   }
   if (typedPair && !seen.has(symbolQuery)) {
     const listing = marketSymbol(symbolQuery, symbolQuery.replace('-', '/'));

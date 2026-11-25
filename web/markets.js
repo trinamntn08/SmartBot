@@ -1,4 +1,4 @@
-import { fetchMarketHistory, fetchPrices } from './market-provider.js';
+import { fetchMarketHistory, fetchPrices, hasCandle } from './market-provider.js';
 import { marketRepository } from './market-repository.js';
 import { renderPriceChart } from './market-chart.js';
 import { defaultMarkets, searchMarkets } from './market-symbols.js';
@@ -7,16 +7,21 @@ const ranges = [
   ['7', '1W', '1 week'], ['30', '1M', '1 month'], ['90', '3M', '3 months'],
   ['180', '6M', '6 months'], ['ytd', 'YTD', 'Year to date'], ['365', '1Y', '1 year'],
 ];
+const chartStyles = [['line', 'Line'], ['candles', 'Candles']];
 const historySources = {
   archive: ['S&P 500 archive on GitHub', 'https://github.com/Johnbrick123/sp500-data'],
   dolthub: ['post-no-preference on DoltHub', 'https://www.dolthub.com/repositories/post-no-preference/stocks'],
   alphaVantage: ['Alpha Vantage', 'https://www.alphavantage.co/'],
   bitstamp: ['Bitstamp', 'https://www.bitstamp.net/api/'],
   bitcoinArchive: ['Bitstamp daily candles on GitHub', 'https://github.com/daniegitx1/btc-price-history'],
-  coinbaseArchive: ['Coinbase daily candles on GitHub', 'https://github.com/akpasz/btc-data'],
+  coinbaseArchive: ['Coinbase daily closes on GitHub', 'https://github.com/akpasz/btc-data'],
+  dnse: ['DNSE', 'https://www.dnse.com.vn/'],
 };
 
 export function renderMarkets(view, focusHeading) {
+  const lastChart = marketRepository.lastChart();
+  let range = ranges.some(([value]) => value === lastChart?.range) ? lastChart.range : '30';
+  let chartStyle = lastChart?.style === 'candles' ? 'candles' : 'line';
   view.innerHTML = `<div class="market-heading">
       <h1 tabindex="-1">Markets</h1>
       <div class="market-ticker">
@@ -43,10 +48,14 @@ export function renderMarkets(view, focusHeading) {
       <p class="market-status" role="status"></p>
       <div class="market-history" hidden>
         <div class="market-quote"></div>
+        <div class="market-chart-style" role="group" aria-label="Chart type">
+          ${chartStyles.map(([value, label]) => `<button type="button" value="${value}"
+            aria-pressed="${value === chartStyle}">${label}</button>`).join('')}
+        </div>
         <figure class="market-chart"></figure>
         <div class="market-period" role="group" aria-label="Chart range">
           ${ranges.map(([value, short, label]) => `<button type="button" value="${value}" aria-label="${label}"
-            aria-pressed="${value === '30'}">${short}</button>`).join('')}
+            aria-pressed="${value === range}">${short}</button>`).join('')}
         </div>
         <section class="market-summary" aria-labelledby="market-summary-title">
           <h3 id="market-summary-title">Range summary</h3>
@@ -55,7 +64,7 @@ export function renderMarkets(view, focusHeading) {
         <details class="market-prices">
           <summary>Price history table</summary>
           <table class="market-table">
-            <thead><tr><th scope="col">Date</th><th scope="col">Closing price (USD)</th></tr></thead>
+            <thead><tr><th scope="col">Date</th><th scope="col" class="market-table-currency">Closing price</th></tr></thead>
             <tbody></tbody>
           </table>
         </details>
@@ -75,6 +84,7 @@ export function renderMarkets(view, focusHeading) {
   const name = panel.querySelector('#market-instrument-name');
   const exchangeLabel = panel.querySelector('.market-instrument p');
   const remove = panel.querySelector('.market-remove');
+  const styleControls = panel.querySelector('.market-chart-style');
   const period = panel.querySelector('.market-period');
   const history = panel.querySelector('.market-history');
   const actions = panel.querySelector('.market-actions');
@@ -82,7 +92,6 @@ export function renderMarkets(view, focusHeading) {
   const status = panel.querySelector('[role="status"]');
   const historyLink = history.querySelector('a');
   const link = panel.querySelector('.market-link');
-  let range = '30';
   let prices;
   let request;
   let searchRequest;
@@ -175,6 +184,12 @@ export function renderMarkets(view, focusHeading) {
     reload();
   }
 
+  function drawChart() {
+    const { symbol, currency } = listings[ticker.selectedIndex];
+    renderPriceChart(history, prices, range, chartStyle, currency);
+    marketRepository.saveChart(symbol, range, chartStyle);
+  }
+
   function showHistory(record, message = '') {
     prices = record.prices;
     const [label, url] = historySources[record.source];
@@ -182,7 +197,7 @@ export function renderMarkets(view, focusHeading) {
     historyLink.href = url;
     status.textContent = message;
     history.hidden = false;
-    renderPriceChart(history, prices, range);
+    drawChart();
   }
 
   async function load(force = false) {
@@ -208,7 +223,8 @@ export function renderMarkets(view, focusHeading) {
     const bundledDate = bundled?.prices.at(-1).date;
     const savedDate = saved?.prices.at(-1).date;
     const useBundled = bundled && (!saved || bundledDate > savedDate
-      || (bundledDate === savedDate && bundled.prices.length > saved.prices.length));
+      || (bundledDate === savedDate && (bundled.prices.length > saved.prices.length
+        || (hasCandle(bundled.prices.at(-1)) && !hasCandle(saved.prices.at(-1))))));
     const current = useBundled ? bundled : saved;
     const savedMessage = current?.bundled ? 'Showing closing prices included with this build.' : 'Showing saved closing prices.';
     if (current?.bundled) showHistory(current, savedMessage);
@@ -216,7 +232,8 @@ export function renderMarkets(view, focusHeading) {
       status.textContent = current ? savedMessage : 'Connect to the internet to load the price chart.';
       return;
     }
-    if (!force && current?.fresh && current.source !== 'dolthub' && current.source !== 'alphaVantage') return;
+    if (!force && current?.fresh && current.source !== 'dolthub' && current.source !== 'alphaVantage'
+      && (chartStyle === 'line' || hasCandle(current.prices.at(-1)))) return;
 
     try {
       const latest = await fetchMarketHistory(selected, signal);
@@ -230,7 +247,7 @@ export function renderMarkets(view, focusHeading) {
     } catch {
       if (signal.aborted) return;
     }
-    if (!current && !selected.endsWith('-USD')) {
+    if (!current && !selected.endsWith('-USD') && !selected.includes(':')) {
       try {
         const latest = await fetchPrices(selected, signal);
         if (signal.aborted) return;
@@ -273,12 +290,21 @@ export function renderMarkets(view, focusHeading) {
     period.querySelector('[aria-pressed="true"]').setAttribute('aria-pressed', 'false');
     button.setAttribute('aria-pressed', 'true');
     range = button.value;
-    renderPriceChart(history, prices, range);
+    drawChart();
+  });
+  styleControls.addEventListener('click', (event) => {
+    const button = event.target.closest('button');
+    if (!button || chartStyle === button.value || !prices) return;
+    styleControls.querySelector('[aria-pressed="true"]').setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-pressed', 'true');
+    chartStyle = button.value;
+    drawChart();
+    if (chartStyle === 'candles' && !hasCandle(prices.at(-1))) reload();
   });
   retry.addEventListener('click', () => void load(true));
   window.addEventListener('online', reload);
   window.addEventListener('offline', reload);
-  setListings();
+  setListings(lastChart?.symbol);
   if (focusHeading) view.querySelector('h1').focus();
   reload();
   return () => {

@@ -1,4 +1,4 @@
-"""Read daily U.S. stock prices for the local preview."""
+"""Read daily market prices for the local preview."""
 
 from datetime import date
 from http.client import HTTPException, HTTPSConnection
@@ -6,6 +6,7 @@ import json
 from math import isfinite
 import os
 import re
+import time
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -15,6 +16,7 @@ MAX_ARCHIVE_RANGE = 2 * 1024 * 1024
 ARCHIVE_URL = "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet"
 BITCOIN_CSV = "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv"
 COINBASE_HISTORY = "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json"
+DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock"
 
 
 class MarketError(Exception):
@@ -65,14 +67,26 @@ def crypto_history(symbol, source):
     else:
         raise MarketError(400, "The requested cryptocurrency source is unavailable.")
 
+    return download_history(url, limit, "Cryptocurrency closing prices"), content_type
+
+
+def vietnam_history(symbol):
+    if not re.fullmatch(r"[A-Z0-9]{3}", symbol):
+        raise MarketError(400, "Choose a valid Vietnamese stock symbol.")
+    end = int(time.time())
+    query = urlencode({"symbol": symbol, "resolution": "1D", "from": end - 400 * 86400, "to": end})
+    return download_history(f"{DNSE_HISTORY}?{query}", MAX_RESPONSE, "Vietnamese stock prices")
+
+
+def download_history(url, limit, description):
     try:
         with urlopen(Request(url, headers={"User-Agent": "SmartBot"}), timeout=10) as response:
             body = response.read(limit + 1)
             if response.status != 200 or not 0 < len(body) <= limit:
-                raise ValueError("Unexpected cryptocurrency history")
-        return body, content_type
+                raise ValueError("Unexpected market history response")
+        return body
     except (OSError, HTTPException, ValueError):
-        raise MarketError(502, "Cryptocurrency closing prices could not be downloaded.") from None
+        raise MarketError(502, f"{description} could not be downloaded.") from None
 
 
 def daily_prices(symbol):
@@ -118,7 +132,16 @@ def daily_prices(symbol):
         except (KeyError, TypeError, ValueError, OverflowError):
             continue
         if day == parsed_day.isoformat() and isfinite(close) and 0 < close <= 1e9:
-            prices.append({"date": day, "close": close})
+            price = {"date": day, "close": close}
+            try:
+                values = [float(quote[field]) for field in ("1. open", "2. high", "3. low")]
+                open_price, high, low = values
+                if (all(isfinite(value) and 0 < value <= 1e9 for value in values)
+                        and low <= min(open_price, close) <= max(open_price, close) <= high):
+                    price.update(open=open_price, high=high, low=low)
+            except (KeyError, TypeError, ValueError, OverflowError):
+                pass
+            prices.append(price)
     prices.sort(key=lambda price: price["date"])
     if not prices:
         raise MarketError(502, f"No daily prices were returned for {symbol}.")

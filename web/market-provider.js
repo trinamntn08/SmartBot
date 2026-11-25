@@ -1,3 +1,8 @@
+export function hasCandle({ open, high, low, close }) {
+  return [open, high, low].every(value => Number.isFinite(value) && value > 0 && value <= 1e9)
+    && low <= Math.min(open, close) && high >= Math.max(open, close);
+}
+
 export function validatePrices(data, symbol) {
   if (!data || data.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 400) {
     throw new Error('The market data response was incomplete.');
@@ -15,6 +20,10 @@ export function validatePrices(data, symbol) {
 }
 
 export async function fetchMarketHistory(symbol, signal) {
+  if (symbol.includes(':')) {
+    const { vietnamHistory } = await import('./market-vietnam.js');
+    return vietnamHistory(symbol, signal);
+  }
   if (symbol.endsWith('-USD')) {
     const { cryptoHistory } = await import('./market-crypto.js');
     return cryptoHistory(symbol, signal);

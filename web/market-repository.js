@@ -4,11 +4,42 @@ import { defaultMarkets, marketSymbol } from './market-symbols.js';
 const prefix = 'smartbot-market:';
 const cacheDuration = 4 * 60 * 60 * 1000;
 const watchlistKey = 'smartbot-market-watchlist';
-const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitcoinArchive', 'coinbaseArchive']);
+const chartKey = 'smartbot-market-chart';
+const openKey = 'smartbot-markets-open';
+const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitcoinArchive', 'coinbaseArchive', 'dnse']);
 const defaults = new Set(defaultMarkets.map(({ symbol }) => symbol));
 let snapshot;
 
 export const marketRepository = {
+  wasOpen() {
+    try {
+      return localStorage.getItem(openKey) === '1';
+    } catch {
+      return false;
+    }
+  },
+  setOpen(open) {
+    try {
+      if (open) localStorage.setItem(openKey, '1');
+      else localStorage.removeItem(openKey);
+    } catch {
+      // The chart remains usable when browser storage is blocked.
+    }
+  },
+  lastChart() {
+    try {
+      return JSON.parse(localStorage.getItem(chartKey));
+    } catch {
+      return null;
+    }
+  },
+  saveChart(symbol, range, style) {
+    try {
+      localStorage.setItem(chartKey, JSON.stringify({ symbol, range, style }));
+    } catch {
+      // The chart remains usable when browser storage is blocked.
+    }
+  },
   watchlist() {
     try {
       const saved = JSON.parse(localStorage.getItem(watchlistKey));

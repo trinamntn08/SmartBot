@@ -15,12 +15,14 @@ import java.util.Map;
 
 final class MarketFeed {
     private static final int MAX_RANGE = 2 * 1024 * 1024;
+    private static final int MAX_HISTORY = 128 * 1024;
     private static final String ARCHIVE_URL =
             "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet";
     private static final String BITCOIN_CSV =
             "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv";
     private static final String COINBASE_HISTORY =
             "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json";
+    private static final String DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock";
 
     static WebResourceResponse read(WebResourceRequest request) {
         if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
@@ -77,7 +79,7 @@ final class MarketFeed {
         if ("bitstamp".equals(source)) {
             String pair = symbol.replace("-", "").toLowerCase(java.util.Locale.ROOT);
             url = "https://www.bitstamp.net/api/v2/ohlc/" + pair + "/?step=86400&limit=400&exclude_current_candle=true";
-            limit = 128 * 1024;
+            limit = MAX_HISTORY;
         } else if ("archive".equals(source) && "BTC-USD".equals(symbol)) {
             url = BITCOIN_CSV;
             mimeType = "text/csv";
@@ -86,17 +88,31 @@ final class MarketFeed {
         } else {
             return error(400, "Invalid cryptocurrency source");
         }
+        return downloadHistory(url, mimeType, limit, "Cryptocurrency history unavailable");
+    }
+
+    static WebResourceResponse vietnam(WebResourceRequest request) {
+        if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
+        String symbol = parameter(request, "symbol");
+        if (!symbol.matches("[A-Z0-9]{3}")) return error(400, "Invalid Vietnamese stock symbol");
+
+        long end = System.currentTimeMillis() / 1000;
+        String url = DNSE_HISTORY + "?symbol=" + symbol + "&resolution=1D&from=" + (end - 400L * 86400) + "&to=" + end;
+        return downloadHistory(url, "application/json", MAX_HISTORY, "Vietnamese stock history unavailable");
+    }
+
+    private static WebResourceResponse downloadHistory(String url, String mimeType, int limit, String message) {
         HttpURLConnection connection = null;
         try {
             connection = connect(new URL(url));
             connection.setRequestProperty("User-Agent", "SmartBot");
-            if (connection.getResponseCode() != 200) throw new IOException("Cryptocurrency history unavailable");
+            if (connection.getResponseCode() != 200) throw new IOException(message);
             byte[] body = readBody(connection, limit);
-            if (body.length == 0) throw new IOException("Empty cryptocurrency history");
+            if (body.length == 0) throw new IOException("Empty market history");
             return new WebResourceResponse(mimeType, "UTF-8", 200, "OK",
                     java.util.Collections.singletonMap("Cache-Control", "no-store"), new ByteArrayInputStream(body));
         } catch (IOException error) {
-            return error(502, "Cryptocurrency history unavailable");
+            return error(502, message);
         } finally {
             if (connection != null) connection.disconnect();
         }

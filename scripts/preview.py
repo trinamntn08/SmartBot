@@ -17,7 +17,7 @@ import webbrowser
 from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
-from market_api import MarketError, crypto_history, daily_prices, market_archive
+from market_api import MarketError, crypto_history, daily_prices, market_archive, vietnam_history
 
 
 HOST = "127.0.0.1"
@@ -27,6 +27,7 @@ API = "/api/assistant"
 MARKET_API = "/api/markets/daily"
 MARKET_ARCHIVE_API = "/api/markets/archive"
 MARKET_CRYPTO_API = "/api/markets/crypto"
+MARKET_VIETNAM_API = "/api/markets/vietnam"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
@@ -122,7 +123,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition("?")
-        if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_API):
+        if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_VIETNAM_API, MARKET_API):
             if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
@@ -149,6 +150,9 @@ class PreviewHandler(SimpleHTTPRequestHandler):
                 return
             if path == MARKET_CRYPTO_API:
                 body, content_type = crypto_history(parameter("symbol"), parameter("source"))
+                status, extra_headers = 200, {}
+            elif path == MARKET_VIETNAM_API:
+                body, content_type = vietnam_history(parameter("symbol")), "application/json"
                 status, extra_headers = 200, {}
             else:
                 body, content_range, etag = market_archive(parameter("start"), parameter("end"))
