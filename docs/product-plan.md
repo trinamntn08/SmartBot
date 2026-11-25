@@ -76,7 +76,7 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 ### News
 
-- Present ten matching headlines initially when available. A compact More button appends the next ten from the edition. Show title, publisher, and publish date when supplied. Deduplicate links and favor a mix of enabled publishers on the first page.
+- Present ten matching headlines initially when available. Scrolling to the end of the headlines appends the next ten from the edition. Show title, publisher, and publish date when supplied. Deduplicate links and favor a mix of enabled publishers on the first page.
 - Use article opens to recommend fresh, unread stories with similar topics or publishers. Keep reading activity on the device and respect explicitly selected languages and topics. Settings lets readers turn personalization off or reset what it learned. A fresh or disabled profile uses the freshness-based edition.
 - Make the news list available outside Today. Display the article in SmartBot when the provider permits it, with attribution and a link to the original. Where only headlines or excerpts are available, link to the publisher for the full text.
 - Fetch from publisher RSS or Atom feeds whose terms permit the intended use. Keep the news provider replaceable so a licensed API can later supply the same headline records. A publisher such as The Guardian is a candidate to evaluate for the private pilot if it fits your preferences. [The Guardian’s RSS guidance](https://www.theguardian.com/help/feeds)
