@@ -53,9 +53,9 @@ Tap a Tuổi Trẻ headline to open the publisher’s full article with its orig
 
 ## Markets
 
-Open **Workspace → Markets** in the browser or Android app. Choose a U.S. stock or ETF to see its latest available quote and a price chart with one-month, three-month, and one-year views. The chart uses TradingView and loads over the internet without an account or API key. Prices may be delayed. [TradingView Symbol Overview](https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/)
+Open **Workspace → Markets** in the local browser preview or Android app. Choose a U.S. stock or ETF to see its latest available closing price and a chart with one-month, three-month, and one-year views. The app fetches daily closes from the public `post-no-preference/stocks` dataset on DoltHub. It needs no account or API key. The date beside the price identifies the latest trading session available. [DoltHub stock prices](https://www.dolthub.com/repositories/post-no-preference/stocks)
 
-If the chart is unavailable, SmartBot can show daily closes previously downloaded in the same browser. The local Python preview can also fetch daily closes as a fallback when `SMARTBOT_ALPHA_VANTAGE_API_KEY` is set in the server environment. [Get an Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
+Downloaded daily closes reopen offline on the same device. If a ticker has no saved prices and the public feed is unavailable, SmartBot tries the TradingView chart. The local Python preview can also use Alpha Vantage as a fallback when `SMARTBOT_ALPHA_VANTAGE_API_KEY` is set in the server environment. [TradingView Symbol Overview](https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/) [Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
 
 ## Listen to podcasts
 

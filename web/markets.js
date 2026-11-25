@@ -1,4 +1,4 @@
-import { fetchPrices, mountPriceWidget } from './market-provider.js';
+import { fetchMarketHistory, fetchPrices, mountPriceWidget } from './market-provider.js';
 import { marketRepository } from './market-repository.js';
 
 const listings = [
@@ -17,6 +17,10 @@ const percent = new Intl.NumberFormat(undefined, {
 });
 const dates = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const dayLength = 24 * 60 * 60 * 1000;
+const historySources = {
+  dolthub: ['post-no-preference on DoltHub', 'https://www.dolthub.com/repositories/post-no-preference/stocks'],
+  alphaVantage: ['Alpha Vantage', 'https://www.alphavantage.co/'],
+};
 
 function priceChart(series, days) {
   const last = series.at(-1);
@@ -75,10 +79,10 @@ export function renderMarkets(view, focusHeading) {
       <p class="market-status muted" role="status"></p>
       <div class="market-history" hidden>
         <label class="market-period">Period
-          <select name="period"><option value="30">30 days</option><option value="90">90 days</option></select>
+          <select name="period"><option value="30">1 month</option><option value="90">3 months</option><option value="365">1 year</option></select>
         </label>
         <div class="market-result"></div>
-        <p class="market-source muted">Daily closes in USD · <a href="https://www.alphavantage.co/">Alpha Vantage</a></p>
+        <p class="market-source muted">Daily closes in USD · <a></a></p>
       </div>
       <div class="market-footer">
         <p><a class="market-link" rel="nofollow">TradingView</a><span class="market-delay"> · Prices may be delayed</span></p>
@@ -93,6 +97,7 @@ export function renderMarkets(view, focusHeading) {
   const retry = panel.querySelector('button');
   const status = panel.querySelector('[role="status"]');
   const result = panel.querySelector('.market-result');
+  const historyLink = history.querySelector('a');
   const link = panel.querySelector('.market-link');
   const delay = panel.querySelector('.market-delay');
   const theme = matchMedia('(prefers-color-scheme: dark)');
@@ -105,55 +110,84 @@ export function renderMarkets(view, focusHeading) {
     if (wasOpen && prices) result.querySelector('details').open = true;
   }
 
-  async function load() {
+  function showHistory(record, message = '') {
+    prices = record.prices;
+    const [label, url] = historySources[record.source];
+    historyLink.textContent = label;
+    historyLink.href = url;
+    link.parentElement.hidden = true;
+    status.textContent = message;
+    history.hidden = false;
+    updateChart();
+  }
+
+  async function load(force = false) {
     request?.abort();
     const controller = new AbortController();
     request = controller;
     const { signal } = controller;
     const selected = ticker.value.split(':')[1];
     const saved = marketRepository.get(selected);
-    prices = saved?.prices;
+    prices = undefined;
     widget.replaceChildren();
+    widget.hidden = true;
     retry.hidden = true;
     history.hidden = true;
     delay.hidden = false;
+    link.parentElement.hidden = true;
     link.href = `https://www.tradingview.com/symbols/${ticker.value.replace(':', '-')}/`;
     const online = navigator.onLine !== false;
-    if (online) {
-      widget.hidden = false;
-      status.textContent = `Loading ${selected} chart…`;
-      const embedded = await mountPriceWidget(widget, ticker.value, theme.matches ? 'dark' : 'light', signal);
+    const savedMessage = 'Showing saved closing prices.';
+    if (saved) showHistory(saved, online ? '' : savedMessage);
+    if (!online) {
+      if (!saved) status.textContent = 'Connect to the internet to load the price chart.';
+      return;
+    }
+    if (!force && saved?.source === 'dolthub' && saved.fresh) return;
+
+    if (!saved) status.textContent = `Loading ${selected} chart…`;
+    try {
+      const latest = await fetchMarketHistory(selected, signal);
       if (signal.aborted) return;
-      if (embedded) {
-        status.textContent = '';
-        return;
-      }
+      marketRepository.save(selected, latest, 'dolthub');
+      showHistory({ prices: latest, source: 'dolthub' });
+      return;
+    } catch {
+      if (signal.aborted) return;
+    }
+    if (saved) {
+      status.textContent = savedMessage;
+      retry.hidden = false;
+      return;
     }
 
+    widget.hidden = false;
+    link.parentElement.hidden = false;
+    const embedded = await mountPriceWidget(widget, ticker.value, theme.matches ? 'dark' : 'light', signal);
+    if (signal.aborted) return;
+    if (embedded) {
+      status.textContent = '';
+      return;
+    }
     widget.hidden = true;
     delay.hidden = true;
-    if (online && !saved?.fresh) {
-      try {
-        const latest = await fetchPrices(selected, signal);
-        if (signal.aborted) return;
-        marketRepository.save(selected, latest);
-        prices = latest;
-      } catch {
-        if (signal.aborted) return;
-      }
+    try {
+      const latest = await fetchPrices(selected, signal);
+      if (signal.aborted) return;
+      marketRepository.save(selected, latest, 'alphaVantage');
+      showHistory({ prices: latest, source: 'alphaVantage' });
+    } catch {
+      if (signal.aborted) return;
+      status.textContent = 'The price chart is unavailable right now.';
     }
     retry.hidden = false;
-    history.hidden = !prices;
-    updateChart();
-    status.textContent = prices ? 'Showing available daily closes.' : (online
-      ? 'The price chart is unavailable right now.' : 'Connect to the internet to load the price chart.');
   }
 
   function reload() { void load(); }
 
   ticker.addEventListener('change', reload);
   period.addEventListener('change', updateChart);
-  retry.addEventListener('click', reload);
+  retry.addEventListener('click', () => void load(true));
   theme.addEventListener('change', reload);
   window.addEventListener('online', reload);
   window.addEventListener('offline', reload);

@@ -51,7 +51,7 @@ export function mountPriceWidget(container, symbol, theme, signal) {
 }
 
 export function validatePrices(data, symbol) {
-  if (data?.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 100) {
+  if (!data || data.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 280) {
     throw new Error('The market data response was incomplete.');
   }
   let previous = '';
@@ -64,6 +64,24 @@ export function validatePrices(data, symbol) {
     previous = price.date;
   }
   return data.prices;
+}
+
+export async function fetchMarketHistory(symbol, signal) {
+  const query = new URLSearchParams({ symbol });
+  const response = await fetch(`./api/markets/history?${query}`, {
+    signal, cache: 'no-store', headers: { 'X-SmartBot-Market': 'daily' },
+  });
+  if (!response.ok) throw new Error('Daily closing prices could not be downloaded.');
+  const data = await response.json();
+  if (!['Success', 'RowLimit'].includes(data?.query_execution_status) || !Array.isArray(data.rows)) {
+    throw new Error('No closing prices were returned.');
+  }
+  const prices = data.rows.map((row) => ({
+    date: row?.date,
+    close: typeof row?.close === 'string' || typeof row?.close === 'number' ? Number(row.close) : NaN,
+  })).filter(({ date, close }) => typeof date === 'string' && Number.isFinite(close) && close > 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  return validatePrices({ symbol, prices }, symbol);
 }
 
 export async function fetchPrices(symbol, signal) {

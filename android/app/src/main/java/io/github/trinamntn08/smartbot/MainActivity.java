@@ -76,7 +76,7 @@ public final class MainActivity extends Activity {
         ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request);
             }
         });
 
@@ -105,7 +105,7 @@ public final class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request.getUrl());
+                return appAsset(assetLoader, newsFeed, request);
             }
 
             @Override
@@ -263,6 +263,7 @@ public final class MainActivity extends Activity {
     private static boolean isMarketSource(Uri uri) {
         String path = uri.getPath();
         return ("www.tradingview.com".equals(uri.getAuthority()) && path != null && path.startsWith("/symbols/"))
+                || ("www.dolthub.com".equals(uri.getAuthority()) && "/repositories/post-no-preference/stocks".equals(path))
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
@@ -282,7 +283,9 @@ public final class MainActivity extends Activity {
                 || "s3-symbol-logo.tradingview.com".equals(host);
     }
 
-    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, Uri uri) {
+    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed,
+            WebResourceRequest request) {
+        Uri uri = request.getUrl();
         if (!isAppAsset(uri)) {
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
@@ -291,6 +294,7 @@ public final class MainActivity extends Activity {
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
+        if ((ASSET_PATH + "api/markets/history").equals(uri.getPath())) return MarketFeed.read(request);
         String feedPrefix = ASSET_PATH + "api/news/";
         if (uri.getEncodedPath().startsWith(feedPrefix)) {
             String id = uri.getEncodedQuery() == null ? uri.getEncodedPath().substring(feedPrefix.length()) : null;

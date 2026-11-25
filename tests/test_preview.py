@@ -9,6 +9,7 @@ from threading import Thread
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -16,6 +17,41 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_market_history_proxies_only_valid_symbols_to_the_public_dataset(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/history?symbol="
+            headers = {"X-SmartBot-Market": "daily"}
+            try:
+                with patch("market_api.urlopen") as upstream:
+                    for invalid, status in ((url + "SPY", 403), (Request(url + "SPY%27", headers=headers), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(invalid, timeout=2)
+                        self.assertEqual(error.exception.code, status)
+                    upstream.assert_not_called()
+
+                    payload = {"query_execution_status": "Success", "rows": [{"date": "2026-11-24", "close": "572.00"}]}
+                    read = upstream.return_value.__enter__.return_value.read
+                    read.return_value = json.dumps(payload).encode()
+                    request = Request(url + "SPY", headers=headers)
+                    with urlopen(request, timeout=2) as result:
+                        self.assertEqual(json.load(result), payload)
+                    target = urlsplit(upstream.call_args.args[0])
+                    self.assertEqual(target.netloc + target.path, "www.dolthub.com/api/v1alpha1/post-no-preference/stocks")
+                    query = parse_qs(target.query)
+                    self.assertEqual(list(query), ["q"])
+                    self.assertIn("act_symbol = 'SPY'", query["q"][0])
+                    self.assertTrue(query["q"][0].endswith("LIMIT 280"))
+
+                    read.return_value = b"record" * 24000
+                    with self.assertRaises(HTTPError) as error:
+                        urlopen(request, timeout=2)
+                    self.assertEqual(error.exception.code, 502)
+            finally:
+                server.shutdown()
+                thread.join()
+
     def test_market_prices_keep_provider_credentials_server_side_and_normalize_closes(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
