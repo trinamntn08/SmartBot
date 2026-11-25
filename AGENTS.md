@@ -12,8 +12,9 @@ SmartBot is a personal, mobile-first web app that suggests an editable 15–30 m
 - Keep changes focused, use existing conventions, and avoid adding dependencies or infrastructure without a clear need.
 - Do not commit secrets, credentials, generated output, or machine-specific configuration.
 - Run checks appropriate to the change. Report what was tested and any checks that could not be run.
-- Record each completed step in the relevant documentation with the outcome, checks, and any remaining work. Include that record in the step's commit.
-- Commit only the changes for that step, push immediately to its upstream branch, and verify local and remote are in sync before moving on. Follow the [Git session workflow](docs/codex-setup.md#session-workflow). If the remote is unavailable, preserve the local commit and report it as pending sync.
+- For each completed development step, update the task's tracking document with what changed, the checks and their results, and any remaining work. Use the existing task plan or `docs/status.md` and include the record in the same commit as the change.
+- Push each completed step to GitHub immediately. When using a work branch, push it first, merge it into the latest `main`, and push `main`. Fetch again and confirm GitHub's `main` includes the change and its tracking record before calling the step complete. If publication is blocked, preserve the commit and report the blocker. [Git session workflow](docs/codex-setup.md#session-workflow)
+- Before generating or refreshing a browser preview or building an Android preview APK, verify that a clean checkout matches live GitHub `main` and includes the requested work and its tracking record. Check the worktree used by any running preview server before reusing it. [Preview verification steps](docs/codex-setup.md#verify-main-before-generating-a-preview)
 - Use a separate branch and worktree or clone for each parallel writing session. Coordinate overlapping edits before starting them. Preserve other sessions' changes and history. Destructive Git operations require explicit authorization.
 
 ## Implementation boundaries

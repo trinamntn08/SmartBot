@@ -48,9 +48,9 @@ Apply the guidance to SmartBot's mobile-first layout and offline web app. Emil's
 
 1. At the start of a session, read [current status](status.md) and the relevant product requirements. Before editing, building, or launching a preview, [check every remote branch](#check-every-remote-branch). Start from the fetched integration branch or the branch requested for the task. On a clean branch that is only behind its upstream, update with `git merge --ff-only '@{upstream}'`.
 2. Give each parallel writing session a unique branch and a separate Git worktree or clone. Agree on file ownership, including shared documentation and contracts. Use the [implementation plan template](templates/implementation-plan.md) for dependent steps or multiple owners. Coordinate with the integration owner when sessions need to change the same file or land work on a shared branch.
-3. For every completed step, run the relevant checks and record the outcome, checks and their results, and any blocker or next action in the task plan or relevant project doc. Update [current status](status.md) when a milestone or active handoff changes. Use a [decision record](templates/decision.md) for consequential architecture choices. Stage only the step's files and documentation, review `git diff --cached` and `git diff --cached --check`, then make one focused commit.
-4. Push immediately. Use `git push -u <remote> <branch>` for a new branch and `git push <remote> <branch>` for later commits. Fetch again and run `git rev-list --left-right --count 'HEAD...@{upstream}'` to verify the branch is in sync. Both counts should be zero. If the upstream advanced, fetch and inspect the divergence, coordinate any conflicts, integrate both histories, and rerun the affected checks before retrying the push. Avoid force-pushing or discarding work from another session.
-5. Carry on once the step is synchronized. If a remote, access, or a conflict blocks sync, preserve the commit locally and report its branch, commit ID, and the blocker. In cloud and local handoffs, include the pushed branch, commit ID, any pull request, what changed, and any pending checks. For builds and previews, include the branch and commit actually used.
+3. For each completed development step, run the relevant checks and record what changed, the check results, and any blocker or remaining work in the task's tracking document. Use its existing plan or `docs/status.md` when there is no plan. Update current status when a milestone or active handoff changes. Use a decision record for consequential architecture choices. Stage only the step's files and record, review `git diff --cached` and `git diff --cached --check`, then make one focused commit. [Current status](status.md) · [Decision record template](templates/decision.md)
+4. Push the commit to GitHub immediately. Use `git push -u origin <branch>` for a new work branch and `git push origin <branch>` for later commits. Fetch the latest `origin/main`, merge the work into `main`, and push `main` once the affected checks pass. If the remote advances, fetch and inspect the divergence, integrate both histories, and rerun the affected checks before retrying the push. Preserve other sessions' work and history.
+5. Fetch after pushing and run `git rev-list --left-right --count 'HEAD...@{upstream}'` from the publishing checkout. Both counts should be zero. Confirm live GitHub `main` contains the change and its tracking record before reporting the step complete. If access, a conflict, or a remote outage blocks publication, preserve the commit and report its branch, commit ID, and blocker. In handoffs, include the published commit, any pull request, what changed, and pending checks. For previews, include the branch and commit used to generate them.
 
 ### Check every remote branch
 
@@ -70,11 +70,26 @@ git branch -r --no-merged HEAD
 - Review the branches with commits outside the intended checkout for work relevant to the task. For example, use `git log --oneline HEAD..origin/work` and `git diff --stat 'HEAD...origin/work'`. Check the cloud handoff and relevant open pull requests as well, including pull requests from a fork when expected work is missing from the repository's branches.
 - For a named commit, run `git branch -r --contains <commit>` to locate it, then `git merge-base --is-ancestor <commit> HEAD` in the checkout you plan to use. Exit code 0 confirms it is included. If the change was squashed or cherry-picked, verify the equivalent changes in the checkout.
 - Use the branch that contains the required work, or integrate the relevant changes within the requested scope. Keep unrelated branches separate. If expected cloud work cannot be located or accessed, report the missing branch, commit, or pull request when known and what the current checkout contains.
-- Before a build or preview, confirm the source worktree with `git rev-parse --show-toplevel` and the commit with `git rev-parse HEAD`. If an existing preview server points to a different worktree, launch from the intended one and verify the requested feature before handing it off.
+
+### Verify main before generating a preview
+
+Repeat this check before generating or refreshing a browser preview or building an Android preview APK. Check every remote branch first, then run the commands from the worktree that will serve or package SmartBot. [Remote branch checks](#check-every-remote-branch)
+
+```powershell
+git fetch origin main
+git ls-remote --heads origin refs/heads/main
+git rev-parse --show-toplevel
+git rev-parse HEAD origin/main
+git status --short --branch
+```
+
+Use a clean `main` checkout. `HEAD`, `origin/main`, and the live GitHub `main` tip must match. Confirm that the requested change and its task record are present at that revision. Use `git merge-base --is-ancestor` to verify a known task commit, or check the equivalent changes and record when they landed under a different commit. Complete the session workflow for any missing task work before generating the preview. [Git session workflow](#session-workflow)
+
+Confirm that an existing preview server serves `web/` from the verified worktree before reusing it. Start the server from that worktree when needed. Open the preview and check the requested change before handing it off.
 
 ## Verification
 
 - Check `git status --short --branch` and `git diff --check` during a review. Check untracked files directly since they are outside the ordinary diff until staged.
 - Parse the TOML files and validate the skill frontmatter after configuration changes. To verify discovery in a supported client, open a fresh SmartBot session and check the project skill list. During authorized delegation, ask for a named role and check that the runtime selects it. A file-format check alone cannot establish client discovery or role selection.
 - Run the web app and planner tests using the [README commands](../README.md#development). See the [first web slice](plans/first-web-slice.md#verification) for browser checks.
-- After syncing and building a preview, launch it with `preview.cmd` or open the [preview refresh link](../README.md#browser-preview). Use the refresh link when handing off a preview so the browser opens the current web files.
+- Verify the preview source, then launch it with `preview.cmd` or open the refresh link. Use the refresh link when handing off a preview so the browser opens the current web files. [Preview verification steps](#verify-main-before-generating-a-preview) · [Browser preview](../README.md#browser-preview)

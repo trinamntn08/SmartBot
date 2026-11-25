@@ -14,7 +14,7 @@ Last updated November 25, 2026.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two SmartBot workflows. The [design skill setup](codex-setup.md#design-skills) also installs pinned releases of Taste, Emil Kowalski's motion guidance, and Impeccable into the checkout.
-- The initial baseline includes the [Git session workflow](codex-setup.md#session-workflow) for documenting, committing, pushing, and verifying each completed step. Parallel writing sessions each use their own branch and worktree or clone. The [SmartBot GitHub repository](https://github.com/trinamntn08/SmartBot) is configured as `origin`.
+- The Git workflow requires a task tracking record in each completed step's commit, an immediate GitHub push, and verification that the change and record reached `main`. Verify the source against live GitHub `main` before generating or refreshing a browser preview or building a preview APK. Parallel writing sessions each use their own branch and worktree or clone. [Git session workflow](codex-setup.md#session-workflow) · [Preview verification steps](codex-setup.md#verify-main-before-generating-a-preview) · [GitHub repository](https://github.com/trinamntn08/SmartBot)
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
@@ -132,6 +132,8 @@ The November 23 Windows rebuild passed `assembleDebug` and `lintDebug` with zero
 The 0.2.0 debug build passed in the main checkout. Lint reported zero errors and six warnings. The APK signature and all nine bundled web assets were verified. The machine had no connected Android device or configured emulator for runtime testing. See the [APK verification record](plans/android-apk-preview.md) and the [phone installation steps](../README.md#install-on-android).
 
 ## Setup verification
+
+The November 25 workflow update documented immediate GitHub pushes, task records, merging into `main`, and verification before each preview. The updated Markdown links and anchors passed local checks. The live branch check found no outstanding SmartBot work outside `main` before this documentation update.
 
 The remote branch check found all eight live `origin` branch tips in `main`. A check against the earlier Workspace checkout found the missing Books redesign commit `3bd8a40` on `origin/work`. The agent instructions and preview guide link to the [branch check](codex-setup.md#check-every-remote-branch).
 

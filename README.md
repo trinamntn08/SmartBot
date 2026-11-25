@@ -8,14 +8,9 @@ Read the [product and development plan](docs/product-plan.md) for the screens, d
 
 ## Browser preview
 
-Before each build and launch, [check every remote branch for relevant cloud work](docs/codex-setup.md#check-every-remote-branch). Then update the clean checkout of the branch you want to preview.
+Before each new preview or refresh, verify that a clean `main` checkout matches live GitHub `main` and includes the requested changes and their task record. [Preview verification steps](docs/codex-setup.md#verify-main-before-generating-a-preview)
 
-```powershell
-git fetch --all
-git merge --ff-only '@{upstream}'
-```
-
-The browser preview serves `web/` from the worktree that started it. Confirm that worktree contains the requested branch or commit. For a fresh Android package, run the [debug APK build](#development) after syncing.
+The browser preview serves `web/` from the worktree that started it. Confirm that the server uses the verified worktree. Build a fresh Android preview from the same checkout. [Debug APK build](#development)
 
 On Windows with Python 3 installed, run [preview.cmd](preview.cmd) after syncing and any build. It starts or reuses the local server and opens the refresh link in your default browser. Keep the server window open while you use SmartBot.
 
@@ -101,7 +96,7 @@ Open SmartBot from the launcher. To check offline use, turn on airplane mode, im
 
 ## Development
 
-To serve the preview without opening a browser automatically, run this from the repository root with Python 3.
+Verify the preview source, then run this from the repository root with Python 3 to serve the preview without opening a browser automatically. [Preview verification steps](docs/codex-setup.md#verify-main-before-generating-a-preview)
 
 ```sh
 python3 scripts/preview.py --no-browser
@@ -114,7 +109,7 @@ node --test tests/planner.test.mjs tests/text-book.test.mjs tests/news.test.mjs
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-To rebuild the Android debug APK, use a JDK 17 or 21 and install Android SDK Platform 35 and Build Tools 35.0.0. Point `JAVA_HOME` to the JDK and `ANDROID_HOME` to the SDK for the build shell. Run the wrapper from the repository root on Windows.
+Verify the preview source before rebuilding the Android debug APK for preview. Use a JDK 17 or 21 and install Android SDK Platform 35 and Build Tools 35.0.0. Point `JAVA_HOME` to the JDK and `ANDROID_HOME` to the SDK for the build shell. Run the wrapper from the repository root on Windows. [Preview verification steps](docs/codex-setup.md#verify-main-before-generating-a-preview)
 
 ```powershell
 .\android\gradlew.bat -p android :app:assembleDebug :app:lintDebug

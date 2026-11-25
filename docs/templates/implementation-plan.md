@@ -16,7 +16,7 @@ List the automated and manual checks to run. Record the actual outcomes, includi
 
 ## Step records
 
-For each completed step, record the date, outcome, checks and results, and any blocker or next action. If sessions work in parallel, name the session branch so others can find the work. Include the record in the same commit as the step, then push and verify sync using the [session workflow](../codex-setup.md#session-workflow).
+For each completed step, record the date, outcome, checks and results, and any blocker or next action. If sessions work in parallel, name the session branch so others can find the work. Include the record in the same commit as the step. Push it to GitHub immediately, merge it into `main`, and verify that both the change and its record are on GitHub `main`. [Git session workflow](../codex-setup.md#session-workflow)
 
 ## Handoff
 
