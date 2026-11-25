@@ -89,6 +89,8 @@ Four text import tests covered encoding, line breaks, Unicode section boundaries
 
 ## Android APK verification
 
+The SmartBot 0.3.4 debug APK gives the build a distinct Android version (code 7). Chromium loaded the APK's packaged web files at the Android asset origin and verified the floating gear, Books and Settings in the top bar, and NVIDIA candlesticks. Switching from the 0.3.3 bundle in the same profile kept the imported book and gear position. All 42 automated tests passed. Gradle build, APK alignment, the existing signing certificate, and all 245 packaged web files passed verification. Lint reported zero errors and six warnings. Physical phone verification remains pending.
+
 The Markets candlestick build passed Gradle build, ZIP alignment, and signature verification with the same certificate as the previous APK. All 245 bundled web files matched, including 2,616 daily candles and the searchable directory of 1,579 Vietnamese stocks. Lint reported zero errors and six warnings. Live Vietnamese quotes in the Android app still need a phone check.
 
 The SmartBot 0.3.3 debug build with the movable assistant gear passed Gradle build, ZIP alignment, same-certificate signature verification, and byte-for-byte checks of all 243 web files. Lint found zero errors and six warnings. Physical phone verification remains pending.
