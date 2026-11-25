@@ -263,6 +263,7 @@ export function renderMarkets(view, focusHeading) {
   }
 
   function reload() { void load(); }
+  function refresh() { void load(true); }
 
   ticker.addEventListener('change', () => {
     clearSearch();
@@ -301,16 +302,16 @@ export function renderMarkets(view, focusHeading) {
     drawChart();
     if (chartStyle === 'candles' && !hasCandle(prices.at(-1))) reload();
   });
-  retry.addEventListener('click', () => void load(true));
-  window.addEventListener('online', reload);
+  retry.addEventListener('click', refresh);
+  window.addEventListener('online', refresh);
   window.addEventListener('offline', reload);
   setListings(lastChart?.symbol);
   if (focusHeading) view.querySelector('h1').focus();
-  reload();
+  refresh();
   return () => {
     request?.abort();
     searchRequest?.abort();
-    window.removeEventListener('online', reload);
+    window.removeEventListener('online', refresh);
     window.removeEventListener('offline', reload);
   };
 }

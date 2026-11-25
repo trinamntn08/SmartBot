@@ -1,7 +1,7 @@
 import { hasCandle, validatePrices } from './market-provider.js';
 
 const archivedPairs = new Set(['BTC-USD', 'ETH-USD', 'SOL-USD', 'PAXG-USD']);
-const twoDays = 2 * 86400000;
+const dayLength = 86400000;
 
 async function readHistory(symbol, source, signal) {
   const query = new URLSearchParams({ symbol, source });
@@ -55,8 +55,8 @@ export async function cryptoHistory(symbol, signal) {
   if (archivedPairs.has(symbol)) {
     try {
       archived = await archivedPrices(symbol, signal);
-      const recentCutoff = new Date(Date.now() - twoDays).toISOString().slice(0, 10);
-      if (archived.prices.at(-1).date >= recentCutoff && hasCandle(archived.prices.at(-1))) return archived;
+      const lastClosedDate = new Date(Date.now() - dayLength).toISOString().slice(0, 10);
+      if (archived.prices.at(-1).date === lastClosedDate && hasCandle(archived.prices.at(-1))) return archived;
     } catch (error) {
       if (signal?.aborted) throw error;
     }
