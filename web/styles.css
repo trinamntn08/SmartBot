@@ -72,6 +72,7 @@ h1:focus { outline: none; }
 
 .header-inner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1.5rem;
@@ -140,6 +141,12 @@ nav > a:hover,
 nav > [aria-current="page"] {
   background: var(--accent-soft);
   color: var(--ink);
+}
+
+nav > .settings-link {
+  justify-content: center;
+  min-width: 2.75rem;
+  padding-inline: 0;
 }
 
 main { padding-block: clamp(1.75rem, 4vw, 3.4rem) 3rem; }
@@ -753,7 +760,6 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 }
 
 @media (max-width: 42rem) {
-  .header-inner { flex-wrap: wrap; }
   nav { column-gap: 0.15rem; }
   nav > a { padding-inline: 0.5rem; }
   .feature-card { grid-template-columns: 1fr; }

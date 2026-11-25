@@ -146,7 +146,7 @@ function render(focusHeading = false) {
   nav.hidden = false;
   for (const link of nav.querySelectorAll('a')) {
     link.hidden = !routine.settings && (link.hash === '#activities' || (link.hash === '#progress' && !Object.keys(routine.plans).length));
-    if (link.hash === `#${section ? 'workspace' : page}`) link.setAttribute('aria-current', 'page');
+    if (link.hash === `#${page}`) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
 
