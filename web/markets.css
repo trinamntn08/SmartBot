@@ -1,17 +1,15 @@
-.workspace-markets { grid-column: 1 / -1; }
-.workspace-markets .section-card { grid-template-rows: 1fr; }
-.workspace-markets .section-arrow { grid-row: 1 / span 2; grid-column: 2; }
-.workspace-markets .section-copy p { grid-column: 1; }
-
-.market-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
-  align-items: end;
+.market-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
+  margin-block-end: 1rem;
 }
 
-.market-controls label { min-width: 0; margin: 0; }
-.market-controls select {
+.market-heading h1 { margin: 0; }
+.market-ticker, .market-period { max-width: 100%; margin: 0; font-size: 0.86rem; }
+.market-ticker select, .market-period select {
   display: block;
   box-sizing: border-box;
   width: 100%;
@@ -25,8 +23,14 @@
   font: inherit;
 }
 
-.market-status { margin-block: 0.65rem 0; }
-.market-status:empty { margin: 0; }
+.market-panel { padding: clamp(0.75rem, 3vw, 1.1rem); }
+.market-widget iframe { display: block; width: 100%; height: clamp(17.5rem, 42vw, 22rem); border: 0; }
+.market-status { margin: 0 0 0.65rem; }
+.market-status:empty { display: none; }
+.market-period { width: fit-content; }
+.market-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.market-footer p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.86rem; }
+.market-footer button { font-size: 0.86rem; }
 .market-quote { margin-block: 1.2rem 1rem; }
 .market-quote strong, .market-axis, .market-table td:last-child { font-variant-numeric: tabular-nums; }
 .market-quote strong { display: block; font-size: clamp(1.65rem, 6vw, 2.3rem); line-height: 1.12; }
@@ -65,9 +69,11 @@
 .market-source { margin-block: 0.8rem 0; font-size: 0.86rem; }
 
 @media (max-width: 38rem) {
-  .market-controls { grid-template-columns: minmax(0, 1fr) auto; }
-  .market-controls label:first-child { grid-column: 1 / -1; }
   body:has(main[data-page="markets"]) > .ask-launcher { position: static; display: block; margin: 0 1rem 1rem auto; }
+}
+
+@media (max-width: 25rem) {
+  .market-ticker { width: 100%; }
 }
 
 @media (forced-colors: active) {

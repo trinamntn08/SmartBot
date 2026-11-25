@@ -53,9 +53,9 @@ Tap a Tuổi Trẻ headline to open the publisher’s full article with its orig
 
 ## Markets
 
-Open **Workspace → Markets** in the local browser preview. Choose a U.S. stock or ETF and view 30 or 90 days of daily closing prices in USD. Expand **Daily closing prices** to read individual dates and prices. The browser keeps the most recent download for each symbol so you can reopen it offline.
+Open **Workspace → Markets** in the browser or Android app. Choose a U.S. stock or ETF to see its latest available quote and a price chart with one-month, three-month, and one-year views. The chart uses TradingView and loads over the internet without an account or API key. Prices may be delayed. [TradingView Symbol Overview](https://www.tradingview.com/widget-docs/widgets/charts/symbol-overview/)
 
-Set `SMARTBOT_ALPHA_VANTAGE_API_KEY` in the environment that runs the Python preview, then start or restart the server. The preview needs HTTPS access to `www.alphavantage.co` for new data. [Get an Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
+If the chart is unavailable, SmartBot can show daily closes previously downloaded in the same browser. The local Python preview can also fetch daily closes as a fallback when `SMARTBOT_ALPHA_VANTAGE_API_KEY` is set in the server environment. [Get an Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
 
 ## Listen to podcasts
 

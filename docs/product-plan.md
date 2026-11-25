@@ -26,7 +26,7 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Music, Mo
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
 | Music | Find and follow podcasts, stream public episodes, and resume from a position stored on your device. |
-| Markets | See 30- and 90-day charts and daily closing prices for a starter selection of U.S. stocks and ETFs. Reopen downloaded prices offline. |
+| Markets | Choose a U.S. stock or ETF and see its quote and a simple price chart in the app. Use one-month, three-month, and one-year views. Reopen any previously downloaded daily closes offline. |
 | Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |
 | Progress | Review a seven-day history and simple totals such as articles read, book sessions, and new words studied. Show skipped or unfinished items neutrally. |
 | Settings | Change the daily budget, reminder time, and display preferences. Provide local export, restore, and data deletion controls. Add a connections area when the first account integration ships. |

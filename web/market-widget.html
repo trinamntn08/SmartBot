@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://s3.tradingview.com; style-src 'unsafe-inline'">
+<title>Market chart loader</title>
+<div class="tradingview-widget-container">
+  <div class="tradingview-widget-container__widget"></div>
+  <div class="tradingview-widget-copyright"></div>
+</div>
+<script type="module">
+  // Run the official embed loader outside SmartBot's origin and send back only its iframe URL.
+  const options = new URLSearchParams(location.hash.slice(1));
+  const symbol = options.get('symbol');
+  const theme = options.get('theme') === 'dark' ? 'dark' : 'light';
+  const container = document.querySelector('.tradingview-widget-container');
+
+  function sendFrame(source) {
+    observer.disconnect();
+    parent.postMessage({ marketWidget: source }, '*');
+  }
+
+  const observer = new MutationObserver(() => {
+    const source = container.querySelector('iframe')?.src;
+    if (source?.startsWith('https://')) sendFrame(source);
+  });
+  if (self.origin === 'null' && parent !== self && /^(?:NASDAQ|AMEX):[A-Z]{1,5}$/.test(symbol)) {
+    observer.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
+    script.addEventListener('error', () => sendFrame(null));
+    script.text = JSON.stringify({
+      symbols: [[symbol + '|1D']],
+      width: '100%', height: '100%', autosize: true,
+      chartOnly: false, chartType: 'area', locale: 'en', colorTheme: theme,
+      lineWidth: 2, isTransparent: true, hideSymbolLogo: true, hideMarketStatus: true,
+      showVolume: false, showMA: false, valuesTracking: '1', gridLineColor: 'rgba(127, 127, 127, 0.16)',
+      dateRanges: ['1m|30', '3m|60', '12m|1D'],
+    });
+    container.append(script);
+  } else {
+    sendFrame(null);
+  }
+</script>
+</html>

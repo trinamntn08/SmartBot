@@ -1,15 +1,15 @@
-import { fetchPrices } from './market-provider.js';
+import { fetchPrices, mountPriceWidget } from './market-provider.js';
 import { marketRepository } from './market-repository.js';
 
 const listings = [
-  ['SPY', 'S&P 500 ETF'],
-  ['QQQ', 'Nasdaq-100 ETF'],
-  ['AAPL', 'Apple'],
-  ['AMZN', 'Amazon'],
-  ['GOOGL', 'Alphabet'],
-  ['MSFT', 'Microsoft'],
-  ['NVDA', 'Nvidia'],
-  ['TSLA', 'Tesla'],
+  ['AMEX:SPY', 'S&P 500 ETF'],
+  ['NASDAQ:QQQ', 'Nasdaq-100 ETF'],
+  ['NASDAQ:AAPL', 'Apple'],
+  ['NASDAQ:AMZN', 'Amazon'],
+  ['NASDAQ:GOOGL', 'Alphabet'],
+  ['NASDAQ:MSFT', 'Microsoft'],
+  ['NASDAQ:NVDA', 'Nvidia'],
+  ['NASDAQ:TSLA', 'Tesla'],
 ];
 const dollars = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
 const percent = new Intl.NumberFormat(undefined, {
@@ -64,27 +64,38 @@ function priceChart(series, days) {
 
 export function renderMarkets(view, focusHeading) {
   view.innerHTML = `<a class="back-link" href="#workspace"><span class="arrow" aria-hidden="true"></span>Workspace</a>
-    <h1 tabindex="-1">Markets</h1>
+    <div class="market-heading">
+      <h1 tabindex="-1">Markets</h1>
+      <label class="market-ticker">Stock or ETF
+        <select name="symbol">${listings.map(([symbol, name]) => `<option value="${symbol}">${symbol.split(':')[1]} · ${name}</option>`).join('')}</select>
+      </label>
+    </div>
     <section class="card market-panel" aria-label="Market prices">
-      <div class="market-controls">
-        <label>Stock or ETF
-          <select name="symbol">${listings.map(([symbol, name]) => `<option value="${symbol}">${symbol} · ${name}</option>`).join('')}</select>
-        </label>
-        <label>Period
+      <div class="market-widget"></div>
+      <p class="market-status muted" role="status"></p>
+      <div class="market-history" hidden>
+        <label class="market-period">Period
           <select name="period"><option value="30">30 days</option><option value="90">90 days</option></select>
         </label>
-        <button type="button" class="quiet market-refresh">Refresh prices</button>
+        <div class="market-result"></div>
+        <p class="market-source muted">Daily closes in USD · <a href="https://www.alphavantage.co/">Alpha Vantage</a></p>
       </div>
-      <p class="market-status muted" role="status"></p>
-      <div class="market-result"></div>
-      <p class="market-source muted">Unadjusted daily closes in USD from <a href="https://www.alphavantage.co/">Alpha Vantage</a>.</p>
+      <div class="market-footer">
+        <p><a class="market-link" rel="nofollow">TradingView</a><span class="market-delay"> · Prices may be delayed</span></p>
+        <button class="quiet" type="button" hidden>Retry chart</button>
+      </div>
     </section>`;
   const panel = view.querySelector('.market-panel');
-  const symbol = panel.querySelector('[name="symbol"]');
+  const ticker = view.querySelector('[name="symbol"]');
   const period = panel.querySelector('[name="period"]');
-  const refresh = panel.querySelector('button');
+  const widget = panel.querySelector('.market-widget');
+  const history = panel.querySelector('.market-history');
+  const retry = panel.querySelector('button');
   const status = panel.querySelector('[role="status"]');
   const result = panel.querySelector('.market-result');
+  const link = panel.querySelector('.market-link');
+  const delay = panel.querySelector('.market-delay');
+  const theme = matchMedia('(prefers-color-scheme: dark)');
   let prices;
   let request;
 
@@ -94,45 +105,64 @@ export function renderMarkets(view, focusHeading) {
     if (wasOpen && prices) result.querySelector('details').open = true;
   }
 
-  async function load(force = false) {
+  async function load() {
     request?.abort();
     const controller = new AbortController();
     request = controller;
-    const selected = symbol.value;
+    const { signal } = controller;
+    const selected = ticker.value.split(':')[1];
     const saved = marketRepository.get(selected);
-    if (!force || !prices) prices = saved?.prices;
-    updateChart();
-    refresh.disabled = false;
-    status.textContent = '';
-    if (navigator.onLine === false) {
-      status.textContent = prices ? 'Showing saved prices while offline.' : 'Connect to load prices for this symbol.';
-      return;
+    prices = saved?.prices;
+    widget.replaceChildren();
+    retry.hidden = true;
+    history.hidden = true;
+    delay.hidden = false;
+    link.href = `https://www.tradingview.com/symbols/${ticker.value.replace(':', '-')}/`;
+    const online = navigator.onLine !== false;
+    if (online) {
+      widget.hidden = false;
+      status.textContent = `Loading ${selected} chart…`;
+      const embedded = await mountPriceWidget(widget, ticker.value, theme.matches ? 'dark' : 'light', signal);
+      if (signal.aborted) return;
+      if (embedded) {
+        status.textContent = '';
+        return;
+      }
     }
-    if (!force && saved?.fresh) return;
 
-    refresh.disabled = true;
-    status.textContent = prices ? `Refreshing ${selected} prices…` : `Loading ${selected} prices…`;
-    try {
-      const latest = await fetchPrices(selected, controller.signal);
-      if (controller.signal.aborted) return;
-      prices = latest;
-      marketRepository.save(selected, prices);
-      updateChart();
-      status.textContent = `${selected} prices loaded.`;
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      const message = error instanceof TypeError || error instanceof SyntaxError
-        ? 'Market prices could not be loaded. Try again.' : error.message;
-      status.textContent = prices ? `Showing saved prices. ${message}` : message;
-    } finally {
-      if (!controller.signal.aborted) refresh.disabled = false;
+    widget.hidden = true;
+    delay.hidden = true;
+    if (online && !saved?.fresh) {
+      try {
+        const latest = await fetchPrices(selected, signal);
+        if (signal.aborted) return;
+        marketRepository.save(selected, latest);
+        prices = latest;
+      } catch {
+        if (signal.aborted) return;
+      }
     }
+    retry.hidden = false;
+    history.hidden = !prices;
+    updateChart();
+    status.textContent = prices ? 'Showing available daily closes.' : (online
+      ? 'The price chart is unavailable right now.' : 'Connect to the internet to load the price chart.');
   }
 
-  symbol.addEventListener('change', () => void load());
+  function reload() { void load(); }
+
+  ticker.addEventListener('change', reload);
   period.addEventListener('change', updateChart);
-  refresh.addEventListener('click', () => void load(true));
+  retry.addEventListener('click', reload);
+  theme.addEventListener('change', reload);
+  window.addEventListener('online', reload);
+  window.addEventListener('offline', reload);
   if (focusHeading) view.querySelector('h1').focus();
-  void load();
-  return () => request?.abort();
+  reload();
+  return () => {
+    request?.abort();
+    theme.removeEventListener('change', reload);
+    window.removeEventListener('online', reload);
+    window.removeEventListener('offline', reload);
+  };
 }

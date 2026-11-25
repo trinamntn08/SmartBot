@@ -1,6 +1,6 @@
 # SmartBot status
 
-Last updated November 24, 2026.
+Last updated November 25, 2026.
 
 ## Current state
 
@@ -8,7 +8,7 @@ Last updated November 24, 2026.
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines from free-to-read sources, with more stories in batches of ten. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
-- **Markets** charts 30 or 90 days of unadjusted USD closing prices for eight U.S. stocks and ETFs. The local preview reads the Alpha Vantage key from its environment. Each downloaded series remains available offline in that browser. [Markets setup](../README.md#markets)
+- **Markets** occupies one standard Workspace card. It opens a compact TradingView quote and price chart for eight U.S. stocks and ETFs in the browser and Android app. Previously downloaded daily closes remain available in the same browser if the embed is unavailable. [Markets](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -18,7 +18,9 @@ Last updated November 24, 2026.
 
 ## Web app verification
 
-Chromium at 320 and 1440 CSS pixels verified Markets keyboard navigation, period and ticker changes, refresh failure, and offline reopening with controlled prices. The Markets branch (`3ff9bb6`) merged into `main` without conflicts. The integration rerun passed all 24 Node tests and nine Python tests. A live Alpha Vantage check with a configured key remains open. The Android APK has no market data connection in this slice.
+Chromium verified equal Workspace card dimensions at 320, 390, 820, and 1440 CSS pixels. A controlled embed checked the quote and chart layout, keyboard entry, ticker changes, dark mode, and frame isolation. A blocked widget used the daily-close fallback, and those prices reopened offline. All 24 Node tests and nine Python tests passed. The cloud network policy blocked TradingView, so the live chart still needs a check on a device with access.
+
+The first Markets branch (`3ff9bb6`) merged into `main`. Chromium verified the original daily-close fallback with controlled prices, including ticker and period changes and offline reopening. The integration rerun passed all 24 Node tests and nine Python tests.
 
 Mobile Chromium loaded 20 live headlines without Canada.ca feed requests. A previously saved Canadian release opened with a controlled online response and reopened offline. All 37 automated tests passed. The Android APK built and passed signature and asset checks. Phone testing is pending. [Canada.ca feed retirement](plans/personal-workspace.md#retire-canadaca-feeds)
 
@@ -63,6 +65,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The November 25 Markets build passed Gradle build, signature, ZIP alignment, and byte-for-byte verification of all 234 bundled web files. Lint reported zero errors and five warnings. The Android app allows TradingView chart resources and confines the widget to an iframe. A live chart check on a physical phone remains pending.
 
 The November 24 phone pilot APK (0.3.2) was rebuilt from `main` at `a505431`. Gradle build, signature, ZIP alignment, and byte-for-byte verification of all 228 bundled web files passed. Lint reported zero errors and nine warnings. Installation and launch on a physical phone remain pending.
 

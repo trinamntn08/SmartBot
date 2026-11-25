@@ -25,9 +25,9 @@ export function workspace() {
       <img src="./assets/books.webp" alt="" width="1536" height="1024">
     </a>
     <ul class="workspace-grid" role="list">${sections.map(({ id, title, summary }) => `
-      <li${id === 'markets' ? ' class="workspace-markets"' : ''}>
+      <li>
         <a class="section-card" href="#${id}">
-          ${id === 'markets' ? '' : sectionImage(id)}
+          ${sectionImage(id)}
           <div class="section-copy">
             <h2>${title}</h2>
             <span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>

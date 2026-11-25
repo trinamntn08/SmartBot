@@ -1,3 +1,55 @@
+const tradingViewHost = 'https://www.tradingview-widget.com';
+
+export function mountPriceWidget(container, symbol, theme, signal) {
+  return new Promise((resolve) => {
+    const loader = document.createElement('iframe');
+    loader.hidden = true;
+    loader.setAttribute('sandbox', 'allow-scripts');
+    loader.title = 'Market chart loader';
+    loader.src = `./market-widget.html#${new URLSearchParams({ symbol, theme })}`;
+    let chart;
+    const timeout = setTimeout(() => finish(false), 10000);
+
+    function finish(loaded) {
+      clearTimeout(timeout);
+      window.removeEventListener('message', receiveUrl);
+      signal.removeEventListener('abort', abort);
+      loader.remove();
+      if (!loaded) chart?.remove();
+      resolve(loaded);
+    }
+
+    function abort() { finish(false); }
+
+    function receiveUrl(event) {
+      const source = event.data?.marketWidget;
+      if (event.origin !== 'null' || event.source !== loader.contentWindow || source === undefined) return;
+      window.removeEventListener('message', receiveUrl);
+      let url;
+      try { url = new URL(source); } catch { finish(false); return; }
+      if (url.origin !== tradingViewHost || url.pathname !== '/embed-widget/symbol-overview/' || url.username || url.password) {
+        finish(false);
+        return;
+      }
+      loader.remove();
+      chart = document.createElement('iframe');
+      chart.title = `${symbol.split(':')[1]} price chart by TradingView`;
+      chart.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      chart.src = url.href;
+      chart.addEventListener('load', () => finish(true), { once: true });
+      container.append(chart);
+    }
+
+    if (signal.aborted) {
+      finish(false);
+      return;
+    }
+    signal.addEventListener('abort', abort, { once: true });
+    window.addEventListener('message', receiveUrl);
+    container.append(loader);
+  });
+}
+
 export function validatePrices(data, symbol) {
   if (data?.symbol !== symbol || !Array.isArray(data.prices) || !data.prices.length || data.prices.length > 100) {
     throw new Error('The market data response was incomplete.');
