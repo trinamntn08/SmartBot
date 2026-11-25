@@ -100,6 +100,7 @@ The first planner uses rules you can understand and adjust. Future calendar avai
 
 ### Assistant
 
+- Open Google Search by default and let the reader select a different provider in Settings.
 - Use OpenAI or Gemini for general questions. Add questions about a chosen book or news excerpt through the same assistant, and show the excerpt being attached before the question is sent.
 - Add text questions first, followed by microphone input with a reviewable transcript. Show the answer in text and offer playback for spoken answers.
 - Keep API credentials on the backend. Imported books, reading history, and other personal data stay local unless you choose what to include in a request. Keep the reader usable when the assistant is offline or unavailable.

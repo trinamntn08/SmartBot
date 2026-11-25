@@ -35,7 +35,7 @@ Open **Books** → **Add a book**, choose a PDF or text file, then select **Impo
 
 SmartBot stores the book and last section on the device. Conversion and reading work offline after import and the app’s initial load.
 
-Use **Workspace** or **SmartBot** in the top bar to return to the homepage.
+Select **SmartBot** in the top bar to return to the homepage. Select the three-dot button for more sections and Settings.
 
 ## News
 
@@ -80,16 +80,18 @@ On Android, the default APK searches Apple Podcasts and opens public HTTPS feeds
 
 ## Ask SmartBot
 
-Set at least one provider key in the environment that runs the Python preview server. Restart the preview after changing its environment. Open **Settings** and choose a provider under **Assistant**. SmartBot saves your choice in this browser.
+Tap the floating **Ask SmartBot** chat bubble, enter a search, and select the arrow or press Enter. Google Search is the default and opens results directly in your browser. On Android, results open in a browser tab over SmartBot. Tap outside the composer to close it. Drag the bubble or use the arrow keys while it has focus to move it.
+
+Choose a provider under **Settings → Assistant**. SmartBot saves your choice on this device. Google Search works without an API key. To add GPT or Gemini to the browser preview, set a provider key in the preview server's environment and restart it.
 
 | Provider | Server API key | Optional model override |
 | --- | --- | --- |
-| OpenAI | `SMARTBOT_OPENAI_API_KEY` or `OPENAI_API_KEY` | `SMARTBOT_OPENAI_MODEL` defaults to `gpt-4o-mini`. `SMARTBOT_OPENAI_TRANSCRIPTION_MODEL` defaults to `gpt-4o-mini-transcribe`. |
+| GPT (OpenAI) | `SMARTBOT_OPENAI_API_KEY` or `OPENAI_API_KEY` | `SMARTBOT_OPENAI_MODEL` defaults to `gpt-4o-mini`. `SMARTBOT_OPENAI_TRANSCRIPTION_MODEL` defaults to `gpt-4o-mini-transcribe`. |
 | Gemini | `SMARTBOT_GEMINI_API_KEY` or `GEMINI_API_KEY` | `SMARTBOT_GEMINI_MODEL` defaults to `gemini-2.5-flash`. Use an audio-capable model for voice. |
 
-In a browser, tap the floating **Ask SmartBot** gear to open the composer. Drag the gear anywhere on the screen or focus it and use the arrow keys. The browser remembers its position. Type a question and select the send arrow or press Enter. Use Shift+Enter for a new line. To ask by voice, select the microphone, allow access, then select stop to transcribe. You can edit the transcript before sending. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
+With GPT or Gemini selected, use Shift+Enter for a new line. To ask by voice, select the microphone, allow access, then select stop to transcribe. You can edit the transcript before sending. Use **Read aloud** if your browser provides speech synthesis. The chat lasts for the current page session. The chosen provider receives the recording for transcription and recent conversation turns when you send a question.
 
-The assistant requires the Python preview server and outbound HTTPS to `api.openai.com` or `generativelanguage.googleapis.com`. The preview listens on loopback for personal use. In a restricted cloud environment, allow the hostname for the provider you choose. The bundled Android APK directs you to the browser preview for the assistant.
+GPT and Gemini require the Python preview server and outbound HTTPS to `api.openai.com` or `generativelanguage.googleapis.com`. The preview listens on loopback for personal use. In a restricted cloud environment, allow the hostname for the provider you choose.
 
 ## Install on Android
 
