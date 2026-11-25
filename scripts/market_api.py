@@ -1,16 +1,18 @@
 """Read daily U.S. stock prices for the local preview."""
 
-from datetime import date, timedelta
+from datetime import date
 from http.client import HTTPException, HTTPSConnection
 import json
 from math import isfinite
 import os
 import re
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 
 MAX_RESPONSE = 128 * 1024
+MAX_ARCHIVE_RANGE = 2 * 1024 * 1024
+ARCHIVE_URL = "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet"
 
 
 class MarketError(Exception):
@@ -24,22 +26,26 @@ def validate_symbol(symbol):
         raise MarketError(400, "Choose a valid U.S. stock or ETF symbol.")
 
 
-def market_history(symbol):
-    validate_symbol(symbol)
-    start = date.today() - timedelta(days=400)
-    query = urlencode({
-        "ref": "master", "timeout_ms": 6000,
-        "q": ("SELECT date, close FROM ohlcv "
-              f"WHERE act_symbol = '{symbol}' AND date >= '{start}' "
-              "ORDER BY date DESC LIMIT 280"),
-    })
+def market_archive(start, end):
+    if not all(re.fullmatch(r"[0-9]{1,9}", value) for value in (start, end)):
+        raise MarketError(400, "Invalid market data range.")
+    start, end = int(start), int(end)
+    length = end - start + 1
+    if not 1 <= length <= MAX_ARCHIVE_RANGE:
+        raise MarketError(400, "Invalid market data range.")
+    requested = f"{start}-{end}"
+    request = Request(ARCHIVE_URL, headers={"Range": f"bytes={requested}", "Accept-Encoding": "identity"})
     try:
-        with urlopen(f"https://www.dolthub.com/api/v2/databases/post-no-preference/stocks/sql?{query}", timeout=8) as response:
-            body = response.read(MAX_RESPONSE + 1)
-        if len(body) > MAX_RESPONSE:
-            raise ValueError("Market history response was too large")
-        return json.loads(body)
-    except (OSError, HTTPException, ValueError, RecursionError):
+        with urlopen(request, timeout=10) as response:
+            content_range = response.headers.get("Content-Range", "")
+            etag = response.headers.get("ETag", "")
+            if response.status != 206 or not content_range.startswith(f"bytes {requested}/") or not etag:
+                raise ValueError("The provider did not return the requested range")
+            body = response.read(length + 1)
+        if len(body) != length:
+            raise ValueError("Incomplete market data range")
+        return body, content_range, etag
+    except (OSError, HTTPException, ValueError):
         raise MarketError(502, "Daily closing prices could not be downloaded.") from None
 
 

@@ -9,7 +9,6 @@ from threading import Thread
 import unittest
 from unittest.mock import patch
 from urllib.error import HTTPError
-from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -17,35 +16,36 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
-    def test_market_history_proxies_only_valid_symbols_to_the_public_dataset(self):
+    def test_market_archive_proxies_only_bounded_ranges_from_the_public_dataset(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
             thread.start()
-            url = f"http://127.0.0.1:{server.server_port}/api/markets/history?symbol="
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/archive?"
             headers = {"X-SmartBot-Market": "daily"}
             try:
                 with patch("market_api.urlopen") as upstream:
-                    for invalid, status in ((url + "SPY", 403), (Request(url + "SPY%27", headers=headers), 400)):
+                    for invalid, status in ((url + "start=0&end=3", 403),
+                                            (Request(url + "start=0&end=99999999", headers=headers), 400)):
                         with self.assertRaises(HTTPError) as error:
                             urlopen(invalid, timeout=2)
                         self.assertEqual(error.exception.code, status)
                     upstream.assert_not_called()
 
-                    payload = {"data": {"status": "success", "rows": [["2026-11-24", "572.00"]]}}
-                    read = upstream.return_value.__enter__.return_value.read
-                    read.return_value = json.dumps(payload).encode()
-                    request = Request(url + "SPY", headers=headers)
+                    response = upstream.return_value.__enter__.return_value
+                    response.status = 206
+                    response.headers = {"Content-Range": "bytes 0-3/100", "ETag": '"archive-revision"'}
+                    response.read.return_value = b"PAR1"
+                    request = Request(url + "start=0&end=3", headers=headers)
                     with urlopen(request, timeout=2) as result:
-                        self.assertEqual(json.load(result), payload)
-                    target = urlsplit(upstream.call_args.args[0])
-                    self.assertEqual(target.netloc + target.path, "www.dolthub.com/api/v2/databases/post-no-preference/stocks/sql")
-                    query = parse_qs(target.query)
-                    self.assertEqual(set(query), {"ref", "timeout_ms", "q"})
-                    self.assertEqual(query["ref"], ["master"])
-                    self.assertIn("act_symbol = 'SPY'", query["q"][0])
-                    self.assertTrue(query["q"][0].endswith("LIMIT 280"))
+                        self.assertEqual(result.status, 206)
+                        self.assertEqual(result.headers["Content-Range"], "bytes 0-3/100")
+                        self.assertEqual(result.headers["ETag"], '"archive-revision"')
+                        self.assertEqual(result.read(), b"PAR1")
+                    target = upstream.call_args.args[0]
+                    self.assertEqual(target.full_url, "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet")
+                    self.assertEqual(target.get_header("Range"), "bytes=0-3")
 
-                    read.return_value = b"record" * 24000
+                    response.status = 200
                     with self.assertRaises(HTTPError) as error:
                         urlopen(request, timeout=2)
                     self.assertEqual(error.exception.code, 502)

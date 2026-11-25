@@ -17,7 +17,7 @@ import webbrowser
 from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
-from market_api import MarketError, daily_prices, market_history
+from market_api import MarketError, daily_prices, market_archive
 
 
 HOST = "127.0.0.1"
@@ -25,7 +25,7 @@ PORT = 8000
 WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 API = "/api/assistant"
 MARKET_API = "/api/markets/daily"
-MARKET_HISTORY_API = "/api/markets/history"
+MARKET_ARCHIVE_API = "/api/markets/archive"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
@@ -121,18 +121,11 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition("?")
-        if path in (MARKET_HISTORY_API, MARKET_API):
+        if path in (MARKET_ARCHIVE_API, MARKET_API):
             if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
-            symbols = parse_qs(query, keep_blank_values=True).get("symbol", [])
-            get_prices = market_history if path == MARKET_HISTORY_API else daily_prices
-            try:
-                data = get_prices(symbols[0] if len(symbols) == 1 else "")
-            except MarketError as error:
-                self.send_json(error.status, {"error": str(error)})
-            else:
-                self.send_json(200, data)
+            self.serve_market(path, parse_qs(query, keep_blank_values=True))
             return
         if self.path != API:
             super().do_GET()
@@ -143,6 +136,28 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         self.send_json(200, {"providers": [
             {"id": provider.id, "label": provider.label} for provider in configured_providers().values()
         ]})
+
+    def serve_market(self, path, query):
+        def parameter(name):
+            values = query.get(name, [])
+            return values[0] if len(values) == 1 else ""
+
+        try:
+            if path == MARKET_API:
+                self.send_json(200, daily_prices(parameter("symbol")))
+                return
+            body, content_range, etag = market_archive(parameter("start"), parameter("end"))
+        except MarketError as error:
+            self.send_json(error.status, {"error": str(error)})
+            return
+        self.send_response(206)
+        self.send_header("Content-Type", "application/octet-stream")
+        self.send_header("Content-Range", content_range)
+        self.send_header("ETag", etag)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def read_body(self, max_size):
         length = self.headers.get("Content-Length", "")

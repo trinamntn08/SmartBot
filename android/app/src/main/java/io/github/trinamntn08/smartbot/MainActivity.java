@@ -256,6 +256,7 @@ public final class MainActivity extends Activity {
         String path = uri.getPath();
         return ("www.tradingview.com".equals(uri.getAuthority()) && path != null && path.startsWith("/symbols/"))
                 || ("www.dolthub.com".equals(uri.getAuthority()) && "/repositories/post-no-preference/stocks".equals(path))
+                || ("github.com".equals(uri.getAuthority()) && "/Johnbrick123/sp500-data".equals(path))
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
@@ -269,7 +270,7 @@ public final class MainActivity extends Activity {
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
-        if ((ASSET_PATH + "api/markets/history").equals(uri.getPath())) return MarketFeed.read(request);
+        if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
         String feedPrefix = ASSET_PATH + "api/news/";
         if (uri.getEncodedPath().startsWith(feedPrefix)) {
             String id = uri.getEncodedQuery() == null ? uri.getEncodedPath().substring(feedPrefix.length()) : null;

@@ -17,6 +17,7 @@ const ranges = [
   ['180', '6M', '6 months'], ['ytd', 'YTD', 'Year to date'], ['365', '1Y', '1 year'],
 ];
 const historySources = {
+  archive: ['S&P 500 archive on GitHub', 'https://github.com/Johnbrick123/sp500-data'],
   dolthub: ['post-no-preference on DoltHub', 'https://www.dolthub.com/repositories/post-no-preference/stocks'],
   alphaVantage: ['Alpha Vantage', 'https://www.alphavantage.co/'],
 };
@@ -99,25 +100,36 @@ export function renderMarkets(view, focusHeading) {
     history.hidden = true;
     link.href = `https://www.tradingview.com/symbols/${ticker.value.replace(':', '-')}/`;
     const online = navigator.onLine !== false;
-    const savedMessage = 'Showing saved closing prices.';
-    if (saved) showHistory(saved, online ? '' : savedMessage);
+    if (saved) showHistory(saved);
+    else status.textContent = `Loading ${selected} chart…`;
+    const bundled = await marketRepository.bundled(selected);
+    if (signal.aborted) return;
+    const bundledDate = bundled?.prices.at(-1).date;
+    const savedDate = saved?.prices.at(-1).date;
+    const useBundled = bundled && (!saved || bundledDate > savedDate
+      || (bundledDate === savedDate && bundled.prices.length > saved.prices.length));
+    const current = useBundled ? bundled : saved;
+    const savedMessage = current?.bundled ? 'Showing closing prices included with this build.' : 'Showing saved closing prices.';
+    if (current?.bundled) showHistory(current, savedMessage);
     if (!online) {
-      if (!saved) status.textContent = 'Connect to the internet to load the price chart.';
+      status.textContent = current ? savedMessage : 'Connect to the internet to load the price chart.';
       return;
     }
-    if (!force && saved?.source === 'dolthub' && saved.fresh) return;
+    if (!force && current?.source === 'archive' && current.fresh) return;
 
-    if (!saved) status.textContent = `Loading ${selected} chart…`;
     try {
       const latest = await fetchMarketHistory(selected, signal);
       if (signal.aborted) return;
-      marketRepository.save(selected, latest, 'dolthub');
-      showHistory({ prices: latest, source: 'dolthub' });
+      if (current && latest.at(-1).date < current.prices.at(-1).date) {
+        throw new Error('The market archive is older than the prices on this device.');
+      }
+      marketRepository.save(selected, latest, 'archive');
+      showHistory({ prices: latest, source: 'archive' });
       return;
     } catch {
       if (signal.aborted) return;
     }
-    if (!saved) {
+    if (!current) {
       try {
         const latest = await fetchPrices(selected, signal);
         if (signal.aborted) return;
@@ -128,7 +140,7 @@ export function renderMarkets(view, focusHeading) {
         if (signal.aborted) return;
       }
     }
-    status.textContent = saved ? savedMessage : 'Daily closing prices are unavailable right now.';
+    status.textContent = current ? savedMessage : 'Daily closing prices are unavailable right now.';
     actions.hidden = false;
   }
 

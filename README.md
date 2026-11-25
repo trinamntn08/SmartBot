@@ -53,9 +53,11 @@ Tap a Tuổi Trẻ headline to open the publisher’s full article with its orig
 
 ## Markets
 
-Open **Workspace → Markets** in the local browser preview or Android app. Choose a U.S. stock or ETF to see its latest available closing price and change from the prior close. Switch between one week, one month, three months, six months, year to date, and one year. Tap or move across the chart to inspect a date, or focus the chart and use the arrow keys. **Price history table** lists the daily closes in the selected range. The app fetches daily closes from the public `post-no-preference/stocks` dataset on DoltHub without an account or API key. [DoltHub stock prices](https://www.dolthub.com/repositories/post-no-preference/stocks)
+Open **Workspace → Markets** in the local browser preview or Android app. Choose a U.S. stock or ETF to see its latest available closing price and change from the prior close. Switch between one week, one month, three months, six months, year to date, and one year. Tap or move across the chart to inspect a date, or focus the chart and use the arrow keys. **Price history table** lists the daily closes in the selected range.
 
-Downloaded daily closes reopen offline on the same device. If prices cannot be loaded, Markets offers **Retry chart** and **Open on TradingView**. The local Python preview can also load daily closes from Alpha Vantage when `SMARTBOT_ALPHA_VANTAGE_API_KEY` is set in the server environment. [Alpha Vantage API key](https://www.alphavantage.co/support/#api-key)
+The Android app includes closing prices for all eight tickers through November 24, 2026, so charts open offline on the first launch. The browser caches the same history after its first load. The Android app and Python preview check the public archive for newer daily closes without an account or key. Markets keeps the most recent available history on the device and shows the date of the last close. If a refresh fails, **Retry chart** is available alongside **Open on TradingView**. [S&P 500 data archive](https://github.com/Johnbrick123/sp500-data)
+
+To refresh the prices bundled with the next build, run `python3 scripts/build-market-snapshot.py /path/to/prices.parquet > web/assets/market-closes.json` with PyArrow installed and the archive's published Parquet file. Online updates use HTTP byte ranges and the bundled MIT-licensed hyparquet and fzstd readers. [Parquet download](https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet)
 
 ## Listen to podcasts
 

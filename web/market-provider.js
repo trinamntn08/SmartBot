@@ -15,25 +15,8 @@ export function validatePrices(data, symbol) {
 }
 
 export async function fetchMarketHistory(symbol, signal) {
-  const query = new URLSearchParams({ symbol });
-  const response = await fetch(`./api/markets/history?${query}`, {
-    signal, cache: 'no-store', headers: { 'X-SmartBot-Market': 'daily' },
-  });
-  if (!response.ok) throw new Error('Daily closing prices could not be downloaded.');
-  const { data } = await response.json();
-  if (!['success', 'row_limit'].includes(data?.status) || !Array.isArray(data.rows)) {
-    throw new Error('No closing prices were returned.');
-  }
-  const prices = [];
-  for (const row of data.rows) {
-    if (!Array.isArray(row)) continue;
-    const [date, value] = row;
-    const close = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
-    if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}(?:$|[T ])/.test(date) && close > 0 && close <= 1e9) {
-      prices.push({ date: date.slice(0, 10), close });
-    }
-  }
-  prices.sort((a, b) => a.date.localeCompare(b.date));
+  const { archivePrices } = await import('./market-archive.js');
+  const prices = await archivePrices(symbol, signal);
   return validatePrices({ symbol, prices }, symbol);
 }
 
