@@ -112,7 +112,7 @@ public final class MainActivity extends Activity {
                 if (isAppAsset(uri)) return false;
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
                         && (isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
-                        || isMarketSource(uri))) {
+                        || isMarketSource(uri) || isGoogleSearch(uri))) {
                     try {
                         Intent article = new Intent(Intent.ACTION_VIEW, uri);
                         Bundle extras = new Bundle();
@@ -250,6 +250,10 @@ public final class MainActivity extends Activity {
     private static boolean isPublisher(String host) {
         return "www.canada.ca".equals(host) || "science.nasa.gov".equals(host)
                 || "www.nasa.gov".equals(host) || "tuoitre.vn".equals(host);
+    }
+
+    private static boolean isGoogleSearch(Uri uri) {
+        return "www.google.com".equals(uri.getAuthority()) && "/search".equals(uri.getPath());
     }
 
     private static boolean isMarketSource(Uri uri) {

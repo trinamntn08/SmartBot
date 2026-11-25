@@ -5,7 +5,7 @@ Last updated November 25, 2026.
 ## Current state
 
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
-- **Ask SmartBot** opens from a floating chat bubble that moves by touch, mouse, or arrow keys. The browser remembers its position. The question bar supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
+- **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
 - **News** opens to ten matching headlines from free-to-read sources and appends the next ten as you scroll to the end. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. The default Android APK uses the Apple Podcasts catalog and opens public HTTPS feeds directly. Followed shows and resuming playback appear when available. [Podcast listening](plans/podcast-listening.md)
 - The top bar has direct links to **Books** and **News**. The three-dot menu opens the other sections and Settings. Tap **SmartBot** to return home.
@@ -18,6 +18,8 @@ Last updated November 25, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified that Ask defaults to Google Search, encodes the full query, and opens the results without an assistant API call. Settings preserved a GPT choice across a reload and routed questions to GPT and Gemini with controlled responses. Mouse and touch checks closed the composer from outside and preserved its draft. The Android asset origin requested the same Google Search URL. All 25 web and 11 Python tests passed.
 
 Chromium displayed the full header on one row at 320, 390, 768, and 1440 CSS pixels. The three-dot menu passed pointer, keyboard, touch, and offline checks, and remained usable at 200% text size. The chat bubble opened the composer and accepted a question with a controlled response. It moved by mouse, touch, and keyboard, and its position survived an offline reload. All 25 web and 11 Python tests passed.
 
@@ -86,6 +88,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The debug APK with Google Search and tap-to-dismiss passed Gradle build, ZIP alignment, same-certificate signature verification, and byte-for-byte checks of all 243 web files. Lint reported zero errors and six warnings. Opening a Google result from the installed app still needs a physical phone check.
 
 The SmartBot 0.3.3 debug build with the compact header and chat bubble passed Gradle build, ZIP alignment, same-certificate signature verification, and byte-for-byte checks of all 243 web files. Lint reported zero errors and six warnings. Physical phone testing is pending.
 

@@ -12,7 +12,10 @@ const sampleRate = 16_000;
 const maximumSeconds = 45;
 const history = [];
 const providerPreferenceKey = 'smartbot.assistant.provider';
-const setupMessage = 'Configure an OpenAI or Gemini API key on the SmartBot server.';
+const googleSearch = 'google';
+const providerNames = { [googleSearch]: 'Google Search', openai: 'GPT (OpenAI)', gemini: 'Gemini' };
+const isAndroidApp = location.hostname === 'appassets.androidplatform.net';
+const setupMessage = 'Configure an API key on the SmartBot preview server for each AI provider you want to use.';
 const unavailableMessage = 'Your saved provider is unavailable. Choose an available provider.';
 let sessionPreference = '';
 let availableProviders = [];
@@ -20,14 +23,13 @@ let providerError = '';
 let pending = false;
 let capture = null;
 
-function selectedProvider(providers) {
-  let preferred = sessionPreference;
+function preferredProviderId() {
+  if (sessionPreference) return sessionPreference;
   try {
-    preferred ||= localStorage.getItem(providerPreferenceKey);
+    return localStorage.getItem(providerPreferenceKey) || googleSearch;
   } catch {
-    // The current tab can still use the preference when storage is blocked.
+    return googleSearch;
   }
-  return preferred ? providers.find(({ id }) => id === preferred) : providers[0];
 }
 
 function saveProvider(id) {
@@ -42,8 +44,8 @@ function saveProvider(id) {
 }
 
 async function fetchProviders() {
-  if (location.hostname === 'appassets.androidplatform.net') {
-    throw new Error('Open SmartBot in a browser with the preview server to use the assistant.');
+  if (isAndroidApp) {
+    throw new Error('Use the browser preview to connect GPT or Gemini.');
   }
   let response;
   try {
@@ -61,37 +63,43 @@ async function fetchProviders() {
 export async function renderAssistantSettings(view) {
   view.insertAdjacentHTML('beforeend', `<section class="card assistant-settings" aria-labelledby="assistant-settings-title">
       <h2 id="assistant-settings-title">Assistant</h2>
-      <div class="provider-field" hidden>
+      <div class="provider-field">
         <label for="assistant-provider">Provider</label>
         <select id="assistant-provider" disabled></select>
       </div>
       <p class="settings-status" role="status">Checking providers…</p>
-      <p class="settings-privacy" hidden>Your provider receives recent messages when you send a question and recordings when you transcribe.</p>
+      <p class="settings-privacy">Google receives your search terms. GPT and Gemini receive recent chat messages when you send a question and recordings when you transcribe.</p>
     </section>`);
   const panel = view.querySelector('.assistant-settings');
   const selector = panel.querySelector('select');
   const message = panel.querySelector('.settings-status');
+
+  const available = new Set([googleSearch]);
+  const names = new Map(Object.entries(providerNames));
+  let note = '';
   try {
-    const providers = await fetchProviders();
-    if (!providers.length) {
-      message.textContent = setupMessage;
-      return;
+    for (const { id, label } of await fetchProviders()) {
+      available.add(id);
+      if (!names.has(id)) names.set(id, label);
     }
-    const selected = selectedProvider(providers);
-    const placeholder = new Option('Choose a provider', '');
-    placeholder.disabled = true;
-    selector.replaceChildren(placeholder, ...providers.map(({ id, label }) => new Option(label, id)));
-    selector.value = selected?.id ?? '';
-    selector.disabled = false;
-    selector.closest('.provider-field').hidden = false;
-    panel.querySelector('.settings-privacy').hidden = false;
-    message.textContent = selected ? '' : unavailableMessage;
-    selector.addEventListener('change', () => {
-      message.textContent = saveProvider(selector.value) ? 'Provider saved.' : 'Provider selected for this tab.';
-    });
+    if (!available.has('openai') || !available.has('gemini')) note = setupMessage;
   } catch (error) {
-    message.textContent = error.message;
+    note = error.message;
   }
+  const selected = preferredProviderId();
+  if (!names.has(selected)) names.set(selected, 'Unavailable provider');
+  selector.replaceChildren(...Array.from(names, ([id, label]) => {
+    const option = new Option(label, id);
+    option.disabled = !available.has(id);
+    return option;
+  }));
+  selector.value = selected;
+  selector.disabled = false;
+  message.textContent = available.has(selected) ? note : `${unavailableMessage} ${note}`.trim();
+  selector.addEventListener('change', () => {
+    const saved = saveProvider(selector.value) ? 'Provider saved.' : 'Provider selected for this tab.';
+    message.textContent = `${saved} ${note}`.trim();
+  });
 }
 
 function setStatus(message, error = false) {
@@ -100,20 +108,27 @@ function setStatus(message, error = false) {
 }
 
 function updateControls() {
+  const searching = preferredProviderId() === googleSearch;
+  const submitLabel = searching ? 'Search Google' : 'Send question';
   const recording = Boolean(capture?.recorder);
   const recordLabel = recording ? 'Stop and transcribe' : 'Record voice';
+  question.placeholder = searching ? 'Search Google…' : 'Ask SmartBot…';
+  question.enterKeyHint = searching ? 'search' : 'send';
   question.readOnly = pending || Boolean(capture);
   sendButton.disabled = question.readOnly || !question.value.trim();
+  sendButton.setAttribute('aria-label', submitLabel);
+  sendButton.title = submitLabel;
+  recordButton.hidden = searching || !canRecord;
   recordButton.disabled = pending || !canRecord || Boolean(capture && !recording);
   recordButton.classList.toggle('is-recording', recording);
   recordButton.setAttribute('aria-label', recordLabel);
   recordButton.title = recordLabel;
+  conversation.hidden = searching || !conversation.childElementCount;
 }
 
 async function loadProviders() {
   if (pending) return;
   pending = true;
-  setStatus('');
   updateControls();
   try {
     availableProviders = await fetchProviders();
@@ -128,7 +143,8 @@ async function loadProviders() {
 }
 
 function providerForAction() {
-  const provider = selectedProvider(availableProviders);
+  const providerId = preferredProviderId();
+  const provider = availableProviders.find(({ id }) => id === providerId);
   if (!provider) {
     setStatus(providerError || (availableProviders.length
       ? 'The selected provider is unavailable.'
@@ -177,6 +193,15 @@ async function sendQuestion(event) {
   event.preventDefault();
   const content = question.value.trim();
   if (!content || pending || capture) return;
+  if (preferredProviderId() === googleSearch) {
+    const url = new URL('https://www.google.com/search');
+    url.searchParams.set('q', content);
+    if (isAndroidApp) location.assign(url.href);
+    else window.open(url.href, '_blank', 'noopener,noreferrer');
+    question.value = '';
+    dialog.close();
+    return;
+  }
   const provider = providerForAction();
   if (!provider) return;
   const turn = { role: 'user', content };
@@ -193,7 +218,6 @@ async function sendQuestion(event) {
     setStatus('');
   } catch (error) {
     entry.remove();
-    conversation.hidden = !conversation.childElementCount;
     setStatus(`Could not send the question. ${error.message}`, true);
   } finally {
     pending = false;
@@ -272,7 +296,7 @@ async function toggleRecording() {
     recordButton.disabled = true;
     return;
   }
-  if (pending || capture || !canRecord) return;
+  if (pending || capture || !canRecord || preferredProviderId() === googleSearch) return;
   const provider = providerForAction();
   if (!provider) return;
   const recording = { chunks: [], providerId: provider.id };
@@ -398,16 +422,30 @@ function initializeLauncher() {
 
   launcher.addEventListener('click', event => {
     if (suppressClick && event.detail > 0) return;
+    setStatus('');
+    updateControls();
     dialog.showModal();
     launcher.setAttribute('aria-expanded', 'true');
-    loadProviders();
+    if (preferredProviderId() !== googleSearch) loadProviders();
   });
 }
 
+function isBackdrop(event) {
+  if (event.target !== dialog) return false;
+  const { left, right, top, bottom } = dialog.getBoundingClientRect();
+  return event.clientX < left || event.clientX >= right || event.clientY < top || event.clientY >= bottom;
+}
+
+let pressedBackdrop = false;
 if (typeof dialog.showModal === 'function') initializeLauncher();
-recordButton.hidden = !canRecord;
 dialog.querySelector('.assistant-close').addEventListener('click', () => dialog.close());
+dialog.addEventListener('pointerdown', event => { pressedBackdrop = isBackdrop(event); });
+dialog.addEventListener('click', event => {
+  if (pressedBackdrop && isBackdrop(event)) dialog.close();
+  pressedBackdrop = false;
+});
 dialog.addEventListener('close', () => {
+  pressedBackdrop = false;
   cancelRecording();
   if (canSpeak) speechSynthesis.cancel();
   launcher.setAttribute('aria-expanded', 'false');
