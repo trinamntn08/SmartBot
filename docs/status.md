@@ -19,6 +19,8 @@ Last updated November 25, 2026.
 
 ## Web app verification
 
+The November 25 integration brought updated Markets charts, default Android podcast discovery, direct section navigation, and scroll-based News pagination into `main`. All 25 web, 10 Python, and five podcast service tests passed. At 320 CSS pixels, Chromium verified keyboard navigation, the bundled NVIDIA chart with updates blocked, and News expanding from 10 to 20 to 23 unique headlines and restoring that count on return. With the Android asset origin and controlled native endpoint responses, Chromium displayed podcast search results and an RSS episode.
+
 The News scroll check simulated reaching the end of an offline list and verified that it expanded from 10 to 20 to 23 headlines, stopped at the end, and restored the expanded list on return. All Node and Python suites passed. Browser and Android runtime checks remained open at the time of the branch check.
 
 Chromium verified keyboard navigation to each Workspace section, Today, and Settings, with active states at 320, 760, and 1440 CSS pixels. The Settings gear had an accessible name, and section navigation worked after an offline reload. All 24 Node and nine Python tests passed.
@@ -78,6 +80,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The November 25 SmartBot 0.3.3 debug APK was built from `dca67c0` on `main`. Gradle build, signature, ZIP alignment, and byte-for-byte comparison of all 240 web assets passed. Lint reported zero errors and six warnings. Installation, live podcast discovery, and playback on a physical phone remain pending.
 
 The November 25 Markets data build passed Gradle build, ZIP alignment, signature verification, and byte-for-byte checks of all 239 web assets, including 2,216 bundled closes. Its certificate matches the previous Markets APK. Lint reported zero errors and five warnings. The Android feed adapter returned verified byte ranges from GitHub in a host JVM test. A physical phone check is pending.
 
