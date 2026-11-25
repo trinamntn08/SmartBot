@@ -1,6 +1,6 @@
 # SmartBot status
 
-Last updated November 24, 2026.
+Last updated November 25, 2026.
 
 ## Current state
 
@@ -8,6 +8,7 @@ Last updated November 24, 2026.
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
 - **News** opens to ten matching headlines from free-to-read sources, with more stories in batches of ten. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
+- The header links directly to every Workspace section and uses an icon for Settings. The current section is highlighted, and the links wrap on narrow screens.
 - **Markets** charts 30 or 90 days of unadjusted USD closing prices for eight U.S. stocks and ETFs. The local preview reads the Alpha Vantage key from its environment. Each downloaded series remains available offline in that browser. [Markets setup](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library. **Back to Workspace** in the library and **SmartBot** in the app header return to the homepage.
@@ -17,6 +18,8 @@ Last updated November 24, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified keyboard navigation to each Workspace section, Today, and Settings, with active states at 320, 760, and 1440 CSS pixels. The Settings gear had an accessible name, and section navigation worked after an offline reload. All 24 Node and nine Python tests passed.
 
 Chromium at 320 and 1440 CSS pixels verified Markets keyboard navigation, period and ticker changes, refresh failure, and offline reopening with controlled prices. The Markets branch (`3ff9bb6`) merged into `main` without conflicts. The integration rerun passed all 24 Node tests and nine Python tests. A live Alpha Vantage check with a configured key remains open. The Android APK has no market data connection in this slice.
 
