@@ -1,12 +1,12 @@
 # SmartBot status
 
-Last updated November 24, 2026.
+Last updated November 25, 2026.
 
 ## Current state
 
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens a compact question bar with mic and send controls at the bottom of the browser app. It supports typed questions and editable voice transcripts through OpenAI or Gemini. Choose the provider under **Settings → Assistant**. SmartBot saves the choice in the browser and reads provider credentials from the local preview server's environment.
-- **News** opens to ten matching headlines from free-to-read sources, with more stories in batches of ten. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
+- **News** opens to ten matching headlines from free-to-read sources, and appends the next ten as you scroll to the end. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. Followed shows and resuming playback appear when available. See the [podcast pilot setup](plans/podcast-listening.md).
 - **Markets** charts 30 or 90 days of unadjusted USD closing prices for eight U.S. stocks and ETFs. The local preview reads the Alpha Vantage key from its environment. Each downloaded series remains available offline in that browser. [Markets setup](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
@@ -17,6 +17,8 @@ Last updated November 24, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The News scroll check simulated reaching the end of an offline list and verified that it expanded from 10 to 20 to 23 headlines, stopped at the end, and restored the expanded list on return. All Node and Python suites passed. Browser and Android runtime checks remain open.
 
 Chromium at 320 and 1440 CSS pixels verified Markets keyboard navigation, period and ticker changes, refresh failure, and offline reopening with controlled prices. The Markets branch (`3ff9bb6`) merged into `main` without conflicts. The integration rerun passed all 24 Node tests and nine Python tests. A live Alpha Vantage check with a configured key remains open. The Android APK has no market data connection in this slice.
 

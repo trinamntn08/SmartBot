@@ -27,6 +27,7 @@ let activitySaveFailed = false;
 let loadActivity;
 let keepReadingPlanOpen = false;
 let stopMarkets;
+let stopNews;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -132,6 +133,8 @@ function render(focusHeading = false) {
   loadActivity = undefined;
   stopMarkets?.();
   stopMarkets = undefined;
+  stopNews?.();
+  stopNews = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -165,7 +168,7 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'news') {
-    renderNews(view, repository.savedNews, focusHeading, track);
+    stopNews = renderNews(view, repository.savedNews, focusHeading, track);
     return;
   }
   if (page === 'music') {
