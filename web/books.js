@@ -157,7 +157,7 @@ async function showReader(panel, id, activity) {
       options.querySelector('summary').focus();
     });
   } catch {
-    showError(panel.querySelector(':scope > .book-error, .book-page > .book-error'), 'Could not open this book.');
+    showError(panel.querySelector(':scope > .book-error, .book-footer > .book-error'), 'Could not open this book.');
   }
 }
 

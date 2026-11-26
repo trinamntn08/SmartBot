@@ -1,9 +1,10 @@
 import { loadReaderPreferences, saveReaderPreferences, saveBookPosition } from './library-repository.js';
 import { localDay } from './planner.js';
+import { pageStarts } from './book-pagination.js';
 
 const textSizes = [85, 100, 115, 130, 150, 175, 200];
 
-function configureAppearance(panel, scroll, content, toggleSettings) {
+function configureAppearance(panel, toggleSettings, reflow) {
   const saved = loadReaderPreferences();
   const smaller = panel.querySelector('[data-size="-1"]');
   const larger = panel.querySelector('[data-size="1"]');
@@ -32,12 +33,8 @@ function configureAppearance(panel, scroll, content, toggleSettings) {
   }
 
   function update() {
-    // Preserve the relative place in the passage when text wraps differently.
-    const oldHeight = content.offsetHeight;
-    const top = scroll.scrollTop;
-    const preferences = apply();
-    if (oldHeight && top) scroll.scrollTop = top * content.offsetHeight / oldHeight;
-    saveReaderPreferences(preferences);
+    saveReaderPreferences(apply());
+    reflow();
   }
 
   for (const button of [smaller, larger]) {
@@ -114,22 +111,30 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
         </fieldset>
       </section>
     </header>
-    <section class="book-scroll" tabindex="0" aria-label="Book text">
-      <div class="book-page">
+    <section class="book-page" tabindex="0" aria-label="Book text">
+      <div class="book-page-frame">
         <p class="book-content"></p>
-        <div class="book-pagination">
-          <button type="button" class="book-tool" data-step="-1">Previous section</button>
-          <button type="button" class="book-tool" data-step="1">Next section</button>
-          <button type="button" class="book-tool" data-finish-section hidden></button>
-        </div>
-        <p class="book-error" role="alert" hidden></p>
+        <div class="book-measure-frame" aria-hidden="true"><p class="book-measure"></p></div>
       </div>
     </section>
     <footer class="book-footer">
+      <p class="book-error" role="alert" hidden></p>
       <div class="book-progress-track" aria-hidden="true"><span></span></div>
       <div class="book-footer-row">
-        <span class="book-location" role="status"></span>
-        <button type="button" class="book-tool" data-show-controls hidden>Show controls</button>
+        <button type="button" class="book-tool" data-step="-1" aria-label="Previous page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Previous
+        </button>
+        <div class="book-footer-center">
+          <div class="book-location" role="status" aria-atomic="true">
+            <span data-current-section></span>
+            <span data-current-page></span>
+          </div>
+          <button type="button" class="book-tool" data-show-controls hidden>Show controls</button>
+        </div>
+        <button type="button" class="book-tool" data-step="1" aria-label="Next page">
+          Next<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+        </button>
+        <button type="button" class="book-tool" data-finish-section hidden>Mark read</button>
       </div>
     </footer>`;
 
@@ -139,9 +144,12 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
   const settingsButton = panel.querySelector('[data-settings]');
   const focusButton = panel.querySelector('[data-focus]');
   const showControls = panel.querySelector('[data-show-controls]');
-  const scroll = panel.querySelector('.book-scroll');
+  const page = panel.querySelector('.book-page');
+  const frame = panel.querySelector('.book-page-frame');
   const content = panel.querySelector('.book-content');
-  const location = panel.querySelector('.book-location');
+  const measure = panel.querySelector('.book-measure');
+  const sectionLabel = panel.querySelector('[data-current-section]');
+  const pageLabel = panel.querySelector('[data-current-page]');
   const progress = panel.querySelector('.book-progress-track span');
   const error = panel.querySelector('.book-error');
   const previous = panel.querySelector('[data-step="-1"]');
@@ -149,10 +157,14 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
   const finish = panel.querySelector('[data-finish-section]');
   const reading = { category: 'reading', id: `book:${book.id}`, topic: book.title };
   let section = book.position;
+  let offset = book.offset ?? 0;
+  let starts;
+  let pageIndex;
+  let finished = false;
   let savingProgress = false;
 
   heading.textContent = title;
-  scroll.setAttribute('aria-label', `Book text: ${title}`);
+  page.setAttribute('aria-label', `Book text: ${title}`);
   toolbar.querySelector('.book-tool-group').append(options);
 
   function toggleSettings(open, restoreFocus = false) {
@@ -166,7 +178,7 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     toggleSettings(false);
     toolbar.hidden = full;
     showControls.hidden = !full;
-    if (moveFocus) (full ? scroll : focusButton).focus({ preventScroll: true });
+    if (moveFocus) (full ? page : focusButton).focus({ preventScroll: true });
   }
 
   settingsButton.addEventListener('click', () => toggleSettings(settings.hidden, true));
@@ -177,7 +189,7 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
       if (!settings.contains(event.target) && !settingsButton.contains(event.target)) toggleSettings(false);
       return;
     }
-    if (!options.open && event.target === content && document.getSelection()?.isCollapsed) {
+    if (!options.open && page.contains(event.target) && document.getSelection()?.isCollapsed) {
       setFullView(!toolbar.hidden, toolbar.contains(document.activeElement));
     }
   });
@@ -186,24 +198,55 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     if (!settings.hidden) toggleSettings(false, true);
     else if (toolbar.hidden) setFullView(false, true);
   });
-  configureAppearance(panel, scroll, content, toggleSettings);
 
   function showError(message) {
     error.textContent = message;
     error.hidden = !message;
   }
 
-  function renderSection() {
-    content.textContent = book.sections[section];
-    location.textContent = `Section ${section + 1} of ${book.count}`;
-    progress.style.inlineSize = `${100 * (section + 1) / book.count}%`;
-    previous.disabled = section === 0;
-    previous.hidden = book.count < 2;
-    next.disabled = section === book.count - 1;
-    next.hidden = section === book.count - 1;
-    finish.hidden = section < book.count - 1;
-    finish.textContent = book.pageEnds ? 'Mark last page read' : 'Mark last section read';
-    finish.disabled = false;
+  function paginate(index) {
+    const lineHeight = parseFloat(getComputedStyle(measure).lineHeight);
+    const height = Math.max(frame.getBoundingClientRect().height, lineHeight);
+    const result = pageStarts(book.sections[index], (text) => {
+      measure.textContent = text;
+      return measure.getBoundingClientRect().height <= height;
+    });
+    measure.textContent = '';
+    return result;
+  }
+
+  function renderPage() {
+    const text = book.sections[section];
+    const following = starts.findIndex(start => start > offset);
+    pageIndex = (following < 0 ? starts.length : following) - 1;
+    const end = starts[pageIndex + 1] ?? text.length;
+    const visibleText = text.slice(starts[pageIndex], end);
+    if (content.textContent !== visibleText) content.textContent = visibleText;
+    frame.scrollTop = 0;
+    sectionLabel.textContent = `Section ${section + 1} of ${book.count}`;
+    pageLabel.hidden = starts.length === 1;
+    pageLabel.textContent = `Page ${pageIndex + 1} of ${starts.length}`;
+    progress.style.inlineSize = `${100 * (section + (text ? end / text.length : 1)) / book.count}%`;
+    previous.disabled = section === 0 && pageIndex === 0;
+    const atEnd = section === book.count - 1 && pageIndex === starts.length - 1;
+    next.hidden = atEnd;
+    finish.hidden = !atEnd;
+    finish.textContent = finished ? 'Recorded' : 'Mark read';
+    finish.disabled = finished;
+  }
+
+  function reflow() {
+    starts = paginate(section);
+    renderPage();
+  }
+
+  function applyLayout() {
+    reflow();
+    if (document.fonts.status === 'loading') {
+      document.fonts.ready.then(() => {
+        if (panel.isConnected) reflow();
+      });
+    }
   }
 
   async function recordSection(index) {
@@ -212,19 +255,34 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     if (progress) await activity.record([{ ...reading, ...progress, date: localDay().date }]);
   }
 
-  async function turnSection(event) {
-    const target = section + Number(event.currentTarget.dataset.step);
-    if (savingProgress || target < 0 || target >= book.count) return;
+  async function turnPage(event) {
+    if (savingProgress) return;
+    const button = event.currentTarget;
+    const step = Number(button.dataset.step);
+    let targetPage = pageIndex + step;
+    let targetSection = section;
+    let targetStarts = starts;
+    if (targetPage < 0 || targetPage >= starts.length) {
+      targetSection += step;
+      if (targetSection < 0 || targetSection >= book.count) return;
+      targetStarts = paginate(targetSection);
+      targetPage = step < 0 ? targetStarts.length - 1 : 0;
+    }
+    const oldStarts = starts;
+    const targetOffset = targetStarts[targetPage];
     savingProgress = true;
     showError('');
     try {
-      await saveBookPosition(book.id, target);
+      await saveBookPosition(book.id, targetSection, targetOffset);
       const completed = section;
-      section = target;
-      renderSection();
-      scroll.scrollTop = 0;
-      if (panel.isConnected) scroll.focus({ preventScroll: true });
-      if (target > completed) await recordSection(completed).catch(() => {
+      section = targetSection;
+      offset = targetOffset;
+      if (panel.isConnected) {
+        starts = starts === oldStarts ? targetStarts : paginate(section);
+        renderPage();
+        if (button.hidden || button.disabled) page.focus({ preventScroll: true });
+      }
+      if (targetSection > completed) await recordSection(completed).catch(() => {
         showError('Your place is saved. The activity report could not be updated.');
       });
     } catch {
@@ -234,8 +292,8 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     }
   }
 
-  previous.addEventListener('click', turnSection);
-  next.addEventListener('click', turnSection);
+  previous.addEventListener('click', turnPage);
+  next.addEventListener('click', turnPage);
   finish.addEventListener('click', async () => {
     if (savingProgress) return;
     savingProgress = true;
@@ -243,8 +301,9 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     showError('');
     try {
       await recordSection(section);
-      finish.textContent = book.pageEnds ? 'Last page recorded' : 'Last section recorded';
-      if (panel.isConnected) scroll.focus({ preventScroll: true });
+      finished = true;
+      finish.textContent = 'Recorded';
+      if (panel.isConnected) page.focus({ preventScroll: true });
     } catch {
       finish.disabled = false;
       showError('Could not update the activity report. Try again.');
@@ -252,7 +311,13 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
       savingProgress = false;
     }
   });
-  renderSection();
+  configureAppearance(panel, toggleSettings, applyLayout);
+  applyLayout();
+  const viewport = new ResizeObserver(() => {
+    if (panel.isConnected) reflow();
+    else viewport.disconnect();
+  });
+  viewport.observe(frame);
   if (focus) heading.focus({ preventScroll: true });
   activity.foreground(reading, panel);
 }

@@ -117,13 +117,13 @@ export function getBook(id) {
   });
 }
 
-export function saveBookPosition(id, position) {
+export function saveBookPosition(id, position, offset = 0) {
   return runTransaction('books', 'readwrite', (transaction) => {
     const store = transaction.objectStore('books');
     const request = store.get(id);
     request.onsuccess = () => {
       const book = request.result;
-      if (book && position >= 0 && position < book.count) store.put({ ...book, position });
+      if (book && position >= 0 && position < book.count) store.put({ ...book, position, offset });
     };
     return () => undefined;
   });

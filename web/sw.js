@@ -2,7 +2,7 @@ importScripts('./vendor/pdfjs/cache-files.js');
 
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v76'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v77'}`;
 const files = [
   'index.html', 'appearance.js', 'appearance.css', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'today.css', 'today.js', 'activity.js', 'activity-repository.js',
@@ -10,7 +10,8 @@ const files = [
   'market-archive.js', 'market-crypto.js', 'market-symbols.js', 'vendor/market-parquet/parquet.js',
   'market-vietnam.js', 'assets/market-closes.json', 'assets/market-catalog.json', 'assets/market-vietnam-catalog.json',
   'market-euronext.js',
-  'books.js', 'book-reader.js', 'book-reader.css', 'library-repository.js', 'text-book.js', 'pdf-book.js', 'epub-book.js',
+  'books.js', 'book-reader.js', 'book-reader.css', 'book-pagination.js', 'library-repository.js',
+  'text-book.js', 'pdf-book.js', 'epub-book.js',
   'vendor/pdfjs/pdf.min.js', 'vendor/pdfjs/pdf.worker.min.js', 'vendor/jszip/jszip.min.js', ...pdfDataFiles,
   'news.js', 'news-provider.js', 'news-repository.js', 'news-preferences.js', 'news-rss.js', 'tuoitre.js',
   'listen.js', 'spotify-player.js', 'youtube-player.js', 'youtube-search.js', 'youtube-shelves.js',

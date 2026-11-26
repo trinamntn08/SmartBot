@@ -169,19 +169,31 @@ body:has(.book-reader) #view {
   stroke-linejoin: round;
 }
 
-.book-scroll {
+.book-page {
   grid-row: 2;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  padding: clamp(0.5rem, 2.5vh, 2rem) var(--reader-gutter);
+}
+
+.book-page:focus-visible { outline-offset: -3px; }
+
+.book-page-frame {
+  position: relative;
   overflow: auto;
   overscroll-behavior-y: contain;
 }
 
-.book-scroll:focus-visible { outline-offset: -3px; }
-
-.book-page {
-  padding: clamp(1.5rem, 4.5vh, 3.5rem) var(--reader-gutter) 1.5rem;
+.book-measure-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
 }
 
-.book-content {
+.book-content, .book-measure {
   max-width: min(65ch, 44rem);
   margin: 0 auto;
   font-family: var(--reader-font);
@@ -191,30 +203,11 @@ body:has(.book-reader) #view {
   overflow-wrap: anywhere;
 }
 
-.book-pagination {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  max-width: 44rem;
-  margin: 1.5rem auto 0;
-}
-
-.book-pagination .book-tool {
-  border-color: var(--page-line);
-  padding-inline: 0.85em;
-}
-
-.book-pagination :is([data-step="1"], [data-finish-section]):not(:disabled) {
-  border-color: var(--page-accent);
-  color: var(--page-accent);
-}
-
 .book-reader .book-error { max-width: 44rem; margin-inline: auto; color: var(--page-ink); }
 
 .book-footer {
   grid-row: 3;
-  width: calc(100% - 2 * var(--reader-gutter));
+  width: calc(100% - 2 * clamp(0.625rem, 4vw, 2rem));
   max-width: 44rem;
   margin-inline: auto;
 }
@@ -231,17 +224,24 @@ body:has(.book-reader) #view {
 }
 
 .book-footer-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  gap: 0.25rem;
   min-height: 44px;
   color: var(--page-muted);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
+.book-footer-center { text-align: center; }
+.book-location { line-height: 1.25; }
+.book-location span { display: block; }
 .book-footer .book-tool { font-size: 0.75rem; }
+.book-footer-row > :first-child { justify-self: start; }
+.book-footer-row > :is([data-step="1"], [data-finish-section]) { justify-self: end; }
+.book-footer-row > :is([data-step="1"], [data-finish-section]):not(:disabled) { color: var(--page-accent); }
+.book-footer .book-error { margin-block: 0 0.35rem; background: var(--page); }
 
 .book-settings {
   position: absolute;

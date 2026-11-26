@@ -28,7 +28,7 @@ Tap **+** beside **Books** to pick a PDF or text file. On Android, select **Driv
 - For a scan, run optical character recognition (OCR) before importing. Conversion uses the PDF’s selectable text, so complex layouts may read better in the original.
 - For a text file up to 8 MB, use UTF-8 or UTF-16 with a byte order mark.
 
-SmartBot shows your most recently opened book first. Tap its row to resume at the saved section. Conversion and reading work offline after import and the app’s initial load.
+SmartBot shows your most recently opened book first. Tap its row to resume at your saved place. Read one screen at a time and use **Previous** and **Next** below the text. Conversion and reading work offline after import and the app’s initial load.
 
 Select **SmartBot** in the top bar to return to the homepage. Select the three-dot button for more sections and Settings.
 
