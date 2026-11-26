@@ -2,10 +2,11 @@ import { createYouTubeShelves } from './youtube-shelves.js';
 
 const approvalKey = 'smartbot-youtube-enabled';
 const android = location.origin === 'https://appassets.androidplatform.net';
-const searchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
-  stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>`;
-const closeSearchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
-  stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>`;
+export const listenSearchIcon = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+  stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+  <circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>
+</svg>`;
+
 let enabled = false;
 
 function approved() {
@@ -53,27 +54,16 @@ function showResults(list, items, player) {
   }
 }
 
-export function renderYouTubeSearch(root, player, settings) {
+export function renderYouTubeSearch(root, player, settings, searchToggle) {
   const lifecycle = new AbortController();
-  root.innerHTML = `<div class="youtube-browse-header">
-    <h2 id="youtube-search-title" tabindex="-1">Browse music</h2>
-    <form id="youtube-song-search" class="youtube-browse-search" hidden>
+  root.innerHTML = `<form id="youtube-song-search" hidden>
       <label class="visually-hidden" for="youtube-query">Song or artist</label>
       <div class="music-choice-row">
         <input id="youtube-query" data-youtube-query name="query" type="search" maxlength="120"
           placeholder="Song or artist" required>
-        <button type="submit" class="youtube-icon" aria-label="Search" title="Search">${searchIcon}</button>
+        <button type="submit" class="youtube-icon" aria-label="Search music" title="Search music">${listenSearchIcon}</button>
       </div>
     </form>
-    <div class="youtube-browse-actions">
-      <a class="youtube-source" href="https://music.youtube.com/" aria-label="Open YouTube Music" title="Open YouTube Music">
-        <img class="youtube-logo-light" src="./assets/youtube-logo.svg" alt="" width="76" height="18">
-        <img class="youtube-logo-dark" src="./assets/youtube-logo-dark.svg" alt="" width="76" height="18">
-      </a>
-      <button type="button" class="listen-tool youtube-icon" data-youtube-search-toggle hidden
-        aria-expanded="false" aria-controls="youtube-song-search youtube-song-results" aria-label="Search music" title="Search music">${searchIcon}</button>
-    </div>
-  </div>
     <section class="youtube-approval">
       <p>SmartBot sends requests for charts, song searches, and playback to YouTube.
       By enabling this feature, you agree to these privacy terms and the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
@@ -113,7 +103,6 @@ export function renderYouTubeSearch(root, player, settings) {
   const disable = root.querySelector('[data-disable-youtube]');
   const status = root.querySelector('.youtube-search-status');
   const list = root.querySelector('.youtube-results');
-  const searchToggle = root.querySelector('[data-youtube-search-toggle]');
   const shelfList = root.querySelector('.youtube-shelves');
   const shelves = createYouTubeShelves(shelfList, youtubeRequest, video => void player.open(video));
   let configured = false;
@@ -130,9 +119,11 @@ export function renderYouTubeSearch(root, player, settings) {
     searchToggle.setAttribute('aria-expanded', String(open));
     searchToggle.setAttribute('aria-label', label);
     searchToggle.title = label;
-    searchToggle.innerHTML = open ? closeSearchIcon : searchIcon;
     form.hidden = !open;
-    if (open) input.focus();
+    if (open) {
+      input.placeholder = android && !configured ? 'Search YouTube Music' : 'Song or artist';
+      input.focus();
+    }
     else {
       search?.abort();
       input.value = '';
@@ -153,6 +144,7 @@ export function renderYouTubeSearch(root, player, settings) {
 
   function showBrowse(focus) {
     configured = true;
+    input.placeholder = 'Song or artist';
     showSettings();
     searchToggle.hidden = false;
     shelves.load();
@@ -165,7 +157,8 @@ export function renderYouTubeSearch(root, player, settings) {
     if (android) {
       showSettings();
       shelves.showPicks();
-      if (focus) root.querySelector('h2').focus();
+      searchToggle.hidden = false;
+      if (focus) searchToggle.focus();
     }
     try {
       const result = await youtubeRequest('', lifecycle.signal);
@@ -180,15 +173,14 @@ export function renderYouTubeSearch(root, player, settings) {
         status.textContent = '';
         showBrowse(focus);
       }
-      else if (android) status.textContent = 'Live charts and song search are unavailable.';
-      else {
+      else if (!android) {
         setup.hidden = false;
         setup.open = true;
         status.textContent = 'Set up a YouTube Data API key to browse music.';
         if (focus) (canSaveKey ? keyForm.elements.key : setupHeading).focus();
       }
     } catch (error) {
-      if (!lifecycle.signal.aborted) status.textContent = navigator.onLine ? error.message : 'Connect to the internet to browse music.';
+      if (!lifecycle.signal.aborted && !android) status.textContent = navigator.onLine ? error.message : 'Connect to the internet to browse music.';
     }
   }
 
@@ -198,7 +190,7 @@ export function renderYouTubeSearch(root, player, settings) {
     void openBrowse(true);
   });
 
-  searchToggle.addEventListener('click', () => showSearch(form.hidden));
+  searchToggle.addEventListener('click', () => showSearch(form.hidden), { signal: lifecycle.signal });
   form.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -264,6 +256,10 @@ export function renderYouTubeSearch(root, player, settings) {
     event.preventDefault();
     const query = input.value.trim();
     if (!query) return;
+    if (android && !configured) {
+      location.assign(`https://music.youtube.com/search?${new URLSearchParams({ q: query })}`);
+      return;
+    }
     search?.abort();
     const request = search = new AbortController();
     shelfList.hidden = true;
@@ -285,6 +281,10 @@ export function renderYouTubeSearch(root, player, settings) {
   if (approved()) void openBrowse();
   return () => {
     lifecycle.abort();
+    searchToggle.hidden = true;
+    searchToggle.setAttribute('aria-expanded', 'false');
+    searchToggle.setAttribute('aria-label', 'Search music');
+    searchToggle.title = 'Search music';
     search?.abort();
     shelves.stop();
   };

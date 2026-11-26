@@ -1,5 +1,5 @@
 import { spotifyOrigin } from './spotify-player.js';
-import { renderYouTubeSearch } from './youtube-search.js';
+import { listenSearchIcon, renderYouTubeSearch } from './youtube-search.js';
 
 const sectionKey = 'smartbot-listen-section';
 const serviceKey = 'smartbot-music-service';
@@ -59,12 +59,13 @@ export function listeningPage(route) {
   }
 }
 
-export function listenHeader(page, action = '') {
+export function listenHeader(page, controls) {
   try {
     localStorage.setItem(sectionKey, page);
   } catch {
     // The current section is still usable without browser storage.
   }
+  const searchLabel = page === 'tracks' ? 'Search music' : 'Search podcasts';
   const current = id => page === id ? ' aria-current="page"' : '';
   return `<header class="listen-header">
     <h1 tabindex="-1">Listen</h1>
@@ -73,7 +74,8 @@ export function listenHeader(page, action = '') {
         <a href="#tracks"${current('tracks')}>Music</a>
         <a href="#podcasts"${current('podcasts')}>Podcasts</a>
       </nav>
-      ${action}
+      <button type="button" class="listen-tool listen-search-toggle" data-listen-search
+        aria-expanded="false" aria-controls="${controls}" aria-label="${searchLabel}" title="${searchLabel}" hidden>${listenSearchIcon}</button>
     </div>
   </header>`;
 }
@@ -91,10 +93,11 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
     <path d="M13 5h6v6m0-6-8 8m8 1v5H5V5h5"/>
   </svg>`;
   view.innerHTML = `<div class="listen">
-    ${listenHeader('tracks')}
+    ${listenHeader('tracks', 'youtube-song-search')}
     <div class="music-service"></div>
   </div>`;
   const content = view.querySelector('.music-service');
+  const searchToggle = view.querySelector('[data-listen-search]');
   let stopYouTubeSearch;
 
   function savePlaylist(id) {
@@ -159,7 +162,7 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       </div>
     </form>`;
     content.innerHTML = selected ? `
-      ${service === 'youtube' ? '<section class="youtube-search" aria-labelledby="youtube-search-title"></section>' : `<a class="music-launch" href="${selected.url}" rel="noopener noreferrer">
+      ${service === 'youtube' ? '<section class="youtube-search" aria-label="YouTube Music"></section>' : `<a class="music-launch" href="${selected.url}" rel="noopener noreferrer">
         <span class="listen-art">${musicNote}</span>
         <span>Open ${selected.name}</span>
         ${external}
@@ -168,6 +171,7 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       <details class="music-service-settings"${service === 'youtube' ? ' data-youtube-settings' : ''}>
         <summary>${service === 'youtube' ? 'Music settings' : 'Change service'}</summary>
         ${form}
+        ${service === 'youtube' ? '<a class="music-secondary-link" href="https://music.youtube.com/">Open YouTube Music</a>' : ''}
       </details>` : `
       <section class="music-setup" aria-labelledby="music-setup-title">
         <span class="listen-art">${musicNote}</span>
@@ -178,8 +182,8 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       </section>`;
     const youtubeSearch = content.querySelector('.youtube-search');
     if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer,
-      content.querySelector('[data-youtube-settings]'));
-    for (const link of content.querySelectorAll('.music-launch, .music-secondary-link, .youtube-source')) {
+      content.querySelector('[data-youtube-settings]'), searchToggle);
+    for (const link of content.querySelectorAll('.music-launch, .music-secondary-link')) {
       if (location.origin !== 'https://appassets.androidplatform.net') link.target = '_blank';
       link.addEventListener('click', () => {
         spotifyPlayer.close();
@@ -222,7 +226,7 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       }
       renderService();
       const showApproval = content.querySelector('.youtube-approval:not([hidden]) button');
-      (showApproval ?? content.querySelector('.youtube-source, .music-launch')).focus();
+      (showApproval ?? (choice === 'youtube' ? searchToggle : content.querySelector('.music-launch'))).focus();
     });
   }
   renderService();

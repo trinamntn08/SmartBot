@@ -48,8 +48,7 @@ const date = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
 export function renderPodcasts(view, repository, player, focus) {
   const panel = element('div', '', 'listen podcasts');
-  panel.innerHTML = `${listenHeader('podcasts', `<button type="button" class="listen-tool" data-find-podcasts
-      aria-expanded="false" aria-controls="podcast-discovery">${icon('search')} Find podcasts</button>`)}
+  panel.innerHTML = `${listenHeader('podcasts', 'podcast-discovery')}
     <section id="podcast-discovery" class="podcast-discovery" aria-label="Find podcasts" hidden>
       <div class="podcast-discovery-tools">
         <form data-podcast-search>
@@ -105,7 +104,8 @@ export function renderPodcasts(view, repository, player, focus) {
   const followedShows = panel.querySelector('.podcast-followed');
   const continuePanel = panel.querySelector('.podcast-continue');
   const queryInput = panel.querySelector('[name="query"]');
-  const find = panel.querySelector('[data-find-podcasts]');
+  const find = panel.querySelector('[data-listen-search]');
+  find.hidden = false;
   const discoveryPanel = panel.querySelector('#podcast-discovery');
   let follows = [];
   let selected;
@@ -315,6 +315,12 @@ export function renderPodcasts(view, repository, player, focus) {
       status.textContent = '';
       announcement.textContent = '';
     }
+  });
+  discoveryPanel.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    find.click();
+    find.focus();
   });
   panel.querySelector('[data-podcast-feed]').addEventListener('submit', event => {
     event.preventDefault();

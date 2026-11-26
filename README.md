@@ -64,17 +64,17 @@ Open **Workspace → Listen → Music** and save your preferred service. Use its
 
 **Open Spotify** launches Spotify directly. To keep one playlist in SmartBot, expand **Add a Spotify playlist** and paste a playlist link from Spotify's web player. Select **Saved Spotify playlist** to open the player. It stays active when you switch SmartBot screens and shrinks outside Music. Close the player to stop it, or use **Change playlist** to replace or remove the playlist. Playback requires internet, and Spotify may offer previews based on your session and device.
 
-Choose **YouTube Music**, then **Enable YouTube search**, to browse popular music videos in France, Vietnam, and the United States. Select a video from a row to play it in SmartBot, or open the magnifying glass to search by song or artist. The charts use the saved API key and have no account sign-in. Google gives each project 100 searches per day by default. [YouTube API quota](https://developers.google.com/youtube/data/determine_quota_cost)
+Choose **YouTube Music**, then **Enable YouTube search**, to browse popular music videos in France, Vietnam, and the United States. Select a video from a row to play it in SmartBot, or tap the magnifying glass beside the Listen tabs to search by song or artist. The charts use the saved API key and have no account sign-in. Google gives each project 100 searches per day by default. [YouTube API quota](https://developers.google.com/youtube/data/determine_quota_cost)
 
 1. Enable **YouTube Data API v3** in a Google Cloud project and create an API key restricted to that API. [Enable YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com) · [Create an API key](https://console.cloud.google.com/apis/credentials)
 2. On Windows, open the browser preview and save the key once in **YouTube search setup**. The preview encrypts the key for your Windows account in `%LOCALAPPDATA%\SmartBot\youtube-api-key.dpapi` and loads it on later starts. To replace or remove it, open **Music settings → Manage YouTube key**. On other operating systems, set `SMARTBOT_YOUTUBE_API_KEY` in the preview environment before launching it. An environment key takes precedence when present.
 3. Select any video from the charts or search results. The official player stays on screen as you move between sections and pauses when it scrolls out of view or SmartBot goes into the background. Use a standalone browser such as Chrome if VS Code's integrated browser shows a blank player. [VS Code playback issue](https://github.com/microsoft/vscode/issues/289795)
 
-Android users can play the **Music picks** included in the APK with an internet connection. Live charts and search use one deployment secret managed by the app owner. [Android music service setup](docs/plans/youtube-music.md#android-music-service)
+Android users can play the **Music picks** included in the APK with an internet connection. Live charts and in-app search use one deployment secret managed by the app owner. Without the live catalog, search opens results in YouTube Music. [Android music service setup](docs/plans/youtube-music.md#android-music-service)
 
 ## Listen to podcasts
 
-Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Open **Find podcasts** to search by name or add a public HTTPS RSS link.
+Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Tap the magnifying glass beside the Listen tabs to search by name or add a public HTTPS RSS link.
 
 Streaming uses the publisher’s audio and requires internet. SmartBot requires no listening subscription and inserts no ads. Publishers may include ads in their audio.
 

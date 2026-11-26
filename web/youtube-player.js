@@ -134,7 +134,7 @@ export function createYouTubePlayer(panel, view, pauseOtherPlayers) {
   closeButton.addEventListener('click', () => {
     const trigger = launcher;
     close();
-    const target = trigger?.getClientRects().length ? trigger : view.querySelector('[data-youtube-search-toggle]:not([hidden])');
+    const target = trigger?.getClientRects().length ? trigger : view.querySelector('[data-listen-search][aria-controls=youtube-song-search]:not([hidden])');
     (target ?? view).focus();
   });
   if (location.origin !== 'https://appassets.androidplatform.net') watch.target = '_blank';
