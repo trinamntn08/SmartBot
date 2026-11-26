@@ -58,6 +58,8 @@ November 26, 2026. The playback speed button displays one decimal place, while t
 
 November 26, 2026. Workspace opens Listen with separate Music and Podcasts sections. Music remembers a service and opens its HTTPS shortcut. Podcasts leads with resume and followed-show playback, and Find podcasts reveals search and RSS. The existing podcast deep link and device-local listening data carry over. Chromium checked the layout from 320 to 1440 CSS pixels and at 200% text size. Controlled feeds and audio verified hidden discovery, keyboard focus, search and RSS, follow and quick play, resume, section and service persistence, and pausing a podcast when launching a music service. All 46 automated tests passed.
 
+The preview from `9681c07` on `main` passed playback and offline reopening for the podcast library and saved music choice. The Android debug APK passed Gradle build, signature continuity, ZIP alignment, and comparison of all 250 bundled web files. Lint reported zero errors and six warnings. Opening a music service and podcast playback on a physical phone remain pending.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
