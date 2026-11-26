@@ -20,7 +20,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Workspace card titles use the full card width, with the arrow beside the description. Chromium kept all five titles on one line at 19 widths from 320 to 1440 CSS pixels with the bundled font and its fallback. Keyboard entry into Languages, return, reload, and activation at 200% text size passed. All 27 web, 12 Python, and seven podcast service tests passed.
+Workspace card titles use the full card width, with the arrow beside the description. Chromium kept all five titles on one line at 19 widths from 320 to 1440 CSS pixels with the bundled font and its fallback. Keyboard entry into Languages, return, reload, and activation at 200% text size passed. The published preview refreshed and retained the corrected title and touch navigation after an offline reload at 320 CSS pixels. All 27 web, 12 Python, and seven podcast service tests passed.
 
 Chromium verified the six appearance combinations at 320 CSS pixels and reviewed the desktop layout at 1440 CSS pixels. Settings fit the 320-pixel viewport at 200% text size. Checks covered keyboard selection, system color mode changes, reload, two-tab sync, storage errors, and offline use with an imported book and bundled Markets data. The lowest measured text contrast was 5.27:1. All 27 web, 12 Python, and seven podcast service tests passed.
 
@@ -103,6 +103,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The Workspace title fix was bundled in the SmartBot 0.3.4 debug APK from `f5941e7` on `main`. Gradle assemble and lint passed with zero lint errors and ten warnings. APK signing, signature continuity with the preceding build, ZIP alignment, and byte-for-byte comparison of all 247 web files passed. Android runtime verification is pending because no device was connected.
 
 The November 26 consolidated SmartBot 0.3.4 debug APK (version code 7) was rebuilt from `318b5fe` on `main`. All 25 live GitHub branch tips were already included, and there were no open pull requests. All 27 web, 12 Python, and seven podcast service tests passed. Gradle assemble and lint ran from scratch and reported zero lint errors and ten warnings. APK signing, signature continuity with the earlier local pilot, ZIP alignment, and byte-for-byte comparison of all 247 bundled web files passed. Android runtime verification remains pending because no phone or emulator was connected.
 
