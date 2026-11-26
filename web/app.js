@@ -189,6 +189,7 @@ function render(focusHeading = false) {
   else if (page === 'workspace') view.innerHTML = workspace();
   else if (page === 'settings') {
     view.innerHTML = '<h1 tabindex="-1">Settings</h1>';
+    window.smartBotAppearance?.renderSettings(view);
     renderNewsSettings(view);
     renderAssistantSettings(view);
   }

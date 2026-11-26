@@ -2,9 +2,9 @@ importScripts('./vendor/pdfjs/cache-files.js');
 
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v47'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v48'}`;
 const files = [
-  'index.html', 'styles.css', 'app.js', 'planner.js', 'repository.js',
+  'index.html', 'appearance.js', 'appearance.css', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'today.css', 'today.js', 'activity.js', 'activity-repository.js',
   'markets.css', 'markets.js', 'market-chart.js', 'market-provider.js', 'market-repository.js', 'assets/markets.webp',
   'market-archive.js', 'market-crypto.js', 'market-symbols.js', 'vendor/market-parquet/parquet.js',

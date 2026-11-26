@@ -12,33 +12,9 @@
 }
 
 :root {
-  color-scheme: light dark;
   font: 100%/1.5 "DM Sans", system-ui, sans-serif;
   --heading-font: "Instrument Serif", Georgia, serif;
-  --background: #f7f7f0;
-  --surface: #fffefa;
-  --ink: #24291f;
-  --muted: #555b4f;
-  --line: #dedfd5;
-  --accent: #365239;
-  --accent-soft: #e8ede0;
-  --on-accent: #fffdf4;
-  --feature: #28382b;
   --radius: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #171c17;
-    --surface: #212921;
-    --ink: #f5f4ea;
-    --muted: #c6cdbf;
-    --line: #404b3e;
-    --accent: #bfdbb6;
-    --accent-soft: #344334;
-    --on-accent: #172416;
-    --feature: #26382a;
-  }
 }
 
 body {
@@ -213,7 +189,7 @@ h2 { font-size: 1.3rem; }
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--feature);
-  color: #fffdf4;
+  color: var(--feature-ink);
   text-decoration: none;
 }
 

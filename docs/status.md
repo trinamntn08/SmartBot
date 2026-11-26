@@ -4,6 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
+- **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
 - **News** has section navigation above the headlines. **All** covers every available topic in the selected languages. The three-dot button after **Science** opens additional topics and **Saved interests**. News opens ten matching headlines from free-to-read sources and appends ten more as you scroll. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
@@ -18,6 +19,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The appearance update passed all 27 web, 12 Python, and seven podcast service tests. The lowest text contrast across the six palette and mode combinations was 5.27:1. Browser verification from published `main` is pending.
 
 The Workspace home screen removes the visible heading, Books description, and separate library button. The Books title and image share one link, and Workspace retains a heading for screen readers. Chromium verified the layout at 320 and 1440 CSS pixels, keyboard and pointer entry into Books, keyboard focus on return, and offline reopening. All 26 web, 12 Python, and five podcast service tests passed.
 
