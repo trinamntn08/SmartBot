@@ -978,20 +978,6 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   border: 1px solid var(--line);
   background: var(--surface);
 }
-.book-content {
-  margin: 0;
-  font: 1.125rem/1.75 Georgia, serif;
-  max-width: 68ch;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.book-pagination {
-  justify-content: space-between;
-  margin-block-start: 1.25rem;
-  padding-block-start: 1rem;
-  border-top: 1px solid var(--line);
-}
-.book-pagination button { flex: 1 1 auto; }
 #error { border-inline-start: 3px solid currentColor; padding-inline-start: 0.75rem; }
 
 @media (min-width: 65rem) {

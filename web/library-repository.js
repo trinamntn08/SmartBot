@@ -1,5 +1,17 @@
 let connection;
 
+const readerPreferencesKey = 'smartbot-reader-preferences';
+
+export function loadReaderPreferences() {
+  try { return JSON.parse(localStorage.getItem(readerPreferencesKey)) ?? {}; }
+  catch { return {}; }
+}
+
+export function saveReaderPreferences(preferences) {
+  try { localStorage.setItem(readerPreferencesKey, JSON.stringify(preferences)); }
+  catch { /* Settings still apply to the open reader. */ }
+}
+
 export function rememberOpenedBook(id) {
   try { localStorage.setItem('smartbot-last-opened-book', String(id)); }
   catch { /* Reading positions are saved independently in IndexedDB. */ }
