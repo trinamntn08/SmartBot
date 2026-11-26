@@ -20,7 +20,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The appearance update passed all 27 web, 12 Python, and seven podcast service tests. The lowest text contrast across the six palette and mode combinations was 5.27:1. Browser verification from published `main` is pending.
+The appearance update passed all 27 web, 12 Python, and seven podcast service tests. The lowest text contrast across the six palette and mode combinations was 5.27:1. At 320 CSS pixels, Chromium exercised keyboard selection, changes to the system color mode, reload, two-tab sync, and offline use with an imported book and bundled Markets data. At 200% text size the existing Assistant provider field overflowed, so its width now adapts to the Settings column. The final reflow check is pending.
 
 The Workspace home screen removes the visible heading, Books description, and separate library button. The Books title and image share one link, and Workspace retains a heading for screen readers. Chromium verified the layout at 320 and 1440 CSS pixels, keyboard and pointer entry into Books, keyboard focus on return, and offline reopening. All 26 web, 12 Python, and five podcast service tests passed.
 
