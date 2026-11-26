@@ -204,7 +204,7 @@ h2 { font-size: 1.3rem; }
   font: 400 clamp(3.3rem, 6.5vw, 5.8rem)/0.9 var(--heading-font);
 }
 
-a.feature-card:hover .feature-title {
+a.feature-card:not([role="button"]):hover .feature-title {
   text-decoration: underline;
   text-decoration-thickness: 0.035em;
   text-underline-offset: 0.12em;
@@ -256,22 +256,6 @@ a.feature-card:hover .feature-title {
   max-height: 23rem;
 }
 
-.workspace-toolbar {
-  position: sticky;
-  z-index: 1;
-  inset-block-end: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding-block: 0.5rem;
-  background: var(--background);
-  pointer-events: none;
-}
-
-.workspace-toolbar button { margin-inline-start: auto; pointer-events: auto; }
-.workspace-instructions { margin: 0; color: var(--muted); }
 .workspace-status:empty { margin: 0; }
 
 .workspace-grid {
@@ -285,39 +269,55 @@ a.feature-card:hover .feature-title {
   list-style: none;
 }
 
-.workspace-grid > li { position: relative; min-width: 0; border-radius: var(--radius); }
+.workspace-grid > li { position: relative; min-width: 0; border-radius: var(--radius); transform-origin: top left; }
 .workspace-feature { grid-column: 1 / -1; }
 .workspace-grid a { -webkit-touch-callout: none; user-select: none; touch-action: manipulation; }
 
-.workspace-grid .workspace-move,
 .workspace-grid .workspace-hide {
   position: absolute;
-  inset-block-start: 6px;
+  inset-block-start: 0;
+  inset-inline-end: 0;
   display: grid;
-  place-items: center;
+  place-items: start end;
+  box-sizing: border-box;
   width: 44px;
   min-height: 44px;
-  padding: 0;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
 }
 
-.workspace-grid .workspace-move {
-  inset-inline-start: 6px;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
+.workspace-hide svg {
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface);
 }
 
-.workspace-grid .workspace-move:active { cursor: grabbing; }
-.workspace-grid:not(.is-editing) :is(.workspace-move, .workspace-hide),
-.workspace-grid .workspace-move:disabled { display: none; }
-.workspace-grid .workspace-hide { inset-inline-end: 6px; }
-.workspace-grid .workspace-move[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.workspace-hide:hover svg { border-color: var(--accent); }
+.workspace-grid:not(.is-editing) .workspace-hide { display: none; }
+.workspace-grid.is-editing a { cursor: grab; }
+.workspace-grid:has(.is-dragging) a { cursor: grabbing; }
 .workspace-grid .is-selected,
 .workspace-grid .is-drop-target { outline: 2px solid var(--accent); outline-offset: 2px; }
-.workspace-grid:has(.is-dragging) { cursor: grabbing; }
-.workspace-grid .is-dragging { opacity: 0.65; }
+.workspace-grid .is-dragging { opacity: 0.35; }
 
-.workspace-grid.is-editing .section-arrow { visibility: hidden; }
+.workspace-ghost {
+  position: fixed;
+  z-index: 4;
+  inset: 0 auto auto 0;
+  container-type: inline-size;
+  transform-origin: top left;
+  pointer-events: none;
+  opacity: 0.82;
+}
+
+.workspace-ghost > a { height: 100%; }
+.workspace-grid.is-editing .section-arrow, .workspace-ghost .section-arrow { visibility: hidden; }
 .workspace-empty p { margin-block-start: 0; }
 .workspace-settings { margin-block-end: 1rem; }
 .workspace-edit-link { display: inline-flex; align-items: center; min-height: 2.75rem; }
@@ -1229,15 +1229,13 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 @media (max-width: 42rem) {
   .feature-card { grid-template-columns: 1fr; }
   .feature-card img, .feature-card .section-image { height: min(100cqi, clamp(9.5rem, 35vw, 14rem)); }
-  .workspace-feature :is(.workspace-move, .workspace-hide) { inset-block: auto 6px; }
+  .workspace-grid .workspace-feature .workspace-hide { inset-block: auto 0; place-items: end; }
 }
 
 @container (max-width: 17.75rem) {
   .workspace-grid { grid-template-columns: 1fr; }
-  .workspace-grid .feature-copy { padding-inline: 0.75rem; }
-  .workspace-grid .feature-title { font-size: 1.7rem; }
-  .workspace-toolbar { background: transparent; }
-  .workspace-instructions { position: absolute; clip-path: inset(50%); }
+  :is(.workspace-grid, .workspace-ghost) .feature-copy { padding-inline: 0.75rem; }
+  :is(.workspace-grid, .workspace-ghost) .feature-title { font-size: 1.7rem; }
 }
 
 @media (max-width: 24rem) {

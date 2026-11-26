@@ -36,6 +36,7 @@ let keepReadingPlanOpen = false;
 let stopMarkets;
 let stopNews;
 let stopPodcasts;
+let stopWorkspace;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -145,6 +146,8 @@ function render(focusHeading = false) {
   stopNews = undefined;
   stopPodcasts?.();
   stopPodcasts = undefined;
+  stopWorkspace?.();
+  stopWorkspace = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -198,7 +201,7 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'workspace') {
-    renderWorkspace(view, focusHeading, route === workspaceEditRoute);
+    stopWorkspace = renderWorkspace(view, focusHeading, route === workspaceEditRoute);
     return;
   }
   if (section) view.innerHTML = sectionPreview(section);

@@ -34,14 +34,7 @@ function workspaceCard({ id, title, subtitle }, featured) {
     <a class="${featured ? 'feature-card' : 'section-card'}" href="#${id}" draggable="false">
       ${featured ? copy + image : image + copy}
     </a>
-    <button type="button" class="quiet workspace-move" aria-label="Move ${title}" aria-describedby="workspace-instructions" aria-pressed="false" title="Move ${title}">
-      <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
-        <circle cx="7" cy="5" r="1.4"/><circle cx="13" cy="5" r="1.4"/>
-        <circle cx="7" cy="10" r="1.4"/><circle cx="13" cy="10" r="1.4"/>
-        <circle cx="7" cy="15" r="1.4"/><circle cx="13" cy="15" r="1.4"/>
-      </svg>
-    </button>
-    <button type="button" class="quiet workspace-hide" aria-label="Hide ${title}" title="Hide ${title}">
+    <button type="button" class="workspace-hide" aria-label="Hide ${title}" title="Hide ${title}">
       <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
         <path d="M5 10h10"/>
       </svg>
@@ -49,24 +42,28 @@ function workspaceCard({ id, title, subtitle }, featured) {
   </li>`;
 }
 
+function animateCardSwap(card, start) {
+  const end = card.getBoundingClientRect();
+  card.animate([
+    { transform: `translate(${start.left - end.left}px, ${start.top - end.top}px) scale(${start.width / end.width}, ${start.height / end.height})` },
+    { transform: 'none' },
+  ], { duration: 180, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+}
+
 export function renderWorkspace(view, focusHeading, openEditor) {
   view.innerHTML = `<h1 class="visually-hidden">Workspace</h1>
+    <p id="workspace-instructions" class="visually-hidden">Select two cards to swap them. Press Escape to finish.</p>
     <p class="workspace-status" role="status"></p>
     <ul class="workspace-grid" role="list"></ul>
     <div class="card workspace-empty" hidden>
       <p>All Workspace sections are hidden.</p>
       <a href="#settings">Show sections in Settings</a>
-    </div>
-    <div class="workspace-toolbar" hidden>
-      <p id="workspace-instructions" class="workspace-instructions">Drag or select two handles.</p>
-      <button type="button" class="quiet">Done</button>
     </div>`;
   const grid = view.querySelector('.workspace-grid');
-  const toolbar = view.querySelector('.workspace-toolbar');
-  const done = toolbar.querySelector('button');
-  const instructions = toolbar.querySelector('p');
   const status = view.querySelector('.workspace-status');
   const empty = view.querySelector('.workspace-empty');
+  const lifecycle = new AbortController();
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let layout = repository.read();
   let editing = false;
   let returnTo;
@@ -77,9 +74,18 @@ export function renderWorkspace(view, focusHeading, openEditor) {
 
   function updateMode() {
     grid.classList.toggle('is-editing', editing);
-    toolbar.hidden = !editing;
-    instructions.hidden = grid.children.length < 2;
-    for (const card of grid.children) card.firstElementChild.inert = editing;
+    for (const card of grid.children) {
+      const link = card.firstElementChild;
+      if (editing) {
+        link.setAttribute('role', 'button');
+        link.setAttribute('aria-label', `Move ${findSection(card.dataset.section).title}`);
+        link.setAttribute('aria-pressed', 'false');
+        link.setAttribute('aria-describedby', 'workspace-instructions');
+        link.toggleAttribute('inert', grid.children.length < 2);
+      } else {
+        for (const attribute of ['role', 'aria-label', 'aria-pressed', 'aria-describedby', 'inert']) link.removeAttribute(attribute);
+      }
+    }
   }
 
   function draw() {
@@ -87,7 +93,6 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     grid.innerHTML = visible.map((id, index) => workspaceCard(findSection(id), index === 0)).join('');
     grid.hidden = !visible.length;
     empty.hidden = visible.length > 0;
-    for (const handle of grid.querySelectorAll('.workspace-move')) handle.disabled = visible.length < 2;
     updateMode();
   }
 
@@ -101,43 +106,58 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     for (const card of grid.children) {
       const pressed = card.dataset.section === id;
       card.classList.toggle('is-selected', pressed);
-      card.querySelector('.workspace-move').setAttribute('aria-pressed', pressed);
+      card.firstElementChild.setAttribute('aria-pressed', pressed);
     }
   }
 
-  function save(change, message, focus) {
+  function save(change, message, focus, preventScroll = false) {
     const updated = repository.update(change);
     if (!updated) {
       announce(saveError, true);
-      return;
+      return false;
     }
     layout = updated;
     selected = undefined;
     draw();
-    (grid.querySelector(focus) ?? done).focus();
+    (grid.querySelector(focus) ?? empty.querySelector('a')).focus({ preventScroll });
     announce(message);
+    return true;
   }
 
-  function swap(from, to) {
+  function swap(from, to, motionStarts) {
     if (from === to) return;
-    save(({ order }) => {
+    const saved = save(({ order }) => {
       const first = order.indexOf(from);
       const second = order.indexOf(to);
       [order[first], order[second]] = [order[second], order[first]];
     }, `${findSection(from).title} and ${findSection(to).title} swapped places.`,
-    `[data-section="${from}"] .workspace-move`);
+    `[data-section="${from}"] a`, Boolean(motionStarts));
+    if (saved && motionStarts && !reducedMotion.matches) {
+      for (const [id, start] of motionStarts) {
+        const card = grid.querySelector(`[data-section="${id}"]`);
+        if (card) animateCardSwap(card, start);
+      }
+    }
   }
 
-  function closeEditor() {
+  function closeEditor(restoreFocus = false) {
+    cancelPress();
     editing = false;
-    select(undefined);
+    if (selected) select(undefined);
     updateMode();
     announce('');
     if (location.hash === `#${workspaceEditRoute}`) history.replaceState(null, '', '#workspace');
-    const destination = grid.querySelector(`[data-section="${returnTo}"] a`) ?? grid.querySelector('a');
-    (destination ?? empty.querySelector('a')).focus({ preventScroll: true });
+    if (restoreFocus) {
+      const destination = grid.querySelector(`[data-section="${returnTo}"] a`) ?? grid.querySelector('a');
+      (destination ?? empty.querySelector('a')).focus({ preventScroll: true });
+    }
   }
-  done.addEventListener('click', closeEditor);
+
+  document.addEventListener('click', (event) => {
+    if (editing && !drag && (!event.defaultPrevented || !event.composedPath().includes(grid))) {
+      closeEditor();
+    }
+  }, { signal: lifecycle.signal });
 
   grid.addEventListener('click', (event) => {
     if (suppressClick && event.detail) {
@@ -147,23 +167,29 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     if (!editing) return;
     const card = event.target.closest('[data-section]');
     if (!card) return;
+    event.preventDefault();
     const id = card.dataset.section;
     if (event.target.closest('.workspace-hide')) {
       const next = card.nextElementSibling ?? card.previousElementSibling;
       save(({ hidden }) => hidden.add(id), `${findSection(id).title} hidden.`,
         `[data-section="${next?.dataset.section}"] .workspace-hide`);
-    } else if (event.target.closest('.workspace-move')) {
+    } else if (grid.children.length > 1 && event.target.closest('a')) {
       if (selected && selected !== id) swap(selected, id);
       else select(selected ? undefined : id);
     }
   });
 
-  grid.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || !editing || drag) return;
-    event.preventDefault();
-    if (selected) select(undefined);
-    else closeEditor();
-  });
+  view.addEventListener('keydown', (event) => {
+    if (!editing || drag) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      if (selected) select(undefined);
+      else closeEditor(true);
+    } else if (event.key === ' ' && event.target.matches('a[role="button"]')) {
+      event.preventDefault();
+      if (!event.repeat) event.target.click();
+    }
+  }, { signal: lifecycle.signal });
 
   grid.addEventListener('contextmenu', (event) => {
     if (event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents) event.preventDefault();
@@ -172,6 +198,7 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   function updateDropTarget() {
     const card = document.elementFromPoint(drag.x, drag.y)?.closest('[data-section]');
     const target = grid.contains(card) && card !== drag.source ? card : undefined;
+    if (drag.target === target) return;
     drag.target?.classList.remove('is-drop-target');
     drag.target = target;
     target?.classList.add('is-drop-target');
@@ -192,10 +219,39 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     press = undefined;
   }
 
-  function beginDrag() {
-    select(undefined);
+  function startGhost() {
+    drag.moved = true;
     drag.source.classList.add('is-dragging');
-    suppressClick = true;
+    if (reducedMotion.matches) return;
+    const bounds = drag.source.getBoundingClientRect();
+    const previewWidth = Math.min(248, window.innerWidth / 2);
+    const scale = Math.min(1, previewWidth / bounds.width, window.innerHeight / (2 * bounds.height));
+    const ghost = document.createElement('div');
+    ghost.className = 'workspace-ghost';
+    ghost.inert = true;
+    ghost.append(drag.source.firstElementChild.cloneNode(true));
+    ghost.style.width = `${bounds.width}px`;
+    ghost.style.height = `${bounds.height}px`;
+    drag.ghost = ghost;
+    drag.scale = scale;
+    drag.offsetX = (bounds.left - drag.startX) * scale;
+    drag.offsetY = (bounds.top - drag.startY) * scale;
+    document.body.append(ghost);
+  }
+
+  function positionGhost() {
+    if (drag.ghost) {
+      drag.ghost.style.transform = `translate3d(${drag.x + drag.offsetX}px, ${drag.y + drag.offsetY}px, 0) scale(${drag.scale})`;
+    }
+  }
+
+  function clearDrag() {
+    if (!drag) return;
+    cancelAnimationFrame(drag.frame);
+    drag.target?.classList.remove('is-drop-target');
+    drag.source.classList.remove('is-dragging');
+    drag.ghost?.remove();
+    drag = undefined;
   }
 
   grid.addEventListener('pointerdown', (event) => {
@@ -207,45 +263,43 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     suppressClick = false;
     const { pointerId, clientX: x, clientY: y } = event;
     const source = event.target.closest('[data-section]');
-    if (!source) return;
+    if (!source || !event.target.closest('a')) return;
     const pointer = { pointerId, source, startX: x, startY: y, x, y };
-    if (editing) {
-      const handle = event.target.closest('.workspace-move');
-      if (!handle || handle.disabled) return;
-      drag = { ...pointer, capture: handle };
-      handle.setPointerCapture(pointerId);
-      return;
-    }
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     cancelPress();
-    press = { ...pointer, timer: setTimeout(() => {
-      if (!grid.isConnected) return;
-      drag = { ...pointer, capture: grid, fromHold: true };
+    press = { pointerId, x, y, timer: setTimeout(() => {
+      drag = pointer;
       press = undefined;
       grid.setPointerCapture(pointerId);
       returnTo = source.dataset.section;
-      editing = true;
-      updateMode();
-      beginDrag();
-      announce('Reordering Workspace cards.');
+      if (selected) select(undefined);
+      if (!editing) {
+        editing = true;
+        updateMode();
+        announce('Reordering Workspace cards.');
+      }
+      suppressClick = true;
     }, holdDuration) };
   });
 
   // A swipe before the hold scrolls normally. Once editing starts, keep the same touch for dragging.
   grid.addEventListener('touchmove', (event) => {
-    if (drag?.fromHold && event.touches.length === 1 && event.cancelable) event.preventDefault();
+    if (drag && event.touches.length === 1 && event.cancelable) event.preventDefault();
   }, { passive: false });
 
   grid.addEventListener('pointermove', (event) => {
     if (event.pointerId === press?.pointerId) {
-      if (Math.hypot(event.clientX - press.startX, event.clientY - press.startY) > 8) cancelPress();
+      if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) cancelPress();
       return;
     }
     if (event.pointerId !== drag?.pointerId) return;
     drag.x = event.clientX;
     drag.y = event.clientY;
-    if (!suppressClick && Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 6) return;
-    if (!suppressClick) beginDrag();
+    if (!drag.moved) {
+      if (grid.children.length < 2 || Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 6) return;
+      startGhost();
+    }
+    positionGhost();
     updateDropTarget();
     drag.frame ??= requestAnimationFrame(scrollWhileDragging);
   });
@@ -253,18 +307,26 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   function finishDrag(event) {
     if (event.pointerId === press?.pointerId) cancelPress();
     if (event.pointerId !== drag?.pointerId) return;
-    if (event.type === 'lostpointercapture' && event.target !== drag.capture) return;
-    if (event.type === 'pointerup' && suppressClick) {
+    if (event.type === 'lostpointercapture' && event.target !== grid) return;
+    if (event.type === 'pointerup' && drag.moved) {
       drag.x = event.clientX;
       drag.y = event.clientY;
+      positionGhost();
       updateDropTarget();
     }
-    const { source, target, frame } = drag;
-    cancelAnimationFrame(frame);
-    target?.classList.remove('is-drop-target');
-    source.classList.remove('is-dragging');
-    drag = undefined;
-    if (event.type === 'pointerup' && target) swap(source.dataset.section, target.dataset.section);
+    const { source, target, ghost } = drag;
+    if (event.type === 'pointerup' && target) {
+      const from = source.dataset.section;
+      const to = target.dataset.section;
+      const starts = new Map([
+        [from, (ghost ?? source).getBoundingClientRect()],
+        [to, target.getBoundingClientRect()],
+      ]);
+      clearDrag();
+      swap(from, to, starts);
+    } else {
+      clearDrag();
+    }
   }
 
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) grid.addEventListener(event, finishDrag);
@@ -276,10 +338,15 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   if (openEditor && !grid.hidden) {
     editing = true;
     updateMode();
-    (grid.querySelector('.workspace-move:enabled') ?? grid.querySelector('.workspace-hide')).focus();
+    (grid.querySelector('a:not([inert])') ?? grid.querySelector('.workspace-hide')).focus();
   } else if (focusHeading) {
     (grid.querySelector('a') ?? empty.querySelector('a')).focus();
   }
+  return () => {
+    lifecycle.abort();
+    cancelPress();
+    clearDrag();
+  };
 }
 
 export function renderWorkspaceSettings(view) {
