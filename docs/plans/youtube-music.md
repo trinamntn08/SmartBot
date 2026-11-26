@@ -28,6 +28,8 @@ The Android debug APK built from `c5c1a94`. Gradle lint reported zero errors and
 
 The Windows browser preview now saves or removes the key through **YouTube search setup**. Windows DPAPI encrypts the key for the current user and saves it outside the checkout under `%LOCALAPPDATA%\SmartBot`. The preview accepts credential writes from its own origin and returns status only. The environment override is still supported. All 27 web, 14 Python, and seven podcast service tests passed. The Windows HTTP test used a sample key to verify encryption, search, removal, rejection of cross-origin writes, and the environment override.
 
+Chromium used the published Windows build to save a sample key with a masked field, restart the preview process, resume search without re-entering the key, and remove the file. The key stayed out of browser storage and request logs. The form fit 320 CSS pixels at 200% text size. The Android bridge fixture also passed its existing save, remove, and offline recovery checks. The regular browser preview was restarted on port 8003.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
