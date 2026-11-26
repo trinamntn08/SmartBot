@@ -17,12 +17,16 @@ export function rememberOpenedBook(id) {
   catch { /* Reading positions are saved independently in IndexedDB. */ }
 }
 
-export function resumeBookRoute() {
+export function lastOpenedBookId() {
   try {
     const id = Number(localStorage.getItem('smartbot-last-opened-book'));
-    if (Number.isSafeInteger(id) && id > 0) return '#book=' + id;
-  } catch { /* Fall back to the library when the shortcut is unavailable. */ }
-  return '#books';
+    if (Number.isSafeInteger(id) && id > 0) return id;
+  } catch { /* The library is still available. */ }
+}
+
+export function resumeBookRoute() {
+  const id = lastOpenedBookId();
+  return id ? `#book=${id}` : '#books';
 }
 
 function openLibrary() {
@@ -70,10 +74,10 @@ export function listBooks() {
   });
 }
 
-export function addBook({ title, sections, original }) {
+export function addBook({ title, metadataTitle, fileName, sections, original }) {
   return runTransaction(['books', 'sections', 'originals'], 'readwrite', (transaction) => {
     const request = transaction.objectStore('books').add({
-      title, position: 0, count: sections.length, originalName: original?.name,
+      title, metadataTitle, fileName, position: 0, count: sections.length, originalName: original?.name,
     });
     request.onsuccess = () => {
       transaction.objectStore('sections').add(sections, request.result);
@@ -90,14 +94,15 @@ export function getOriginal(id) {
   });
 }
 
-export function saveConversion(id, { sections, pageEnds, skippedPages }) {
+export function saveConversion(id, { sections, pageEnds, skippedPages, metadataTitle }) {
   return runTransaction(['books', 'sections'], 'readwrite', (transaction) => {
     const books = transaction.objectStore('books');
     const request = books.get(id);
     request.onsuccess = () => {
       const book = request.result;
       if (!book?.originalName || book.count > 0) return;
-      books.put({ ...book, count: sections.length, pageEnds, skippedPages });
+      books.put({ ...book, count: sections.length, pageEnds, skippedPages,
+        metadataTitle: metadataTitle || book.metadataTitle });
       transaction.objectStore('sections').put(sections, id);
     };
     return () => undefined;

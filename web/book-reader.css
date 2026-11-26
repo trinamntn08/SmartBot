@@ -112,6 +112,50 @@ body:has(.book-reader) #view {
 .book-tool:is(:hover, [aria-expanded="true"]):not(:disabled) { background: var(--page-active); }
 .book-tool[data-settings] { font: 600 1.2rem/1 Georgia, serif; }
 
+.book-options { margin: 0; }
+.book-options > summary {
+  padding-inline: 0;
+  font-size: 1.4rem;
+  list-style: none;
+}
+
+.book-options > summary::-webkit-details-marker { display: none; }
+.book-options[open] > summary { background: var(--page-active, var(--accent-soft)); }
+.book-entry .book-tool { color: var(--ink); }
+.book-entry .book-tool:hover { background: var(--accent-soft); }
+
+.book-options-panel {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: calc(100% + 0.4rem);
+  inset-inline-end: max(0.5rem, calc((100% - 50rem) / 2));
+  box-sizing: border-box;
+  inline-size: min(19rem, calc(100% - 1rem));
+  max-block-size: 65vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 0.75rem;
+  border: 1px solid var(--page-line, var(--line));
+  border-radius: 0.75rem;
+  background: var(--page, var(--surface));
+  box-shadow: 0 0.4rem 1.4rem rgb(0 0 0 / 18%);
+  overflow-wrap: anywhere;
+}
+
+.book-entry .book-options-panel { inset-inline-end: 0; }
+.book-full-title { margin: 0; font-size: 0.95rem; font-weight: 650; }
+.book-file-name { margin: 0.35rem 0 0; color: var(--page-muted, var(--muted)); font-size: 0.8rem; }
+.book-file-name dd { margin: 0; }
+.book-downloads {
+  display: grid;
+  margin-block-start: 0.5rem;
+  padding-block-start: 0.25rem;
+  border-block-start: 1px solid var(--page-line, var(--line));
+}
+
+.book-downloads .book-tool { justify-content: flex-start; text-align: start; }
+.book-options-panel .book-error { margin-block: 0.5rem 0; background: transparent; }
+
 .book-tool:has(svg:only-child) { padding-inline: 0.25em; }
 
 .book-tool svg {
@@ -310,15 +354,9 @@ body:has(.book-reader) #view {
   pointer-events: none;
 }
 
-@media (max-width: 24em) {
+@media (max-width: 26em) {
+  .book-toolbar-row { grid-template-columns: auto minmax(0, 1fr) auto; }
   .book-toolbar-row > a span { display: none; }
   .book-tool[data-settings] { padding-inline: 0.3em; }
-  .book-toolbar h1 {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    font-size: 1.2rem;
-    overflow-wrap: anywhere;
-    white-space: normal;
-  }
+  .book-toolbar h1 { font-size: 1.2rem; }
 }

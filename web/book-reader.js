@@ -51,7 +51,7 @@ function configureAppearance(panel, scroll, content, toggleSettings) {
   apply();
 }
 
-export function renderReader(panel, book, activity, focus) {
+export function renderReader(panel, book, activity, { title, options, focus }) {
   panel.className = 'book-reader';
   panel.innerHTML = `
     <header class="book-toolbar">
@@ -151,8 +151,9 @@ export function renderReader(panel, book, activity, focus) {
   let section = book.position;
   let savingProgress = false;
 
-  heading.textContent = book.title;
-  scroll.setAttribute('aria-label', `Book text: ${book.title}`);
+  heading.textContent = title;
+  scroll.setAttribute('aria-label', `Book text: ${title}`);
+  toolbar.querySelector('.book-tool-group').append(options);
 
   function toggleSettings(open, restoreFocus = false) {
     settings.hidden = !open;
@@ -176,7 +177,7 @@ export function renderReader(panel, book, activity, focus) {
       if (!settings.contains(event.target) && !settingsButton.contains(event.target)) toggleSettings(false);
       return;
     }
-    if (event.target === content && document.getSelection()?.isCollapsed) {
+    if (!options.open && event.target === content && document.getSelection()?.isCollapsed) {
       setFullView(!toolbar.hidden, toolbar.contains(document.activeElement));
     }
   });

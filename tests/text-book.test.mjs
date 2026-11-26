@@ -6,6 +6,7 @@ test('imports UTF-8 text and keeps paragraph breaks and indentation', async () =
   const file = new File(['  Première page\r\n\r\n続き'], 'My Book.TXT');
   assert.deepEqual(await readTextBook(file), {
     title: 'My Book',
+    fileName: 'My Book.TXT',
     sections: ['  Première page\n\n続き'],
   });
 });

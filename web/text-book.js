@@ -40,5 +40,5 @@ export async function readTextBook(file) {
   if (text.includes('\0')) throw new BookImportError('This file does not contain readable text.');
 
   const title = file.name.slice(0, -4).trim() || 'Untitled book';
-  return { title, sections: readingSections(text) };
+  return { title, fileName: file.name, sections: readingSections(text) };
 }
