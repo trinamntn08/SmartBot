@@ -192,7 +192,9 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   }, { signal: lifecycle.signal });
 
   grid.addEventListener('contextmenu', (event) => {
-    if (event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents) event.preventDefault();
+    if ((drag ?? press)?.touchId !== undefined || event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents) {
+      event.preventDefault();
+    }
   });
 
   function updateDropTarget() {
@@ -220,9 +222,7 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   }
 
   function startGhost() {
-    drag.moved = true;
     drag.source.classList.add('is-dragging');
-    if (reducedMotion.matches) return;
     const bounds = drag.source.getBoundingClientRect();
     const previewWidth = Math.min(248, window.innerWidth / 2);
     const scale = Math.min(1, previewWidth / bounds.width, window.innerHeight / (2 * bounds.height));
@@ -240,9 +240,7 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   }
 
   function positionGhost() {
-    if (drag.ghost) {
-      drag.ghost.style.transform = `translate3d(${drag.x + drag.offsetX}px, ${drag.y + drag.offsetY}px, 0) scale(${drag.scale})`;
-    }
+    drag.ghost.style.transform = `translate3d(${drag.x + drag.offsetX}px, ${drag.y + drag.offsetY}px, 0) scale(${drag.scale})`;
   }
 
   function clearDrag() {
@@ -254,51 +252,41 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     drag = undefined;
   }
 
-  grid.addEventListener('pointerdown', (event) => {
-    if (!event.isPrimary) {
-      if (event.pointerType === 'touch') cancelPress();
-      return;
-    }
-    if (event.button !== 0 || drag) return;
+  function beginGesture(target, point) {
+    if (drag || press) return;
     suppressClick = false;
-    const { pointerId, clientX: x, clientY: y } = event;
-    const source = event.target.closest('[data-section]');
-    if (!source || !event.target.closest('a')) return;
-    const pointer = { pointerId, source, startX: x, startY: y, x, y };
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    cancelPress();
+    if (point.altKey || point.ctrlKey || point.metaKey || point.shiftKey) return;
+    const source = target.closest('[data-section]');
+    if (!source || !target.closest('a')) return;
+    const { clientX: x, clientY: y, pointerId, identifier: touchId } = point;
+    const gesture = { pointerId, touchId, source, startX: x, startY: y, x, y };
     if (editing) {
-      drag = pointer;
+      drag = gesture;
       return;
     }
-    press = { pointerId, x, y, timer: setTimeout(() => {
-      drag = pointer;
+    press = gesture;
+    press.timer = setTimeout(() => {
+      drag = gesture;
       press = undefined;
-      grid.setPointerCapture(pointerId);
+      if (pointerId !== undefined) grid.setPointerCapture(pointerId);
       returnTo = source.dataset.section;
       editing = true;
       updateMode();
       announce('Reordering Workspace cards.');
       suppressClick = true;
-    }, holdDuration) };
-  });
+    }, holdDuration);
+  }
 
-  // A swipe before the hold scrolls normally. Once editing starts, keep the same touch for dragging.
-  grid.addEventListener('touchmove', (event) => {
-    if (drag && suppressClick && event.touches.length === 1 && event.cancelable) event.preventDefault();
-  }, { passive: false });
-
-  grid.addEventListener('pointermove', (event) => {
-    if (event.pointerId === press?.pointerId) {
-      if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > 8) cancelPress();
+  function moveGesture({ clientX: x, clientY: y }) {
+    if (press) {
+      if (Math.hypot(x - press.startX, y - press.startY) > 8) cancelPress();
       return;
     }
-    if (event.pointerId !== drag?.pointerId) return;
-    drag.x = event.clientX;
-    drag.y = event.clientY;
-    if (!drag.moved) {
-      if (grid.children.length < 2 || Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 6) return;
-      grid.setPointerCapture(event.pointerId);
+    drag.x = x;
+    drag.y = y;
+    if (!drag.ghost) {
+      if (grid.children.length < 2 || Math.hypot(x - drag.startX, y - drag.startY) < 6) return;
+      if (drag.pointerId !== undefined) grid.setPointerCapture(drag.pointerId);
       returnTo = drag.source.dataset.section;
       if (selected) select(undefined);
       suppressClick = true;
@@ -307,24 +295,23 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     positionGhost();
     updateDropTarget();
     drag.frame ??= requestAnimationFrame(scrollWhileDragging);
-  });
+  }
 
-  function finishDrag(event) {
-    if (event.pointerId === press?.pointerId) cancelPress();
-    if (event.pointerId !== drag?.pointerId) return;
-    if (event.type === 'lostpointercapture' && event.target !== grid) return;
-    if (event.type === 'pointerup' && drag.moved) {
-      drag.x = event.clientX;
-      drag.y = event.clientY;
+  function finishGesture(point) {
+    cancelPress();
+    if (!drag) return;
+    if (point && drag.ghost) {
+      drag.x = point.clientX;
+      drag.y = point.clientY;
       positionGhost();
       updateDropTarget();
     }
     const { source, target, ghost } = drag;
-    if (event.type === 'pointerup' && target) {
+    if (point && target) {
       const from = source.dataset.section;
       const to = target.dataset.section;
       const starts = new Map([
-        [from, (ghost ?? source).getBoundingClientRect()],
+        [from, ghost.getBoundingClientRect()],
         [to, target.getBoundingClientRect()],
       ]);
       clearDrag();
@@ -334,10 +321,54 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     }
   }
 
-  for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) grid.addEventListener(event, finishDrag);
+  grid.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch' || !event.isPrimary || event.button !== 0) return;
+    beginGesture(event.target, event);
+  });
+  grid.addEventListener('pointermove', (event) => {
+    if (event.pointerId === (drag ?? press)?.pointerId) moveGesture(event);
+  });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    grid.addEventListener(type, (event) => {
+      if (event.pointerId !== (drag ?? press)?.pointerId) return;
+      if (type === 'lostpointercapture' && event.target !== grid) return;
+      finishGesture(type === 'pointerup' ? event : undefined);
+    });
+  }
   grid.addEventListener('pointerleave', (event) => {
-    if (event.pointerId === press?.pointerId) cancelPress();
-    if (event.pointerId === drag?.pointerId && !grid.hasPointerCapture(event.pointerId)) clearDrag();
+    if (event.pointerId === (drag ?? press)?.pointerId && !grid.hasPointerCapture(event.pointerId)) finishGesture();
+  });
+
+  function changedTouch(event) {
+    const touchId = (drag ?? press)?.touchId;
+    if (touchId === undefined) return;
+    return Array.from(event.changedTouches).find(touch => touch.identifier === touchId);
+  }
+
+  // Pointer Events can be cancelled when the browser claims a pan. Touch Events
+  // follow the original contact and let a swipe scroll until the hold activates.
+  grid.addEventListener('touchstart', (event) => {
+    if (event.touches.length === 1) beginGesture(event.target, event.changedTouches[0]);
+    else if ((drag ?? press)?.touchId !== undefined) finishGesture();
+  }, { passive: true });
+  grid.addEventListener('touchmove', (event) => {
+    const touch = changedTouch(event);
+    if (!touch) return;
+    if (event.touches.length !== 1) {
+      finishGesture();
+      return;
+    }
+    moveGesture(touch);
+    if (suppressClick && event.cancelable) event.preventDefault();
+  }, { passive: false });
+  grid.addEventListener('touchend', (event) => {
+    const touch = changedTouch(event);
+    if (!touch) return;
+    if (suppressClick && event.cancelable) event.preventDefault();
+    finishGesture(event.touches.length === 0 ? touch : undefined);
+  }, { passive: false });
+  grid.addEventListener('touchcancel', (event) => {
+    if (changedTouch(event)) finishGesture();
   });
 
   draw();

@@ -4,7 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
-- Press and hold a **Workspace** card to enter swap mode. Drag any card immediately while the mode is active. A translucent preview follows your finger or cursor, and both cards slide into place on release. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.
+- Press and hold a **Workspace** card, then drag it with the same touch to swap it. Drag any card immediately while swap mode is active. A translucent preview follows your finger or cursor, and both cards slide into place on release. With reduced motion enabled, the cards settle instantly. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.
 - **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
@@ -20,6 +20,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The Workspace drag preview now tracks touch contacts directly so losing the touch pointer stream during a hold does not end the drag. A Chromium regression check cancelled the pointer stream while keeping the touch active and reproduced the missing preview on the previous revision. The fix passed that check, plus first and repeat drags, quick scrolling swipes, cancelled touches, edge scrolling, mouse and keyboard swaps, and reduced-motion drops. WebKit passed simulated touch drags and drops. All 49 automated tests passed. Physical phone verification remains open.
 
 Chromium verified that the first hold enters swap mode and later drags start before the hold threshold. The checks covered successive touch swaps, mouse dragging, taps to select cards, edge scrolling, cancellation, outside dismissal, and keyboard swaps at 320 and 1440 CSS pixels. The published preview also reopened the saved layout and restored a hidden card offline. All 46 automated tests passed.
 
