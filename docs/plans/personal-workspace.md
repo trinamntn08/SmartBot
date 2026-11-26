@@ -87,6 +87,12 @@ November 24, 2026. Current editions, starter headlines, and recommendation signa
 
 At 320 CSS pixels, Chromium loaded 20 live headlines through More without a Canada.ca request, even with a retired feed snapshot and reading signal in local storage. A previously saved release opened with a controlled publisher response and reopened offline. All 29 Node and eight Python tests passed. The Android debug APK passed signature and 228 bundled asset checks. Lint reported zero errors and nine warnings. Phone testing is pending.
 
+### Refresh the News edition
+
+November 26, 2026. Refresh requests the selected feeds directly and updates the header to the latest successful refresh time. If a source fails, its cached headlines stay available without a feed warning. If every source fails, the last successful time stays visible. The bundled starter headlines have no refresh timestamp.
+
+All 31 Node and 12 Python tests passed. The regression test covers an older cached feed, a newly refreshed feed, and a newer feed outside the active selection. Mobile browser and physical phone checks are pending.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

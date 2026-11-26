@@ -61,6 +61,9 @@ export const newsRepository = {
     } catch { return false; }
   },
   edition(feed) { return read(feed.id); },
+  latestEditionTime(selected) {
+    return Math.max(0, ...selected.map(feed => this.edition(feed)?.time).filter(Number.isFinite));
+  },
   saveEdition(feed, edition) {
     if (this.edition(feed)?.time > edition.time) return true;
     return write(feed.id, edition);

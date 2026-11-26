@@ -46,7 +46,7 @@ export function isCanadaStory(url) {
 const techWords = /\b(technolog\w*|digital\w*|numérique\w*|cyber\w*|artificial intelligence|intelligence artificielle|robot\w*|semiconductor\w*|semi-conducteur\w*|software|logiciel\w*|quantum|quantique\w*|sensor\w*|capteur\w*|satellite\w*|broadband|haut débit|AI|IA)\b/i;
 
 export async function fetchFeed(feed, signal) {
-  const options = { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
+  const options = { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal };
   if (feed.provider === 'rss') return fetchPublisherFeed(feed, options);
   if (feed.language === 'vi') return fetchTuoitre(feed, options);
   if (feed.id !== 'nasa') throw new Error('Unknown feed');

@@ -44,7 +44,7 @@ test('learned interests refresh relevant feeds when browsing all topics', () => 
   assert.ok(selectedFeeds({ languages: ['vi'], topics: ['sports'] }, affinity).every(feed => feed.topic === 'sports'));
 });
 
-test('opened stories stay bounded and can be disabled and cleared without touching preferences', t => {
+function useTestStorage(t) {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
   const storage = {
     getItem(key) { return this[key] ?? null; },
@@ -56,6 +56,27 @@ test('opened stories stay bounded and can be disabled and cleared without touchi
     if (original) Object.defineProperty(globalThis, 'localStorage', original);
     else delete globalThis.localStorage;
   });
+  return storage;
+}
+
+test('the refresh time follows the latest saved edition for the selected feeds', t => {
+  useTestStorage(t);
+  const [unavailable, refreshed, ...others] = rssFeeds;
+  const selected = [unavailable, refreshed, others[0]];
+  const stale = Date.parse('2026-11-24T20:27:00Z');
+  const fresh = Date.parse('2026-11-26T12:00:00Z');
+
+  assert.equal(newsRepository.latestEditionTime(selected), 0);
+  newsRepository.saveEdition(unavailable, { time: stale, stories: [story], pageSize: 10 });
+  assert.equal(newsRepository.latestEditionTime(selected), stale);
+  newsRepository.saveEdition(refreshed, { time: fresh, stories: [story], pageSize: 10 });
+  newsRepository.saveEdition(others[1], { time: fresh + 60000, stories: [story], pageSize: 10 });
+  assert.equal(newsRepository.latestEditionTime(selected), fresh);
+  assert.equal(newsRepository.edition(unavailable).time, stale);
+});
+
+test('opened stories stay bounded and can be disabled and cleared without touching preferences', t => {
+  const storage = useTestStorage(t);
   const now = Date.parse('2026-11-24T12:00:00Z');
   const prefs = { languages: ['fr'], topics: ['world'] };
   newsRepository.savePreferences(prefs);

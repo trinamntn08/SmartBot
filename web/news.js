@@ -205,26 +205,28 @@ export function renderNews(view, savedNews, focus, track) {
     });
     draw();
     const time = Date.now();
-    let failures = 0;
     refreshButton.disabled = navigator.onLine && pending.length > 0;
-    if (refreshButton.disabled) status.textContent = 'Updating…';
-    const timeout = setTimeout(() => controller.abort(), 12000);
-    if (navigator.onLine) await Promise.all(pending.map(async feed => {
-      try {
-        const stories = await fetchFeed(feed, controller.signal);
-        if (!controller.signal.aborted && !store.saveEdition(feed, { time, stories, pageSize: newsPageSize })) failures++;
-      } catch { failures++; }
-    }));
-    clearTimeout(timeout);
+    if (refreshButton.disabled) {
+      status.textContent = 'Updating…';
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      await Promise.all(pending.map(async feed => {
+        try {
+          const stories = await fetchFeed(feed, controller.signal);
+          if (!controller.signal.aborted) store.saveEdition(feed, { time, stories, pageSize: newsPageSize });
+        } catch { /* Keep the cached edition for this feed. */ }
+      }));
+      clearTimeout(timeout);
+    }
     if (request !== controller || !panel.isConnected) return;
     refreshButton.disabled = false;
     const available = draw();
-    const times = selected.map(feed => store.edition(feed)?.time).filter(Boolean);
-    const oldest = times.length ? new Date(Math.min(...times)) : null;
-    const stamp = oldest ? 'Updated ' + oldest.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Starter edition · Nov 23, 2026';
-    const note = !navigator.onLine ? 'Offline' : failures ? 'Some feeds unavailable' : '';
-    status.textContent = [note, available && affinity?.seen.size ? 'For you' : '',
-      available ? stamp : 'No matching headlines.'].filter(Boolean).join(' · ');
+    const latest = store.latestEditionTime(selected);
+    const stamp = latest ? 'Updated ' + new Date(latest).toLocaleString(undefined, {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    }) : '';
+    status.textContent = available
+      ? [affinity?.seen.size ? 'For you' : '', stamp].filter(Boolean).join(' · ')
+      : 'No matching headlines.';
   }
 
   refreshButton.disabled = true;
