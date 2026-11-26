@@ -23,7 +23,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The regional Markets update passed 30 web and 16 Python tests. Live provider checks returned 272 VN-Index candles and daily history for all 13 Euronext listings. Android compilation and lint passed. Published browser and APK checks and physical phone verification remain open.
+Chromium at 320 CSS pixels verified live VN-Index candlesticks, a year of CAC 40 closes, and Valeo search and prices in EUR. All three charts reopened offline, and the existing watchlist was preserved. Live provider checks returned 272 VN-Index candles and daily history for all 13 Euronext listings. All 30 web, 16 Python, and eight podcast-service tests passed. The Android market adapter returned live history for VN-Index, CAC 40, and Valeo in a host JVM check. The published debug APK passed lint, signature, and ZIP alignment checks, and all 261 bundled web files matched. Physical phone verification remains open.
 
 Chromium verified the Four Leaves header across all six theme and color-mode combinations. The header fit on one row from 320 to 1440 CSS pixels, the SmartBot link returned to Workspace by keyboard, and all three browser icon assets loaded after an offline reload. All 27 web, 15 Python, and eight podcast-service tests passed. The debug APK built from published `main`, passed lint, signature and ZIP alignment checks, matched all 260 bundled web files, and included the adaptive launcher with its monochrome layer. Physical launcher and iOS shortcut checks remain open.
 

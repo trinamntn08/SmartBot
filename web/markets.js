@@ -34,7 +34,7 @@ export function renderMarkets(view, focusHeading) {
     </div>
     <form class="market-search" role="search" aria-label="Market symbols">
       <label for="market-search-input" class="market-search-label">Search Markets</label>
-      <input id="market-search-input" type="search" placeholder="Symbol, company, index, or crypto"
+      <input id="market-search-input" type="search" placeholder="Symbol or name"
         enterkeyhint="search" autocomplete="off" spellcheck="false" maxlength="100"
         aria-controls="market-search-results">
       <ul id="market-search-results" class="market-search-results" hidden></ul>

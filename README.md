@@ -121,7 +121,7 @@ python3 scripts/preview.py --no-browser
 Run the planner and text import tests with Node.js 22 or newer, and the assistant API tests with Python 3.
 
 ```sh
-node --test tests/planner.test.mjs tests/text-book.test.mjs tests/news.test.mjs
+node --test tests/*.test.mjs
 python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
