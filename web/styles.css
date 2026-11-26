@@ -648,7 +648,7 @@ summary { width: fit-content; padding-block: 0.625rem; cursor: pointer; }
 .news-topic-row {
   display: flex;
   flex-wrap: wrap;
-  column-gap: clamp(0.75rem, 2.5vw, 1.5rem);
+  column-gap: clamp(0.5rem, 1.8vw, 1.5rem);
 }
 .news-topic-more { border-block-start: 1px solid var(--line); }
 .news-topic {

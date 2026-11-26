@@ -99,6 +99,8 @@ November 26, 2026. The News header shows the main sections and an expandable **M
 
 All 27 web and 12 Python tests passed. Mobile and desktop browser checks and physical phone verification are pending.
 
+The initial 320-pixel preview put **More topics** on a line by itself. The section controls use tighter spacing on narrow screens to keep it with the other topics.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.
