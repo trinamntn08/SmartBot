@@ -23,7 +23,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The Four Leaves update passed all 27 web, 15 Python, and eight podcast-service tests. Android resource compilation and lint passed. Browser and APK checks from published `main` and physical launcher verification remain open.
+Chromium verified the Four Leaves header across all six theme and color-mode combinations. The header fit on one row from 320 to 1440 CSS pixels, the SmartBot link returned to Workspace by keyboard, and all three browser icon assets loaded after an offline reload. All 27 web, 15 Python, and eight podcast-service tests passed. The debug APK built from published `main`, passed lint, signature and ZIP alignment checks, matched all 260 bundled web files, and included the adaptive launcher with its monochrome layer. Physical launcher and iOS shortcut checks remain open.
 
 The Workspace drag preview now tracks touch contacts directly through the hold and drag. A Chromium regression check cancelled the pointer stream while keeping the touch active and reproduced the missing preview on the previous revision. The fix passed that check, plus first and repeat drags, quick scrolling swipes, cancelled touches, edge scrolling, mouse and keyboard swaps, and reduced-motion drops. WebKit passed simulated touch drags and drops. The preview from published `main` reopened the saved layout and restored a hidden card offline. All 50 automated tests passed after integration. Physical phone verification remains open.
 
