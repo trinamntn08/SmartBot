@@ -103,7 +103,7 @@ All 27 web and 12 Python tests passed. At 320 CSS pixels, Chromium verified touc
 
 November 26, 2026. One three-dot button beside **Science** opens the additional topics and **Saved interests**. An active choice from the menu appears next to the update time. The selected topic and saved interests carry forward.
 
-All 27 web and 12 Python tests passed. Browser and physical phone verification are pending.
+All 27 web and 12 Python tests passed. Chromium at 320 and 1280 CSS pixels verified the icon beside **Science**, the combined list, selection from earlier saved preferences, keyboard dismissal, filtering, and offline reopening. The icon stayed beside **Science** at 200% text size on the narrow viewport. Physical phone verification is pending.
 
 ## Handoff
 
