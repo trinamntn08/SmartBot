@@ -442,6 +442,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-form-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
   gap: 0.5rem;
 }
 
@@ -452,7 +453,19 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 }
 
 .podcast-form-row input::placeholder { color: var(--muted); }
-.podcast-form-row button:not(:disabled):hover { filter: brightness(1.12); }
+.podcasts .podcast-icon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  inline-size: 2.75rem;
+  min-inline-size: 44px;
+  min-block-size: max(44px, 2.75rem);
+  padding: 0;
+  border-radius: 0.55rem;
+}
+
+.podcast-icon:not(.quiet):not(:disabled):hover { filter: brightness(1.12); }
 
 .podcast-rss { margin-block-start: 0.25rem; }
 .podcast-rss summary { box-sizing: border-box; min-height: 44px; color: var(--muted); font-weight: 650; }
@@ -528,7 +541,6 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-show-back { margin-block-end: 0.65rem; }
 .podcast-show-panel h3 { margin-block: 1.25rem 0.45rem; }
 .podcast-show-panel .actions { align-items: center; gap: 0.4rem; margin-block-start: 0.75rem; }
-.podcast-show-panel .actions a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 0.35rem; }
 
 .podcast-list { margin: 0; padding: 0; list-style: none; }
 .podcast-list li, .podcast-continue {
@@ -544,15 +556,24 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-row-copy { flex: 1 1 10rem; min-width: 0; overflow-wrap: anywhere; }
 .podcast-row-copy strong { font-weight: 650; }
 .podcast-notice { display: block; margin: 0.1rem 0 0; color: var(--muted); font-size: 0.8125rem; }
-.podcast-play { min-width: 3.75rem; }
-
 .podcast-continue {
-  padding: 0.75rem 1rem;
+  flex-wrap: nowrap;
+  padding: 0.5rem 0.75rem;
   border-radius: var(--radius);
   background: var(--accent-soft);
 }
 
 .podcast-continue h2 { margin-block-end: 0.2rem; font-size: 0.8125rem; }
+
+.podcast-continue strong {
+  display: block;
+  max-inline-size: 25ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podcast-continue .podcast-icon { border-radius: 50%; }
 
 .podcast-player {
   box-sizing: border-box;
@@ -679,14 +700,15 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-transport button { min-width: 44px; min-height: 44px; padding-inline: 0.35rem; }
 
 .podcast-transport .podcast-skip {
+  display: grid;
+  place-items: center;
   border-color: transparent;
   background: transparent;
   color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
 }
 
+.podcast-skip path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.podcast-skip text { fill: currentColor; font-size: 9px; font-weight: 700; text-anchor: middle; }
 .podcast-skip:not(:disabled):hover { background: var(--accent-soft); color: var(--ink); }
 .podcast-player [data-player-toggle] { display: grid; place-items: center; border-radius: 50%; }
 .podcast-player [data-player-toggle]:hover { filter: brightness(1.12); }

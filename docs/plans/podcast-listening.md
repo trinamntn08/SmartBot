@@ -46,6 +46,8 @@ November 26, 2026. The player fits in a single 50-pixel row outside Music, close
 
 The combined build at `0a61e50` passed all 46 automated tests. Desktop Chrome opened **Tri Kỷ Cảm Xúc** and played a live franceinfo episode while verifying the speed slider, compact row, close, and resume. The Android debug APK passed signature and alignment checks and matched all 245 packaged web files. Lint reported zero errors and ten warnings.
 
+November 26, 2026. Continue listening shows a short, single-line episode title and a play icon. Search, RSS submission, back, clear, follow, refresh, episode navigation, publisher, play, and skip actions use icons with accessible names. Chromium verified the title and touch targets at 320, 390, 768, and 1440 CSS pixels. Controlled feeds and audio verified keyboard and touch actions, saved position and resume, retries, and player controls at 200% text size. All 27 web, 12 Python, and seven podcast service tests passed.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.

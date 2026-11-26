@@ -8,10 +8,37 @@ function element(tag, text, className) {
   return node;
 }
 
-function button(text, action) {
-  const node = element('button', text);
+function button(action) {
+  const node = element('button');
   node.type = 'button';
   node.addEventListener('click', () => action(node));
+  return node;
+}
+
+const icons = {
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>',
+  next: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
+  back: '<path d="M19 12H5m6 6-6-6 6-6"/>',
+  close: '<path d="m6 6 12 12M18 6 6 18"/>',
+  bookmark: '<path d="M6 4h12v16l-6-4-6 4z"/>',
+  saved: '<path fill="currentColor" d="M6 4h12v16l-6-4-6 4z"/>',
+  refresh: '<path d="M20 6v6h-6m6 0a8 8 0 1 0-2.3 5.7"/>',
+  external: '<path d="M13 5h6v6m0-6-8 8m8 1v5H5V5h5"/>',
+  episodes: '<path d="m9 6 6 6-6 6"/>',
+  play: '<path fill="currentColor" stroke="none" d="M8 5v14l11-7z"/>',
+};
+
+function icon(name) {
+  return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]}</svg>`;
+}
+
+function iconButton(label, name, action) {
+  const node = button(action);
+  node.className = 'podcast-icon';
+  node.setAttribute('aria-label', label);
+  node.title = label;
+  node.innerHTML = icon(name);
   return node;
 }
 
@@ -30,7 +57,7 @@ export function renderPodcasts(view, repository, player, focus) {
         <form data-podcast-search>
           <div class="podcast-form-row">
             <input type="search" name="query" maxlength="120" aria-label="Podcast name" placeholder="Search podcasts" required>
-            <button type="submit">Search</button>
+            <button type="submit" class="podcast-icon" aria-label="Search" title="Search">${icon('search')}</button>
           </div>
         </form>
         <details class="podcast-rss">
@@ -38,7 +65,7 @@ export function renderPodcasts(view, repository, player, focus) {
           <form data-podcast-feed>
             <div class="podcast-form-row">
               <input name="url" type="url" maxlength="2048" aria-label="Podcast RSS link" placeholder="https://" required>
-              <button type="submit">Open feed</button>
+              <button type="submit" class="podcast-icon" aria-label="Open feed" title="Open feed">${icon('next')}</button>
             </div>
           </form>
         </details>
@@ -50,7 +77,8 @@ export function renderPodcasts(view, repository, player, focus) {
     <section class="podcast-results" aria-labelledby="podcast-results-title" hidden>
       <div class="podcast-section-heading">
         <h2 id="podcast-results-title" tabindex="-1">Search results</h2>
-        <button type="button" class="quiet" data-clear-search>Clear search</button>
+        <button type="button" class="quiet podcast-icon" data-clear-search
+          aria-label="Clear search" title="Clear search">${icon('close')}</button>
       </div>
       <div class="podcast-result-list"></div>
     </section>
@@ -111,10 +139,13 @@ export function renderPodcasts(view, repository, player, focus) {
   });
 
   function publisherLink(website) {
-    const link = element('a', 'Open publisher');
+    const link = element('a', '', 'quiet podcast-icon');
     link.href = website;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', 'Open publisher');
+    link.title = 'Open publisher';
+    link.innerHTML = icon('external');
     if (hasNativePodcastPlayer) {
       link.addEventListener('click', event => {
         event.preventDefault();
@@ -131,7 +162,7 @@ export function renderPodcasts(view, repository, player, focus) {
     const heading = element('h2', show.title);
     heading.tabIndex = -1;
     const hasResults = resultList.childElementCount > 0;
-    const back = button(hasResults ? 'Back to results' : 'Back to shows', () => {
+    const back = iconButton(hasResults ? 'Back to results' : 'Back to shows', 'back', () => {
       discovery?.abort();
       detail.hidden = true;
       selected = undefined;
@@ -142,10 +173,10 @@ export function renderPodcasts(view, repository, player, focus) {
       if (hasResults) results.querySelector('h2').focus();
       else queryInput.focus();
     });
-    back.className = 'quiet podcast-show-back';
+    back.classList.add('quiet', 'podcast-show-back');
     card.append(back, heading, element('p', show.publisher, 'podcast-notice'));
     const actions = element('div', '', 'actions');
-    const follow = button(followed ? 'Unfollow' : 'Follow show', trigger => run(async () => {
+    const follow = iconButton(followed ? 'Unfollow' : 'Follow show', followed ? 'saved' : 'bookmark', trigger => run(async () => {
       if (followed) await repository.removeShow(show.feedUrl);
       else await repository.saveShow(show);
       await showLibrary();
@@ -153,11 +184,11 @@ export function renderPodcasts(view, repository, player, focus) {
       showDetails(follows.find(entry => entry.feedUrl === show.feedUrl) ?? show, true);
       announcement.textContent = followed ? 'Show unfollowed.' : 'Show followed.';
     }, trigger));
-    if (followed) follow.className = 'quiet';
+    follow.classList.add('quiet');
     actions.append(follow);
     if (followed) {
-      const refresh = button('Refresh episodes', trigger => openShow(show.feedUrl, trigger, true));
-      refresh.className = 'quiet';
+      const refresh = iconButton('Refresh episodes', 'refresh', trigger => openShow(show.feedUrl, trigger, true));
+      refresh.classList.add('quiet');
       actions.append(refresh);
     }
     if (show.website) actions.append(publisherLink(show.website));
@@ -171,9 +202,9 @@ export function renderPodcasts(view, repository, player, focus) {
         const copy = element('div', '', 'podcast-row-copy');
         copy.append(element('strong', episode.title));
         if (episode.publishedAt != null) copy.append(element('p', date.format(episode.publishedAt), 'podcast-notice'));
-        const play = button('Play', trigger => run(() => player.play(episodeToPlay(show, episode)), trigger));
-        play.className = 'quiet podcast-play';
-        play.setAttribute('aria-label', `Play ${episode.title}`);
+        const play = iconButton(`Play ${episode.title}`, 'play', trigger => run(() => player.play(episodeToPlay(show, episode)), trigger));
+        play.classList.add('quiet');
+        play.title = 'Play episode';
         row.append(copy, play);
         list.append(row);
       }
@@ -200,13 +231,12 @@ export function renderPodcasts(view, repository, player, focus) {
       const row = element('li');
       const copy = element('div', '', 'podcast-row-copy');
       copy.append(element('strong', show.title), element('p', show.publisher, 'podcast-notice'));
-      const open = button('Episodes', () => {
+      const open = iconButton(`Episodes for ${show.title}`, 'episodes', () => {
         discovery?.abort();
         status.textContent = '';
         showDetails(show, true);
       });
-      open.className = 'quiet';
-      open.setAttribute('aria-label', `Episodes for ${show.title}`);
+      open.classList.add('quiet');
       row.append(copy, open);
       list.append(row);
     }
@@ -234,7 +264,7 @@ export function renderPodcasts(view, repository, player, focus) {
     }, trigger);
   }
 
-  const suggested = button('', trigger => openShow(franceinfo.feedUrl, trigger));
+  const suggested = button(trigger => openShow(franceinfo.feedUrl, trigger));
   suggested.className = 'quiet podcast-pick-button';
   suggested.setAttribute('aria-label', `View episodes for ${franceinfo.title}`);
   const suggestedCopy = element('span', '', 'podcast-row-copy');
@@ -279,9 +309,8 @@ export function renderPodcasts(view, repository, player, focus) {
         const row = element('li');
         const copy = element('div', '', 'podcast-row-copy');
         copy.append(element('strong', show.title), element('p', show.publisher, 'podcast-notice'));
-        const open = button('Episodes', trigger => openShow(show.feedUrl, trigger));
-        open.className = 'quiet';
-        open.setAttribute('aria-label', `Episodes for ${show.title}`);
+        const open = iconButton(`Episodes for ${show.title}`, 'episodes', trigger => openShow(show.feedUrl, trigger));
+        open.classList.add('quiet');
         row.append(copy, open);
         list.append(row);
       }
@@ -297,8 +326,8 @@ export function renderPodcasts(view, repository, player, focus) {
     if (continuePanel.hidden) return;
     const copy = element('div', '', 'podcast-row-copy');
     copy.append(element('h2', 'Continue listening'), element('strong', recent.episode.title));
-    continuePanel.replaceChildren(copy,
-      button('Resume episode', trigger => run(() => player.play(recent.episode), trigger)));
+    const resume = iconButton('Resume episode', 'play', trigger => run(() => player.play(recent.episode), trigger));
+    continuePanel.replaceChildren(copy, resume);
   });
   player.connect();
   void run(showLibrary);
