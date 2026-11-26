@@ -4,7 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
-- Press and hold a **Workspace** card and drag it onto another card to swap them. A translucent preview follows your finger or cursor, and both cards slide into place on release. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.
+- Press and hold a **Workspace** card to enter swap mode. Drag any card immediately while the mode is active. A translucent preview follows your finger or cursor, and both cards slide into place on release. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.
 - **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
@@ -20,6 +20,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified that the first hold enters swap mode and later drags start before the hold threshold. The checks covered successive touch swaps, mouse dragging, taps to select cards, edge scrolling, cancellation, outside dismissal, and keyboard swaps at 320 and 1440 CSS pixels. All 46 automated tests passed.
 
 Chromium verified direct dragging, the ghost and swap animation, cancelled drags, reduced motion, outside dismissal, and the smaller hide control at 320 and 1440 CSS pixels. The checks also covered normal taps and scrolling, keyboard reordering, hiding and restoring cards, and 200% text size. The published preview kept the new order and restored a hidden card offline. All 46 automated tests passed. A physical Android check remains open.
 

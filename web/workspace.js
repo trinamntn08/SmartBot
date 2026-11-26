@@ -267,24 +267,25 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     const pointer = { pointerId, source, startX: x, startY: y, x, y };
     if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     cancelPress();
+    if (editing) {
+      drag = pointer;
+      return;
+    }
     press = { pointerId, x, y, timer: setTimeout(() => {
       drag = pointer;
       press = undefined;
       grid.setPointerCapture(pointerId);
       returnTo = source.dataset.section;
-      if (selected) select(undefined);
-      if (!editing) {
-        editing = true;
-        updateMode();
-        announce('Reordering Workspace cards.');
-      }
+      editing = true;
+      updateMode();
+      announce('Reordering Workspace cards.');
       suppressClick = true;
     }, holdDuration) };
   });
 
   // A swipe before the hold scrolls normally. Once editing starts, keep the same touch for dragging.
   grid.addEventListener('touchmove', (event) => {
-    if (drag && event.touches.length === 1 && event.cancelable) event.preventDefault();
+    if (drag && suppressClick && event.touches.length === 1 && event.cancelable) event.preventDefault();
   }, { passive: false });
 
   grid.addEventListener('pointermove', (event) => {
@@ -297,6 +298,10 @@ export function renderWorkspace(view, focusHeading, openEditor) {
     drag.y = event.clientY;
     if (!drag.moved) {
       if (grid.children.length < 2 || Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 6) return;
+      grid.setPointerCapture(event.pointerId);
+      returnTo = drag.source.dataset.section;
+      if (selected) select(undefined);
+      suppressClick = true;
       startGhost();
     }
     positionGhost();
@@ -332,6 +337,7 @@ export function renderWorkspace(view, focusHeading, openEditor) {
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) grid.addEventListener(event, finishDrag);
   grid.addEventListener('pointerleave', (event) => {
     if (event.pointerId === press?.pointerId) cancelPress();
+    if (event.pointerId === drag?.pointerId && !grid.hasPointerCapture(event.pointerId)) clearDrag();
   });
 
   draw();
