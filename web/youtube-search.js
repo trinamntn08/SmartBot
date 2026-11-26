@@ -17,7 +17,7 @@ if (bridge) {
   };
 }
 
-function saveKey(value) {
+function saveNativeKey(value) {
   if (pendingKey) return Promise.reject(new Error('A key change is already in progress.'));
   const response = new Promise((resolve, reject) => {
     pendingKey = { resolve, reject };
@@ -39,14 +39,26 @@ function approved() {
   catch { return enabled; }
 }
 
-async function youtubeRequest(path, signal) {
-  const response = await fetch(`./api/youtube${path}`, {
+async function youtubeRequest(path, signal, key) {
+  const options = {
     headers: { 'X-SmartBot-YouTube': 'music' }, cache: 'no-store', signal,
-  });
+  };
+  if (key !== undefined) {
+    options.method = 'POST';
+    options.mode = 'same-origin';
+    options.redirect = 'error';
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify({ key });
+  }
+  const response = await fetch(`./api/youtube${path}`, options);
   const data = await response.json().catch(() => null);
   if (!data) throw new Error('YouTube search is unavailable. Restart the SmartBot preview or update the Android app.');
   if (!response.ok) throw new Error(data.error || 'YouTube search is unavailable.');
   return data;
+}
+
+function saveKey(key, signal) {
+  return bridge ? saveNativeKey(key) : youtubeRequest('', signal, key);
 }
 
 function showResults(list, items, player) {
@@ -75,7 +87,7 @@ export function renderYouTubeSearch(root, player) {
   const lifecycle = new AbortController();
   root.innerHTML = `<h2 id="youtube-search-title">Search YouTube music videos</h2>
     <section class="youtube-approval">
-      <p>SmartBot sends search terms and playback requests to YouTube. Your key stays in the preview environment or Android app storage.
+      <p>SmartBot sends search terms and playback requests to YouTube. Your key stays on this device.
       By enabling this feature, you agree to these privacy terms and the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
       See <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.</p>
       <button type="button" data-enable-youtube>Enable YouTube search</button>
@@ -93,14 +105,15 @@ export function renderYouTubeSearch(root, player) {
       <ul class="youtube-results" aria-label="YouTube video results"></ul>
       <details class="music-service-settings" data-youtube-setup>
         <summary>YouTube search setup</summary>
-        ${bridge ? `<form data-youtube-key>
+        <form method="post" action="./api/youtube" data-youtube-key${bridge ? '' : ' hidden'}>
           <label for="youtube-key">YouTube Data API key</label>
           <div class="music-choice-row">
             <input id="youtube-key" type="password" name="key" autocomplete="off" spellcheck="false"
               autocapitalize="none" maxlength="128" required>
             <button type="submit">Save key</button>
           </div>
-        </form>` : '<p>Set <code>SMARTBOT_YOUTUBE_API_KEY</code> in the preview environment and restart the preview.</p>'}
+        </form>
+        <p data-youtube-environment hidden>Set <code>SMARTBOT_YOUTUBE_API_KEY</code> in the preview environment and restart the preview.</p>
         <p><a href="https://console.cloud.google.com/apis/credentials">Google Cloud credentials</a></p>
         <p><a href="https://www.youtube.com/t/terms">YouTube terms</a> · <a href="https://policies.google.com/privacy">Google privacy policy</a></p>
         <button type="button" class="quiet" data-disable-youtube>Disable YouTube search${bridge ? ' and remove key' : ''}</button>
@@ -111,8 +124,11 @@ export function renderYouTubeSearch(root, player) {
   const form = root.querySelector('[data-youtube-search]');
   const input = form.elements.query;
   const setup = root.querySelector('[data-youtube-setup]');
+  const keyForm = root.querySelector('[data-youtube-key]');
+  const disable = root.querySelector('[data-disable-youtube]');
   const status = root.querySelector('.youtube-search-status');
   const list = root.querySelector('.youtube-results');
+  let canSaveKey = Boolean(bridge);
   let search;
 
   for (const link of root.querySelectorAll('a')) {
@@ -126,9 +142,14 @@ export function renderYouTubeSearch(root, player) {
     if (focus) input.focus();
     try {
       const result = await youtubeRequest('', lifecycle.signal);
+      canSaveKey = Boolean(bridge || result.canSaveKey);
+      keyForm.hidden = !canSaveKey;
+      root.querySelector('[data-youtube-environment]').hidden = canSaveKey;
+      disable.textContent = canSaveKey ? 'Disable YouTube search and remove key' : 'Disable YouTube search';
       if (!result.configured) {
         setup.open = true;
         status.textContent = 'Set up a YouTube Data API key to search.';
+        if (focus && canSaveKey && document.activeElement === input) keyForm.elements.key.focus();
       }
     } catch (error) {
       if (!lifecycle.signal.aborted) status.textContent = navigator.onLine ? error.message : 'Connect to the internet to search YouTube.';
@@ -141,11 +162,11 @@ export function renderYouTubeSearch(root, player) {
     void openSearch(true);
   });
 
-  root.querySelector('[data-disable-youtube]').addEventListener('click', async event => {
+  disable.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      if (bridge) await saveKey('');
+      if (canSaveKey) await saveKey('', lifecycle.signal);
       player.close();
       search?.abort();
       enabled = false;
@@ -162,16 +183,21 @@ export function renderYouTubeSearch(root, player) {
     }
   });
 
-  root.querySelector('[data-youtube-key]')?.addEventListener('submit', async event => {
+  keyForm.addEventListener('submit', async event => {
     event.preventDefault();
     const key = event.currentTarget.elements.key;
+    const value = key.value.trim();
+    if (!value) {
+      status.textContent = 'Enter a YouTube Data API key.';
+      return;
+    }
     const button = event.submitter;
     if (button) button.disabled = true;
     try {
-      await saveKey(key.value.trim());
+      await saveKey(value, lifecycle.signal);
       key.value = '';
       if (!lifecycle.signal.aborted) {
-        status.textContent = 'YouTube search is ready.';
+        status.textContent = bridge ? 'YouTube search is ready.' : 'Key saved on this computer.';
         setup.open = false;
         input.focus();
       }

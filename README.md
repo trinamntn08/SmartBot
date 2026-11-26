@@ -67,7 +67,7 @@ Open **Workspace → Listen → Music** and save your preferred service. Use its
 Choose **YouTube Music**, then **Enable YouTube search**, to find public music videos by song or artist and play them in SmartBot. A free YouTube account is sufficient. Search uses an API key and has no account sign-in. Google gives each project 100 searches per day by default. [YouTube API quota](https://developers.google.com/youtube/data/determine_quota_cost)
 
 1. Enable **YouTube Data API v3** in a Google Cloud project and create an API key restricted to that API. [Enable YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com) · [Create an API key](https://console.cloud.google.com/apis/credentials)
-2. On Android, enter the key once in **YouTube search setup**. For the browser preview, set `SMARTBOT_YOUTUBE_API_KEY` in the environment that starts the preview, then restart it.
+2. On Windows, open the browser preview and save the key once in **YouTube search setup**. The preview encrypts the key for your Windows account in `%LOCALAPPDATA%\SmartBot\youtube-api-key.dpapi` and loads it on later starts. Remove it with **Disable YouTube search and remove key**. On Android, use the same setup screen. On other operating systems, set `SMARTBOT_YOUTUBE_API_KEY` in the preview environment before launching it. An environment key takes precedence when present.
 3. Search for a song or artist and select a result. The official player stays on screen as you move between sections and pauses when it scrolls out of view or SmartBot goes into the background. If a video is unavailable in the player, choose another result or open it on YouTube.
 
 ## Listen to podcasts

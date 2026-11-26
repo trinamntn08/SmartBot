@@ -18,7 +18,7 @@ from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
 from market_api import MarketError, crypto_history, daily_prices, market_archive, vietnam_history
-from youtube_api import YouTubeError, configured_key, search_music
+from youtube_api import YouTubeError, key_status, search_music, update_key
 
 
 HOST = "127.0.0.1"
@@ -136,7 +136,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
             if path == YOUTUBE_API:
-                self.send_json(200, {"configured": bool(configured_key())})
+                self.send_json(200, key_status())
                 return
             values = parse_qs(query, keep_blank_values=True).get("q", [])
             try:
@@ -211,11 +211,23 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            result = self.assistant_response()
-        except AssistantError as error:
+            result = self.youtube_key_response() if self.path == YOUTUBE_API else self.assistant_response()
+        except (AssistantError, YouTubeError) as error:
             self.send_json(error.status, {"error": str(error)})
         else:
             self.send_json(200, result)
+
+    def youtube_key_response(self):
+        if (not self.local_request() or not self.headers.get("Origin")
+                or self.headers.get("X-SmartBot-YouTube") != "music"):
+            raise YouTubeError(403, "Open YouTube search inside the local SmartBot preview.")
+        if self.headers.get_content_type() != "application/json":
+            raise YouTubeError(415, "Send the YouTube search setup as JSON.")
+        try:
+            data = json.loads(self.read_body(512))
+        except (ValueError, RecursionError):
+            raise YouTubeError(400, "Enter a valid YouTube Data API key.") from None
+        return update_key(data.get("key") if isinstance(data, dict) else None)
 
     def assistant_response(self):
         if self.path not in {f"{API}/ask", f"{API}/transcribe"}:

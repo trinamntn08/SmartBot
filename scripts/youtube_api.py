@@ -5,6 +5,8 @@ import json
 import os
 from urllib.parse import urlencode
 
+from youtube_key_store import key_path, load_key, save_key, valid_key
+
 
 HOST = "www.googleapis.com"
 MAX_RESPONSE = 128 * 1024
@@ -16,15 +18,36 @@ class YouTubeError(Exception):
         self.status = status
 
 
-def configured_key():
+def environment_key():
     return os.environ.get("SMARTBOT_YOUTUBE_API_KEY", "").strip()
+
+
+def key_status():
+    key = environment_key()
+    return {
+        "configured": bool(key or load_key()),
+        "canSaveKey": not key and key_path() is not None,
+    }
+
+
+def update_key(key):
+    path = key_path()
+    if path is None or environment_key():
+        raise YouTubeError(403, "Manage the API key in the SmartBot preview environment.")
+    if not isinstance(key, str) or (key and not valid_key(key)):
+        raise YouTubeError(400, "Enter a valid YouTube Data API key.")
+    try:
+        save_key(path, key)
+    except OSError:
+        raise YouTubeError(500, "SmartBot could not update the saved key. Try again.") from None
+    return {"configured": bool(key), "canSaveKey": True}
 
 
 def search_music(query):
     query = query.strip()
     if not 1 <= len(query) <= 120:
         raise YouTubeError(400, "Enter a song or artist name.")
-    key = configured_key()
+    key = environment_key() or load_key()
     if not key:
         raise YouTubeError(503, "Configure a YouTube Data API key to search.")
     params = urlencode({

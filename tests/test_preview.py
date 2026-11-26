@@ -28,9 +28,9 @@ class PreviewTests(unittest.TestCase):
                 return Request(f"{url}/search?q={query}", headers=headers)
 
             try:
-                with patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": ""}):
+                with patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": "", "LOCALAPPDATA": ""}):
                     with urlopen(Request(url, headers=headers), timeout=2) as result:
-                        self.assertEqual(json.load(result), {"configured": False})
+                        self.assertEqual(json.load(result), {"configured": False, "canSaveKey": False})
                     with self.assertRaises(HTTPError) as error:
                         urlopen(search("music"), timeout=2)
                     self.assertEqual(error.exception.code, 503)
@@ -67,6 +67,62 @@ class PreviewTests(unittest.TestCase):
                         urlopen(search("music"), timeout=2)
                     self.assertEqual(error.exception.code, 429)
                     self.assertNotIn("test-key", error.exception.read().decode())
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
+    @unittest.skipUnless(sys.platform == "win32", "Windows user encryption requires DPAPI")
+    def test_youtube_preview_saves_encrypts_and_removes_only_a_same_origin_key(self):
+        with TemporaryDirectory() as directory, PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            origin = f"http://127.0.0.1:{server.server_port}"
+            url = origin + "/api/youtube"
+            headers = {"X-SmartBot-YouTube": "music"}
+            path = Path(directory) / "SmartBot" / "youtube-api-key.dpapi"
+            sample = "smartbot-test-only-preview-key-1234"
+
+            def post(key, request_origin=origin, content_type="application/json"):
+                fields = {**headers, "Content-Type": content_type}
+                if request_origin:
+                    fields["Origin"] = request_origin
+                return Request(url, json.dumps({"key": key}).encode(), headers=fields, method="POST")
+
+            try:
+                with patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": "", "LOCALAPPDATA": directory}):
+                    for request, code in ((post(sample, "https://example.test"), 403), (post(sample, None), 403),
+                                          (post(sample, content_type="text/plain"), 415), (post("invalid"), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(request, timeout=2)
+                        self.assertEqual(error.exception.code, code)
+                    self.assertFalse(path.exists())
+
+                    with urlopen(post(sample), timeout=3) as result:
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result), {"configured": True, "canSaveKey": True})
+                    self.assertNotIn(sample.encode(), path.read_bytes())
+                    self.assertNotIn(sample.encode("utf-16-le"), path.read_bytes())
+                    with urlopen(Request(url, headers=headers), timeout=3) as result:
+                        self.assertEqual(json.load(result), {"configured": True, "canSaveKey": True})
+
+                    with patch("youtube_api.HTTPSConnection") as upstream:
+                        response = upstream.return_value.getresponse.return_value
+                        response.status = 200
+                        response.read.return_value = b'{"items":[]}'
+                        with urlopen(Request(url + "/search?q=Faded", headers=headers), timeout=3) as result:
+                            self.assertEqual(json.load(result), {"items": []})
+                        self.assertEqual(upstream.return_value.request.call_args.kwargs["headers"],
+                                         {"X-Goog-Api-Key": sample})
+
+                    with patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": "another-environment-key"}):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(post(""), timeout=2)
+                        self.assertEqual(error.exception.code, 403)
+                        self.assertTrue(path.exists())
+
+                    with urlopen(post(""), timeout=2) as result:
+                        self.assertEqual(json.load(result), {"configured": False, "canSaveKey": True})
+                    self.assertFalse(path.exists())
             finally:
                 server.shutdown()
                 thread.join(timeout=2)
