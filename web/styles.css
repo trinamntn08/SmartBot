@@ -517,14 +517,20 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 
 .listen-toolbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0 0.75rem;
+  gap: clamp(0.25rem, 2vw, 0.75rem);
   border-block-end: 1px solid var(--line);
 }
 
-.listen-nav { display: flex; flex-wrap: wrap; gap: 0 0.8rem; }
+.listen-nav { display: flex; flex: none; gap: 0 clamp(0.25rem, 2vw, 0.8rem); }
+.listen-search-form { flex: 1; min-inline-size: 0; margin: 0; }
+.listen-search-form input {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+  padding-inline: 0.5rem;
+}
 .listen-nav a, .listen-tool {
   display: inline-flex;
   align-items: center;
@@ -550,7 +556,7 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 }
 .listen-tool[aria-expanded="true"] { background: var(--accent-soft); color: var(--ink); }
 .listen-tool svg { flex: none; }
-.listen-search-toggle { justify-content: center; min-inline-size: 44px; }
+.listen-search-toggle { flex: none; justify-content: center; min-inline-size: 44px; margin-inline-start: auto; }
 
 .listen-art {
   display: grid;
@@ -799,17 +805,6 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
   color: var(--muted);
 }
 .music-secondary-link:hover { color: var(--ink); }
-
-.podcast-discovery {
-  margin-block-start: 1rem;
-  padding: 0.75rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.podcast-discovery-tools { max-width: 30rem; }
-.podcast-discovery-tools form { margin: 0; }
 
 .podcast-form-row {
   display: grid;

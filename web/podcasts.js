@@ -17,7 +17,6 @@ function button(action) {
 }
 
 const icons = {
-  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>',
   next: '<path d="M5 12h14m-6-6 6 6-6 6"/>',
   back: '<path d="M19 12H5m6 6-6-6 6-6"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
@@ -48,26 +47,7 @@ const date = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
 
 export function renderPodcasts(view, repository, player, focus) {
   const panel = element('div', '', 'listen podcasts');
-  panel.innerHTML = `${listenHeader('podcasts', 'podcast-discovery')}
-    <section id="podcast-discovery" class="podcast-discovery" aria-label="Find podcasts" hidden>
-      <div class="podcast-discovery-tools">
-        <form data-podcast-search>
-          <div class="podcast-form-row">
-            <input type="search" name="query" maxlength="120" aria-label="Podcast name" placeholder="Search podcasts" required>
-            <button type="submit" class="podcast-icon" aria-label="Search" title="Search">${icon('search')}</button>
-          </div>
-        </form>
-        <details class="podcast-rss">
-          <summary>Add by RSS</summary>
-          <form data-podcast-feed>
-            <div class="podcast-form-row">
-              <input name="url" type="url" maxlength="2048" aria-label="Podcast RSS link" placeholder="https://" required>
-              <button type="submit" class="podcast-icon" aria-label="Open feed" title="Open feed">${icon('next')}</button>
-            </div>
-          </form>
-        </details>
-      </div>
-    </section>
+  panel.innerHTML = `${listenHeader('podcasts', 'podcast-search')}
     <section class="podcast-continue" aria-label="Continue listening" hidden></section>
     <span class="podcast-announcement" role="status"></span>
     <p class="podcast-status" role="status"></p>
@@ -89,7 +69,16 @@ export function renderPodcasts(view, repository, player, focus) {
         <h2 id="suggested-podcast">Suggested</h2>
         <div class="podcast-example"></div>
       </section>
-    </div>`;
+    </div>
+    <details class="podcast-rss">
+      <summary>Add by RSS</summary>
+      <form data-podcast-feed>
+        <div class="podcast-form-row">
+          <input name="url" type="url" maxlength="2048" aria-label="Podcast RSS link" placeholder="https://" required>
+          <button type="submit" class="podcast-icon" aria-label="Open feed" title="Open feed">${icon('next')}</button>
+        </div>
+      </form>
+    </details>`;
   view.replaceChildren(panel);
   if (focus) panel.querySelector('h1').focus();
 
@@ -103,17 +92,17 @@ export function renderPodcasts(view, repository, player, focus) {
   const suggestedSection = panel.querySelector('.podcast-pick');
   const followedShows = panel.querySelector('.podcast-followed');
   const continuePanel = panel.querySelector('.podcast-continue');
-  const queryInput = panel.querySelector('[name="query"]');
+  const searchForm = panel.querySelector('#podcast-search');
+  const queryInput = searchForm.elements.query;
   const find = panel.querySelector('[data-listen-search]');
   find.hidden = false;
-  const discoveryPanel = panel.querySelector('#podcast-discovery');
   let follows = [];
   let selected;
   let discovery;
   let showTrigger;
 
   function showDiscovery(visible) {
-    discoveryPanel.hidden = !visible;
+    searchForm.hidden = !visible;
     find.setAttribute('aria-expanded', String(visible));
   }
 
@@ -300,8 +289,8 @@ export function renderPodcasts(view, repository, player, focus) {
   artwork.height = 64;
   suggested.append(artwork, suggestedCopy, arrow);
   panel.querySelector('.podcast-example').append(suggested);
-  find.addEventListener('click', () => {
-    const opening = discoveryPanel.hidden;
+  function toggleSearch() {
+    const opening = searchForm.hidden;
     showDiscovery(opening);
     if (opening) queryInput.focus();
     else {
@@ -315,11 +304,16 @@ export function renderPodcasts(view, repository, player, focus) {
       status.textContent = '';
       announcement.textContent = '';
     }
+  }
+
+  find.addEventListener('click', () => {
+    if (!searchForm.hidden && queryInput.value.trim()) searchForm.requestSubmit();
+    else toggleSearch();
   });
-  discoveryPanel.addEventListener('keydown', event => {
+  searchForm.addEventListener('keydown', event => {
     if (event.key !== 'Escape') return;
     event.preventDefault();
-    find.click();
+    toggleSearch();
     find.focus();
   });
   panel.querySelector('[data-podcast-feed]').addEventListener('submit', event => {
@@ -335,9 +329,10 @@ export function renderPodcasts(view, repository, player, focus) {
     status.textContent = '';
     queryInput.focus();
   });
-  panel.querySelector('[data-podcast-search]').addEventListener('submit', event => {
+  searchForm.addEventListener('submit', event => {
     event.preventDefault();
     const query = queryInput.value.trim();
+    if (!query) return;
     results.hidden = true;
     resultList.replaceChildren();
     detail.hidden = true;

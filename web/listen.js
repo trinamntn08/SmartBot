@@ -74,6 +74,10 @@ export function listenHeader(page, controls) {
         <a href="#tracks"${current('tracks')}>Music</a>
         <a href="#podcasts"${current('podcasts')}>Podcasts</a>
       </nav>
+      <form id="${controls}" class="listen-search-form" hidden>
+        <input name="query" type="search" enterkeyhint="search" maxlength="120"
+          aria-label="${searchLabel}" placeholder="Search" required>
+      </form>
       <button type="button" class="listen-tool listen-search-toggle" data-listen-search
         aria-expanded="false" aria-controls="${controls}" aria-label="${searchLabel}" title="${searchLabel}" hidden>${listenSearchIcon}</button>
     </div>

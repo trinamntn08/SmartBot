@@ -56,15 +56,7 @@ function showResults(list, items, player) {
 
 export function renderYouTubeSearch(root, player, settings, searchToggle) {
   const lifecycle = new AbortController();
-  root.innerHTML = `<form id="youtube-song-search" hidden>
-      <label class="visually-hidden" for="youtube-query">Song or artist</label>
-      <div class="music-choice-row">
-        <input id="youtube-query" data-youtube-query name="query" type="search" maxlength="120"
-          placeholder="Song or artist" required>
-        <button type="submit" class="youtube-icon" aria-label="Search music" title="Search music">${listenSearchIcon}</button>
-      </div>
-    </form>
-    <section class="youtube-approval">
+  root.innerHTML = `<section class="youtube-approval">
       <p>SmartBot sends requests for charts, song searches, and playback to YouTube.
       By enabling this feature, you agree to these privacy terms and the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
       See <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.</p>
@@ -93,7 +85,7 @@ export function renderYouTubeSearch(root, player, settings, searchToggle) {
     </div>`;
   const approval = root.querySelector('.youtube-approval');
   const tools = root.querySelector('.youtube-search-tools');
-  const form = root.querySelector('#youtube-song-search');
+  const form = searchToggle.parentElement.querySelector('#youtube-song-search');
   const input = form.elements.query;
   const setup = root.querySelector('[data-youtube-setup]');
   const setupHeading = setup.querySelector('summary');
@@ -115,13 +107,10 @@ export function renderYouTubeSearch(root, player, settings, searchToggle) {
   }
 
   function showSearch(open) {
-    const label = open ? 'Close music search' : 'Search music';
     searchToggle.setAttribute('aria-expanded', String(open));
-    searchToggle.setAttribute('aria-label', label);
-    searchToggle.title = label;
     form.hidden = !open;
     if (open) {
-      input.placeholder = android && !configured ? 'Search YouTube Music' : 'Song or artist';
+      input.setAttribute('aria-label', android && !configured ? 'Search YouTube Music' : 'Song or artist');
       input.focus();
     }
     else {
@@ -144,7 +133,7 @@ export function renderYouTubeSearch(root, player, settings, searchToggle) {
 
   function showBrowse(focus) {
     configured = true;
-    input.placeholder = 'Song or artist';
+    input.setAttribute('aria-label', 'Song or artist');
     showSettings();
     searchToggle.hidden = false;
     shelves.load();
@@ -190,7 +179,10 @@ export function renderYouTubeSearch(root, player, settings, searchToggle) {
     void openBrowse(true);
   });
 
-  searchToggle.addEventListener('click', () => showSearch(form.hidden), { signal: lifecycle.signal });
+  searchToggle.addEventListener('click', () => {
+    if (!form.hidden && input.value.trim()) form.requestSubmit();
+    else showSearch(form.hidden);
+  }, { signal: lifecycle.signal });
   form.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -283,8 +275,8 @@ export function renderYouTubeSearch(root, player, settings, searchToggle) {
     lifecycle.abort();
     searchToggle.hidden = true;
     searchToggle.setAttribute('aria-expanded', 'false');
-    searchToggle.setAttribute('aria-label', 'Search music');
-    searchToggle.title = 'Search music';
+    form.hidden = true;
+    input.value = '';
     search?.abort();
     shelves.stop();
   };

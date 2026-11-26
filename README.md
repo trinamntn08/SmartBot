@@ -74,7 +74,7 @@ Android users can play the **Music picks** included in the APK with an internet 
 
 ## Listen to podcasts
 
-Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Tap the magnifying glass beside the Listen tabs to search by name or add a public HTTPS RSS link.
+Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Tap the magnifying glass to search by name in the Listen tab row. Use **Add by RSS** below the podcast list to open a public HTTPS feed.
 
 Streaming uses the publisher’s audio and requires internet. SmartBot requires no listening subscription and inserts no ads. Publishers may include ads in their audio.
 
