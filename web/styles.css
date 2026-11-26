@@ -510,6 +510,37 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 .music-service-settings summary { min-block-size: 44px; box-sizing: border-box; color: var(--muted); font-weight: 650; }
 .music-service-settings summary:hover { color: var(--ink); }
 
+.spotify-player {
+  inline-size: max(100%, min(280px, 100vw));
+  max-inline-size: 44rem;
+  margin-inline-start: min(0px, calc(50% - min(140px, 50vw)));
+}
+.spotify-player iframe {
+  display: block;
+  inline-size: 100%;
+  border: 0;
+  border-radius: 0.75rem;
+}
+.spotify-offline {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: var(--muted);
+}
+[data-spotify-playlist] .music-choice-row { display: flex; flex-wrap: wrap; }
+[data-spotify-playlist] input { flex: 1 1 10rem; width: auto; min-width: 0; max-width: none; margin: 0; }
+.music-secondary-link svg { width: 1rem; height: 1rem; }
+.spotify-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-block-start: 0.55rem; }
+.music-secondary-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 44px;
+  color: var(--muted);
+}
+.music-secondary-link:hover { color: var(--ink); }
+
 .podcast-discovery {
   margin-block-start: 1rem;
   padding: 0.75rem;

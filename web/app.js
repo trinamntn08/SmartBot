@@ -33,7 +33,7 @@ let loadActivity;
 let keepReadingPlanOpen = false;
 let stopMarkets;
 let stopNews;
-let stopPodcasts;
+let stopListening;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -141,8 +141,8 @@ function render(focusHeading = false) {
   stopMarkets = undefined;
   stopNews?.();
   stopNews = undefined;
-  stopPodcasts?.();
-  stopPodcasts = undefined;
+  stopListening?.();
+  stopListening = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -183,11 +183,11 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'podcasts') {
-    stopPodcasts = renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+    stopListening = renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
     return;
   }
   if (page === 'tracks') {
-    renderMusic(view, podcastPlayer.pause, focusHeading);
+    stopListening = renderMusic(view, podcastPlayer.pause, focusHeading);
     return;
   }
   if (page === 'markets') {

@@ -1,6 +1,6 @@
 # Podcast listening
 
-The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a shortcut to your chosen service on this device. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
+The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a service shortcut or a Spotify playlist on this device. Spotify's official player handles its playback availability. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
 Open **Podcasts** to resume an unfinished episode, play the latest from a followed show, or open the suggested show. **Find podcasts** reveals name search and **Add by RSS**. Opening a show brings its episodes into focus.
 
@@ -59,6 +59,8 @@ November 26, 2026. The playback speed button displays one decimal place, while t
 November 26, 2026. Workspace opens Listen with separate Music and Podcasts sections. Music remembers a service and opens its HTTPS shortcut. Podcasts leads with resume and followed-show playback, and Find podcasts reveals search and RSS. The existing podcast deep link and device-local listening data carry over. Chromium checked the layout from 320 to 1440 CSS pixels and at 200% text size. Controlled feeds and audio verified hidden discovery, keyboard focus, search and RSS, follow and quick play, resume, section and service persistence, and pausing a podcast when launching a music service. All 46 automated tests passed.
 
 The preview from `9681c07` on `main` passed playback and offline reopening for the podcast library and saved music choice. The Android debug APK passed Gradle build, signature continuity, ZIP alignment, and comparison of all 250 bundled web files. Lint reported zero errors and six warnings. Opening a music service and podcast playback on a physical phone remain pending.
+
+November 26, 2026. Music embeds the saved Spotify playlist in Spotify's official player. SmartBot validates the playlist link, stores the playlist ID on this device, and lets you replace or remove it. Android permits the Spotify playlist embed in a subframe. Chromium verified link validation, save and reload, service switching, replacement, removal, offline recovery, and player layout from 320 to 1440 CSS pixels and at 200% text size. Podcast playback and resume checks and all 46 automated tests passed.
 
 ## Handoff
 

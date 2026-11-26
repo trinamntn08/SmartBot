@@ -110,6 +110,7 @@ public final class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (isAppAsset(uri)) return false;
+                if (!request.isForMainFrame() && isSpotifyPlaylistEmbed(uri)) return false;
                 boolean musicService = uri.getPort() == -1 && uri.getUserInfo() == null && isMusicService(uri.getHost());
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
                         && (musicService || isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
@@ -142,6 +143,12 @@ public final class MainActivity extends Activity {
         return "open.spotify.com".equals(host) || "music.apple.com".equals(host)
                 || "music.youtube.com".equals(host) || "www.deezer.com".equals(host)
                 || "soundcloud.com".equals(host);
+    }
+
+    private static boolean isSpotifyPlaylistEmbed(Uri uri) {
+        String path = uri.getEncodedPath();
+        return "https".equals(uri.getScheme()) && "open.spotify.com".equals(uri.getEncodedAuthority())
+                && path != null && path.matches("/embed/playlist/[A-Za-z0-9]{22}");
     }
 
     @Override
