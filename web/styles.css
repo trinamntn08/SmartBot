@@ -193,9 +193,14 @@ h2 { font-size: 1.3rem; }
   text-decoration: none;
 }
 
-.feature-title {
+.feature-copy {
   align-self: center;
   padding: clamp(1.5rem, 4.2vw, 3.65rem);
+}
+
+.feature-copy p { margin: 0.65rem 0 0; }
+
+.feature-title {
   font: 400 clamp(3.3rem, 6.5vw, 5.8rem)/0.9 var(--heading-font);
 }
 
@@ -258,6 +263,7 @@ h2 { font-size: 1.3rem; }
 .section-card {
   display: grid;
   grid-template-rows: auto 1fr;
+  container: workspace-card / inline-size;
   box-sizing: border-box;
   height: 100%;
   overflow: hidden;
@@ -329,6 +335,11 @@ h2 { font-size: 1.3rem; }
 .section-card:hover .section-arrow {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+@container workspace-card (max-width: 8em) {
+  .section-copy { grid-template-columns: 1fr; }
+  .section-arrow { display: none; }
 }
 
 .section-preview {
