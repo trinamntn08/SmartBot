@@ -39,6 +39,8 @@ All 27 web, 15 Python, and seven podcast service tests passed. Chromium with con
 
 The published preview loaded 36 current chart cards with official thumbnails. Desktop and mobile checks covered opening a live chart video in the embedded player, searching, and returning keyboard focus to the selected card on close. A visual pass aligned the thumbnail cards and reserved two lines for titles so channel names line up within each row.
 
+The final layout passed a second live check in Chrome at desktop and phone widths in light and dark modes. The browser preview is running on port 8003. The Android debug APK rebuilt from `a9a9ace` with zero lint errors and eight warnings. Signature continuity, ZIP alignment, and all 257 bundled web assets passed. No Android device was connected.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
