@@ -4,6 +4,8 @@ Use the Music card to find, follow, and stream public podcasts. The browser uses
 
 Open **Music** to search by podcast name, open the suggested show, or expand **Add by RSS**. Opening a show brings its episodes into focus. **Followed shows** and **Continue listening** appear when there are saved shows or an unfinished episode.
 
+Drag the timeline to a specific point or use the 10-second back and forward buttons. Open the speed control to choose a preset or enter a custom rate from 0.25× to 4×. SmartBot keeps the rate when you switch episodes or reopen the app.
+
 ## Optional hosted service
 
 The default Android APK searches the Apple Podcasts catalog and downloads public HTTPS RSS feeds on the device. It uses the device's country for search, with the United States as the default when the device has no region set. The existing hosted service remains available for deployments that use Podcast Index.
@@ -29,6 +31,8 @@ The design skill's landing-page gate flagged the shared app shell, hash routes, 
 November 24, 2026. The player uses labeled play, pause, and retry icons in a 54-pixel desktop bar and an 81-pixel phone layout. Chromium verified the icons, keyboard activation, seek, and rewind at 320, 390, and 1440 CSS pixels. All 22 web tests passed. The Android debug build, lint, signature, and updated asset checks passed. Lint reported zero errors and seven warnings. Physical phone verification remains open.
 
 November 25, 2026. Android 0.3.3 adds discovery to the default APK. Mobile-width Chromium verified name search, a SoundCloud-format RSS link, episode ordering, stable playback IDs, refreshing followed shows, and offline access with controlled responses. All 39 automated tests passed. The APK passed build, alignment, signature, and checks of all 233 bundled web files. It uses the same signing certificate as the previous pilot. Lint reported zero errors and six warnings. The cloud environment could not reach the live catalog or publisher feed endpoints.
+
+November 26, 2026. Music uses smaller type, compact discovery, and a player with a timeline, two 10-second skip buttons, and a saved custom speed. Chromium verified search, follow, playback, keyboard scrubbing and speed entry, touch, invalid rates, reload and resume, retry, and elapsed activity at changed speeds with controlled feeds and audio. The layout fit widths from 320 to 1440 CSS pixels and 200% text size on mobile. All 26 web, 12 Python, and five podcast service tests passed. Android compilation and lint passed. Physical phone playback and lock-screen checks remain pending.
 
 ## Handoff
 

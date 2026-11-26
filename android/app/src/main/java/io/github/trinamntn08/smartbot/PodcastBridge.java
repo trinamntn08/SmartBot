@@ -126,6 +126,19 @@ final class PodcastBridge {
             case "pause":
                 controller.pause();
                 return;
+            case "back":
+                if (controller.isCurrentMediaItemSeekable()) controller.seekBack();
+                return;
+            case "forward":
+                if (controller.isCurrentMediaItemSeekable()) controller.seekForward();
+                return;
+            case "speed":
+                double rate = request.getDouble("rate");
+                if (!Double.isFinite(rate) || rate < 0.25 || rate > 4) {
+                    throw new IllegalArgumentException("Invalid playback speed");
+                }
+                controller.setPlaybackSpeed((float) rate);
+                return;
             case "seek":
                 double position = request.getDouble("position");
                 long duration = controller.getDuration();
@@ -156,6 +169,8 @@ final class PodcastBridge {
         return new JSONObject().put("active", true).put("episode", PodcastPlaybackService.episode(current))
                 .put("position", Math.max(0, controller.getCurrentPosition()) / 1000.0)
                 .put("duration", duration == C.TIME_UNSET ? 0 : duration / 1000.0)
+                .put("seekable", controller.isCurrentMediaItemSeekable())
+                .put("rate", Double.parseDouble(Float.toString(controller.getPlaybackParameters().speed)))
                 .put("playing", playing).put("buffering", playing && state == Player.STATE_BUFFERING)
                 .put("ended", state == Player.STATE_ENDED).put("error", controller.getPlayerError() == null
                         ? "" : "This episode could not play. Check your connection and retry.");

@@ -12,6 +12,7 @@ import androidx.annotation.OptIn;
 import androidx.media3.common.AudioAttributes;
 import androidx.media3.common.C;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackParameters;
 import androidx.media3.common.Player;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -26,6 +27,7 @@ public final class PodcastPlaybackService extends MediaSessionService {
     private static final long CHECKPOINT_INTERVAL_MS = 5_000;
     static final String OPEN_MUSIC = "io.github.trinamntn08.smartbot.OPEN_MUSIC";
     private static final String LAST = "last";
+    private static final String RATE = "playback-rate";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable checkpoint = new Runnable() {
@@ -46,9 +48,15 @@ public final class PodcastPlaybackService extends MediaSessionService {
         AudioAttributes attributes = new AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
                 .setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build();
         player = new ExoPlayer.Builder(this).setAudioAttributes(attributes, true)
-                .setHandleAudioBecomingNoisy(true).setSeekBackIncrementMs(15_000)
+                .setHandleAudioBecomingNoisy(true).setSeekBackIncrementMs(10_000).setSeekForwardIncrementMs(10_000)
                 .setWakeMode(C.WAKE_MODE_NETWORK).build();
+        player.setPlaybackSpeed(preferences(this).getFloat(RATE, 1));
         player.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackParametersChanged(PlaybackParameters parameters) {
+                preferences(PodcastPlaybackService.this).edit().putFloat(RATE, parameters.speed).apply();
+            }
+
             @Override
             public void onIsPlayingChanged(boolean playing) {
                 handler.removeCallbacks(checkpoint);

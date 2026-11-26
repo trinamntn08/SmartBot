@@ -42,8 +42,26 @@
   </header>
   <div class="shell">
     <section id="podcast-player" class="card podcast-player" aria-label="Podcast player" hidden>
-      <strong></strong>
-      <div class="actions">
+      <div class="podcast-player-episode">
+        <span class="podcast-player-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+            <path d="M4 13v-1a8 8 0 0 1 16 0v1"/>
+            <rect x="4" y="12" width="4" height="7" rx="2"/>
+            <rect x="16" y="12" width="4" height="7" rx="2"/>
+          </svg>
+        </span>
+        <div class="podcast-player-copy">
+          <strong data-player-title></strong>
+          <span data-player-publisher></span>
+        </div>
+      </div>
+      <div class="podcast-timeline">
+        <span data-player-time aria-hidden="true">0:00</span>
+        <input type="range" min="0" max="0" step="1" value="0" data-player-seek aria-label="Episode position" disabled>
+        <span data-player-duration aria-hidden="true">–:––</span>
+      </div>
+      <div class="podcast-transport" role="group" aria-label="Playback controls">
+        <button type="button" class="quiet podcast-skip" data-player-rewind aria-label="Back 10 seconds" title="Back 10 seconds">−10 s</button>
         <button type="button" data-player-toggle data-playback="play" aria-label="Play podcast">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="currentColor">
             <path data-icon="play" d="M8 5v14l11-7z"/>
@@ -51,11 +69,26 @@
             <path data-icon="retry" d="M20 6v6h-6m6 0a8 8 0 1 0-2.3 5.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        <button type="button" class="quiet" data-player-rewind aria-label="Back 15 seconds">−15 s</button>
+        <button type="button" class="quiet podcast-skip" data-player-forward aria-label="Forward 10 seconds" title="Forward 10 seconds">+10 s</button>
       </div>
-      <input type="range" min="0" max="0" step="1" value="0" aria-label="Episode position">
-      <span data-player-time></span>
-      <p role="status"></p>
+      <details class="podcast-speed">
+        <summary aria-label="Playback speed, 1×"><span data-player-rate>1×</span></summary>
+        <form class="podcast-speed-menu">
+          <label for="podcast-rate">Playback speed</label>
+          <div class="podcast-speed-presets" role="group" aria-label="Speed presets">
+            <button type="button" class="quiet" data-rate="1">1×</button>
+            <button type="button" class="quiet" data-rate="1.25">1.25×</button>
+            <button type="button" class="quiet" data-rate="1.5">1.5×</button>
+            <button type="button" class="quiet" data-rate="2">2×</button>
+          </div>
+          <div class="podcast-form-row">
+            <input id="podcast-rate" type="number" inputmode="decimal" min="0.25" max="4" step="any" required aria-label="Custom playback speed" aria-describedby="podcast-rate-limits">
+            <button type="submit">Apply</button>
+          </div>
+          <small id="podcast-rate-limits">0.25× to 4×</small>
+        </form>
+      </details>
+      <p class="podcast-player-status" role="status"></p>
     </section>
     <main id="view" aria-busy="true">Opening SmartBot…</main>
     <p id="error" role="alert" hidden></p>
