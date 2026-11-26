@@ -24,15 +24,9 @@ export const feeds = [
   ...rssFeeds,
 ];
 
-export function selectedFeeds({ languages, topics }, affinity) {
-  const learned = topics.length || !affinity ? [] : [...affinity.topics]
-    .sort((a, b) => b[1] - a[1]).slice(0, 2).map(([topic]) => topic);
-  const interests = topics.length ? topics : ['general', 'sports', ...learned];
-  return feeds.filter(feed => {
-    if (!languages.includes(feed.language)) return false;
-    if (!topics.length && feed.provider === 'rss') return true;
-    return interests.includes(feed.topic) || feed.related?.some(topic => interests.includes(topic));
-  });
+export function selectedFeeds({ languages, topics }) {
+  return feeds.filter(feed => languages.includes(feed.language)
+    && (!topics.length || topics.includes(feed.topic) || feed.related?.some(topic => topics.includes(topic))));
 }
 
 export function isCanadaStory(url) {

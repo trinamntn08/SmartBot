@@ -1,11 +1,12 @@
 import { fetchArticle, fetchFeed, newsAffinity, newsPageSize, selectedFeeds, shortlist } from './news-provider.js';
 import { isCurrentPublisherLink } from './news-rss.js';
 import { isTuoitreStory } from './tuoitre.js';
-import { newsLanguages, newsTopics } from './news-preferences.js';
+import { myNewsTopics, newsBrowseTopic, newsEditionPreferences, newsLanguages, newsTopics } from './news-preferences.js';
 import { newsRepository as store } from './news-repository.js';
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 const freshFor = 60 * 60 * 1000;
+const mainTopicIds = ['world', 'business', 'tech', 'sports', 'culture', 'science'];
 const storyDate = value => dateFormat.format(new Date(value.length === 10 ? value + 'T12:00:00' : value));
 const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.9 6.5.9-4.7 4.6 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.7-4.6 6.5-.9Z"/></svg>';
 
@@ -139,27 +140,51 @@ export function renderNewsSettings(view) {
       message.textContent = 'Choose at least one language.';
     } else {
       const next = { ...store.preferences(), [name]: values };
-      if (store.savePreferences(next)) preferences = next;
-      else message.textContent = 'Could not save news preferences on this device.';
+      if (store.savePreferences(next)) {
+        preferences = next;
+        if (name === 'topics') store.saveBrowseTopic(null);
+      } else message.textContent = 'Could not save news preferences on this device.';
     }
     sync();
   });
 }
 
 export function renderNews(view, savedNews, focus, track) {
+  const preferences = store.preferences();
+  const personalized = store.personalized();
+  let topic = newsBrowseTopic(store.browseTopic(), preferences);
+  function editionKey() {
+    return JSON.stringify({ ...newsEditionPreferences(preferences, topic), personalized, topic });
+  }
+  let visible = history.state?.newsEdition === editionKey() ? history.state.newsCount : newsPageSize;
+
+  const mainTopics = [{ id: '', label: 'All' }];
+  if (preferences.topics.length) mainTopics.push({ id: myNewsTopics, label: 'My topics' });
+  for (const id of mainTopicIds) {
+    mainTopics.push(id === 'world' ? { id, label: 'World' } : newsTopics.find(choice => choice.id === id));
+  }
+  const moreTopics = newsTopics.filter(choice => !mainTopicIds.includes(choice.id));
+  const topicButtons = choices => choices.map(({ id, label }) =>
+    `<button class="news-topic" type="button" data-topic="${id}" aria-pressed="${topic === id}">${escapeHtml(label)}</button>`).join('');
   const panel = document.createElement('section');
   view.replaceChildren(panel);
   panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
-    <button class="quiet" type="button">Refresh</button></div></div>
+    <button class="quiet" type="button" data-news-refresh>Refresh</button></div></div>
+    <div class="news-edition" role="group" aria-label="News topics">
+      <div class="news-topic-row">${topicButtons(mainTopics)}
+        <button class="news-topic news-topic-toggle" type="button" aria-expanded="false" aria-controls="news-more-topics"><span>More topics</span></button>
+      </div>
+      <div class="news-topic-row news-topic-more" id="news-more-topics" hidden>${topicButtons(moreTopics)}</div>
+    </div>
     <p class="news-info" role="status"></p><ul class="news-list" aria-label="Headlines"></ul>
     <div data-news-end aria-hidden="true" hidden></div>`;
-  const refreshButton = panel.querySelector('button');
+  const refreshButton = panel.querySelector('[data-news-refresh]');
   const status = panel.querySelector('[role=status]');
-  const preferences = store.preferences();
-  const personalized = store.personalized();
-  const editionKey = JSON.stringify({ ...preferences, personalized });
-  let visible = history.state?.newsEdition === editionKey ? history.state.newsCount : newsPageSize;
+  const topics = panel.querySelector('.news-edition');
+  const topicToggle = topics.querySelector('.news-topic-toggle');
+  const topicToggleLabel = topicToggle.querySelector('span');
+  const more = topics.querySelector('#news-more-topics');
   const end = panel.querySelector('[data-news-end]');
   const list = panel.querySelector('ul');
   if (focus) panel.querySelector('h1').focus();
@@ -169,8 +194,8 @@ export function renderNews(view, savedNews, focus, track) {
   let affinity;
   let request;
 
-  function draw() {
-    stories = shortlist(store.stories(), preferences, affinity);
+  function draw(edition) {
+    stories = shortlist(store.stories(), edition, affinity);
     list.innerHTML = storyRows(stories.slice(0, visible), stars);
     watchEnd();
     return stories.length;
@@ -182,7 +207,7 @@ export function renderNews(view, savedNews, focus, track) {
     const next = stories.slice(visible, visible + newsPageSize);
     list.insertAdjacentHTML('beforeend', storyRows(next, stars));
     visible += newsPageSize;
-    history.replaceState({ ...history.state, newsEdition: editionKey, newsCount: visible }, '');
+    rememberPage();
     // Recheck after appending in case the viewport still reaches the end.
     watchEnd();
   });
@@ -193,20 +218,56 @@ export function renderNews(view, savedNews, focus, track) {
     if (!end.hidden) observer.observe(end);
   }
 
+  function rememberPage() {
+    history.replaceState({ ...history.state, newsEdition: editionKey(), newsCount: visible }, '');
+  }
+
+  function showMore(expanded) {
+    const current = moreTopics.find(choice => choice.id === topic);
+    topicToggleLabel.textContent = current && !expanded ? current.label : 'More topics';
+    if (current && !expanded) topicToggle.setAttribute('aria-label', `${current.label} selected, more topics`);
+    else topicToggle.removeAttribute('aria-label');
+    topicToggle.toggleAttribute('data-current', Boolean(current && !expanded));
+    topicToggle.setAttribute('aria-expanded', String(expanded));
+    more.hidden = !expanded;
+  }
+
+  showMore(false);
+  topicToggle.onclick = () => showMore(more.hidden);
+  topics.addEventListener('click', event => {
+    const button = event.target.closest('[data-topic]');
+    if (!button) return;
+    const changed = button.dataset.topic !== topic;
+    if (changed) {
+      topics.querySelector('[aria-pressed="true"]')?.setAttribute('aria-pressed', 'false');
+      topic = button.dataset.topic;
+      button.setAttribute('aria-pressed', 'true');
+      store.saveBrowseTopic(topic);
+      visible = newsPageSize;
+      rememberPage();
+    }
+    const fromMore = more.contains(button);
+    showMore(false);
+    if (fromMore) topicToggle.focus({ preventScroll: true });
+    if (changed && request) load();
+  });
+
   async function load(force = false) {
     request?.abort();
     const controller = new AbortController();
     request = controller;
     affinity = personalized ? newsAffinity(store.opens()) : undefined;
-    const selected = selectedFeeds(preferences, affinity);
+    const edition = newsEditionPreferences(preferences, topic);
+    const selected = selectedFeeds(edition);
     const pending = selected.filter(feed => {
-      const edition = store.edition(feed);
-      return force || edition?.pageSize !== newsPageSize || Date.now() - edition.time >= freshFor;
+      const cached = store.edition(feed);
+      return force || cached?.pageSize !== newsPageSize || Date.now() - cached.time >= freshFor;
     });
-    draw();
+    const cachedCount = draw(edition);
     const time = Date.now();
-    refreshButton.disabled = navigator.onLine && pending.length > 0;
-    if (refreshButton.disabled) {
+    const updating = navigator.onLine && pending.length > 0;
+    refreshButton.disabled = updating;
+    if (updating) {
       status.textContent = 'Updating…';
       const timeout = setTimeout(() => controller.abort(), 12000);
       await Promise.all(pending.map(async feed => {
@@ -218,15 +279,15 @@ export function renderNews(view, savedNews, focus, track) {
       clearTimeout(timeout);
     }
     if (request !== controller || !panel.isConnected) return;
+    const available = updating ? draw(edition) : cachedCount;
     refreshButton.disabled = false;
-    const available = draw();
     const latest = store.latestEditionTime(selected);
     const stamp = latest ? 'Updated ' + new Date(latest).toLocaleString(undefined, {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     }) : '';
     status.textContent = available
       ? [affinity?.seen.size ? 'For you' : '', stamp].filter(Boolean).join(' · ')
-      : 'No matching headlines.';
+      : topic ? 'No headlines for this topic.' : 'No headlines available.';
   }
 
   refreshButton.disabled = true;

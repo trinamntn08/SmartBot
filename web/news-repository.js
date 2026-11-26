@@ -34,6 +34,8 @@ function readOpens() {
 export const newsRepository = {
   preferences() { return newsPreferences(read('filters')); },
   savePreferences(value) { return write('filters', value); },
+  browseTopic() { return read('browse-topic'); },
+  saveBrowseTopic(value) { return write('browse-topic', value); },
   personalized() { return read('personalized') !== false; },
   setPersonalized(enabled) { return write('personalized', enabled); },
   opens(now = Date.now()) {

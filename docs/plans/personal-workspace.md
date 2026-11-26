@@ -93,6 +93,12 @@ November 26, 2026. Refresh requests the selected feeds directly and updates the 
 
 All 31 Node and 12 Python tests passed. At 320 CSS pixels, Chromium received 15 live feed responses and displayed ten headlines after Refresh. A controlled check reproduced the November 24 timestamp, advanced it to November 26 when one feed succeeded, and kept the latest successful time during a complete failure and an offline reload. Physical phone verification is pending.
 
+### Browse News by topic
+
+November 26, 2026. The News header shows the main sections and an expandable **More topics** list. **All** requests every existing feed in the selected languages. The **My topics** section keeps saved interests available, and the last chosen section reopens on return. Topic changes start a new list, and Refresh updates that list's feeds.
+
+All 27 web and 12 Python tests passed. Mobile and desktop browser checks and physical phone verification are pending.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

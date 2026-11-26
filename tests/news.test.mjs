@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { ensurePlan, newRoutine, savePreferences } from '../web/planner.js';
-import { newsAffinity, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
-import { newsPreferences, newsTopics } from '../web/news-preferences.js';
+import { feeds, newsAffinity, selectedFeeds, shortlist, starterStories } from '../web/news-provider.js';
+import { myNewsTopics, newsBrowseTopic, newsEditionPreferences, newsPreferences, newsTopics } from '../web/news-preferences.js';
 import { newsRepository } from '../web/news-repository.js';
 import { isCurrentPublisherLink, rssFeeds, rssStory } from '../web/news-rss.js';
 import { tuoitreStory } from '../web/tuoitre.js';
@@ -37,11 +37,9 @@ test('reading activity ranks unread related headlines without overriding filters
   assert.equal(newsAffinity([{ ...open, at: now - 28 * 86400000 }], now).topics.get('ai'), 0.25);
 });
 
-test('learned interests refresh relevant feeds when browsing all topics', () => {
-  const now = Date.now();
-  const affinity = newsAffinity([{ url: story.url, at: now, topics: ['culture'], source: story.source }], now);
-  assert.ok(selectedFeeds({ languages: ['vi'], topics: [] }, affinity).some(feed => feed.topic === 'culture'));
-  assert.ok(selectedFeeds({ languages: ['vi'], topics: ['sports'] }, affinity).every(feed => feed.topic === 'sports'));
+test('All requests every feed in the selected languages and sections request relevant feeds', () => {
+  assert.deepEqual(selectedFeeds({ languages: ['vi'], topics: [] }), feeds.filter(feed => feed.language === 'vi'));
+  assert.deepEqual(selectedFeeds({ languages: ['vi'], topics: ['sports'] }).map(feed => feed.topic), ['sports']);
 });
 
 function useTestStorage(t) {
@@ -58,6 +56,25 @@ function useTestStorage(t) {
   });
   return storage;
 }
+
+test('browsing a section or All preserves earlier topic and language preferences', t => {
+  const storage = useTestStorage(t);
+  storage.setItem('smartbot-news-filters', JSON.stringify({ language: 'vi', topic: 'sports' }));
+  const prefs = newsRepository.preferences();
+  assert.equal(newsBrowseTopic(newsRepository.browseTopic(), prefs), myNewsTopics);
+  assert.deepEqual(newsEditionPreferences(prefs, myNewsTopics), { languages: ['vi'], topics: ['sports'] });
+
+  newsRepository.saveBrowseTopic('');
+  const all = newsBrowseTopic(newsRepository.browseTopic(), prefs);
+  assert.equal(all, '');
+  assert.deepEqual(newsEditionPreferences(prefs, all), { languages: ['vi'], topics: [] });
+
+  newsRepository.saveBrowseTopic('culture');
+  const culture = newsBrowseTopic(newsRepository.browseTopic(), prefs);
+  assert.deepEqual(newsEditionPreferences(prefs, culture), { languages: ['vi'], topics: ['culture'] });
+  assert.deepEqual(newsRepository.preferences(), { languages: ['vi'], topics: ['sports'] });
+  assert.equal(newsBrowseTopic(myNewsTopics, { topics: [] }), '');
+});
 
 test('the refresh time follows the latest saved edition for the selected feeds', t => {
   useTestStorage(t);

@@ -30,6 +30,18 @@ export const newsTopics = [
   { id: 'immigration', label: 'Immigration' },
 ];
 
+export const myNewsTopics = 'my-topics';
+
+export function newsBrowseTopic(value, { topics }) {
+  if (value === '' || newsTopics.some(topic => topic.id === value)) return value;
+  return topics.length ? myNewsTopics : '';
+}
+
+export function newsEditionPreferences(preferences, topic) {
+  const topics = topic === myNewsTopics ? preferences.topics : topic ? [topic] : [];
+  return { ...preferences, topics };
+}
+
 export function newsPreferences(value) {
   // Earlier versions stored the two dropdown values as singular strings.
   const valid = (choices, multiple, single) => choices.map(choice => choice.id)
