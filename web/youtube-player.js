@@ -37,6 +37,7 @@ export function createYouTubePlayer(panel, view, pauseOtherPlayers) {
   let visible = false;
   let startWhenVisible = false;
   let readyTimeout;
+  let launcher;
 
   const canPlay = () => visible && !document.hidden && navigator.onLine
     && !document.querySelector('dialog[open]') && !document.querySelector('.book-reader');
@@ -59,6 +60,7 @@ export function createYouTubePlayer(panel, view, pauseOtherPlayers) {
     sequence += 1;
     clearTimeout(readyTimeout);
     videoId = undefined;
+    launcher = undefined;
     visible = false;
     startWhenVisible = false;
     observer.disconnect();
@@ -69,13 +71,16 @@ export function createYouTubePlayer(panel, view, pauseOtherPlayers) {
   }
 
   async function open(video) {
+    const trigger = view.contains(document.activeElement) ? document.activeElement : undefined;
     if (video.id === videoId && player && watch.hidden) {
+      launcher = trigger ?? launcher;
       panel.focus();
       startWhenVisible = !document.hidden;
       checkPlayback();
       return;
     }
     close();
+    launcher = trigger;
     pauseOtherPlayers();
     const attempt = sequence;
     videoId = video.id;
@@ -127,8 +132,10 @@ export function createYouTubePlayer(panel, view, pauseOtherPlayers) {
   }
 
   closeButton.addEventListener('click', () => {
+    const trigger = launcher;
     close();
-    (view.querySelector('[data-youtube-query]') ?? view).focus({ preventScroll: true });
+    const target = trigger?.getClientRects().length ? trigger : view.querySelector('[data-youtube-search-toggle]:not([hidden])');
+    (target ?? view).focus();
   });
   if (location.origin !== 'https://appassets.androidplatform.net') watch.target = '_blank';
   watch.addEventListener('click', close);

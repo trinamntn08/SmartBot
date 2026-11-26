@@ -11,6 +11,7 @@ Use Listen → Music to search for public music videos and choose one to play in
 1. Add YouTube Data API search through the loopback preview and Android app. Keep keys in the preview environment or private Android app storage.
 2. Add first-use terms and privacy information, search, selection, and a persistent visible player. Switch cleanly between YouTube, Spotify, and Podcasts.
 3. Verify blank, configured, error, and offline states, a real embedded music video, and Android packaging.
+4. Put playable music charts on the Music screen. Share the chart view across the browser preview and Android, and move song search into a button.
 
 ## Verification
 
@@ -31,6 +32,10 @@ The Windows browser preview now saves or removes the key through **YouTube searc
 Chromium used the published Windows build to save a sample key with a masked field, restart the preview process, resume search without re-entering the key, and remove the file. The key stayed out of browser storage and request logs. The form fit 320 CSS pixels at 200% text size. The Android bridge fixture also passed its existing save, remove, and offline recovery checks. The regular browser preview was restarted on port 8003.
 
 Chromium verified live search from the configured preview. Searching for Alan Walker Faded returned the official video. Selecting it opened the embedded YouTube player above Music, played the full-length video, and kept playing on Workspace in the same tab.
+
+The Music screen now opens with regional rows from YouTube's public music charts for France, Vietnam, and the United States. Cards use official thumbnails and launch the existing player directly. The magnifying glass opens search, and Escape returns from search to the charts. Both preview and Android use the same chart UI and their existing key storage. The upstream chart returned 18 embeddable videos for each region during the provider check.
+
+All 27 web, 15 Python, and seven podcast service tests passed. Chromium with controlled data verified browsing without a search, keyboard scrolling, eligibility filtering, a failed region alongside working charts, re-entry, and the layout at 320 CSS pixels and 200% text size. Impeccable's only flag was for an existing font declaration.
 
 ## Handoff
 

@@ -659,9 +659,44 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
 }
 .youtube-player.is-compact .youtube-video iframe { block-size: 200px; }
 .youtube-search {
-  max-width: 44rem;
   margin-block-end: 1rem;
 }
+.youtube-browse-header, .youtube-shelf-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.youtube-browse-header { flex-wrap: wrap; min-block-size: 44px; }
+.listen .youtube-browse-header h2 {
+  margin: 0;
+  font-size: 1.375rem;
+  letter-spacing: -0.022em;
+}
+.youtube-browse-actions, .youtube-shelf-controls { display: flex; align-items: center; gap: 0.25rem; }
+.youtube-source {
+  display: inline-grid;
+  place-items: center;
+  min-block-size: 44px;
+  padding-inline: 0.5rem;
+  border-radius: 0.5rem;
+}
+.youtube-source:hover { background: var(--surface); }
+.youtube-source img { object-fit: contain; }
+.youtube-logo-dark,
+:root[data-color-mode="dark"] .youtube-logo-light { display: none; }
+:root[data-color-mode="dark"] .youtube-logo-dark { display: block; }
+.youtube-icon {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  padding: 0;
+}
+.listen-tool.youtube-icon:hover { background: var(--accent-soft); }
+.listen-tool.youtube-icon[aria-disabled="true"] { opacity: 0.55; cursor: default; background: transparent; }
+.youtube-approval { max-inline-size: 44rem; }
+#youtube-song-search { max-inline-size: 44rem; margin-block-end: 0.75rem; }
 .youtube-search form { margin-block-start: 0.65rem; max-width: 32rem; }
 .youtube-search form input { min-width: 0; max-width: none; margin: 0; }
 .youtube-search-status { margin: 0.65rem 0 0; color: var(--muted); }
@@ -678,6 +713,93 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
 }
 .youtube-result:hover { border-color: transparent; background: var(--accent-soft); }
 .youtube-search-tools details p { overflow-wrap: anywhere; }
+.youtube-shelves { margin-block: 0.65rem 1.5rem; }
+.youtube-shelves:empty { display: none; }
+.youtube-shelf + .youtube-shelf { margin-block-start: 1.25rem; }
+.youtube-shelf-heading {
+  min-block-size: 44px;
+  margin-block-end: 0.25rem;
+}
+.youtube-shelf-heading h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+.youtube-shelf-track, .youtube-shelf-loading {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(8.75rem, 22vw, 13.25rem);
+  gap: 0.8rem;
+  padding: 0 0 0.5rem;
+  margin: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-color: var(--line) transparent;
+}
+.youtube-shelf-track li { min-inline-size: 0; scroll-snap-align: start; }
+.youtube-shelf-loading { overflow: hidden; }
+.youtube-shelf-loading span {
+  aspect-ratio: 16 / 9;
+  border-radius: 0.7rem;
+  background: var(--surface);
+}
+.youtube-video-card, .youtube-video-card:hover {
+  display: grid;
+  align-content: start;
+  inline-size: 100%;
+  gap: 0.2rem;
+  padding: 0 0 0.25rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: transparent;
+  text-align: start;
+}
+.youtube-video-card:focus-visible { outline-offset: -2px; }
+.youtube-cover {
+  position: relative;
+  display: grid;
+  aspect-ratio: 16 / 9;
+  margin-block-end: 0.3rem;
+  overflow: hidden;
+  border-radius: 0.7rem;
+  background: var(--accent-soft);
+}
+.youtube-cover img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+.youtube-card-play {
+  position: absolute;
+  inset-inline-end: 0.4rem;
+  inset-block-end: 0.4rem;
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--feature);
+  color: var(--feature-ink);
+}
+.youtube-video-card:hover .youtube-card-play, .youtube-video-card:focus-visible .youtube-card-play {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.youtube-video-card strong {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.youtube-channel {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.youtube-shelf-status { margin: 0.25rem 0; color: var(--muted); }
+.youtube-shelf-status:empty { display: none; }
 .spotify-offline {
   margin: 0;
   padding: 0.75rem;

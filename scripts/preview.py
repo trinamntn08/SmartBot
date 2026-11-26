@@ -18,7 +18,7 @@ from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
 from market_api import MarketError, crypto_history, daily_prices, market_archive, vietnam_history
-from youtube_api import YouTubeError, key_status, search_music, update_key
+from youtube_api import YouTubeError, key_status, popular_music, search_music, update_key
 
 
 HOST = "127.0.0.1"
@@ -131,16 +131,18 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path, _, query = self.path.partition("?")
-        if path in (YOUTUBE_API, f"{YOUTUBE_API}/search"):
+        if path in (YOUTUBE_API, f"{YOUTUBE_API}/search", f"{YOUTUBE_API}/chart"):
             if not self.local_request() or self.headers.get("X-SmartBot-YouTube") != "music":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
             if path == YOUTUBE_API:
                 self.send_json(200, key_status())
                 return
-            values = parse_qs(query, keep_blank_values=True).get("q", [])
+            is_chart = path.endswith("/chart")
+            values = parse_qs(query, keep_blank_values=True).get("region" if is_chart else "q", [])
+            value = values[0] if len(values) == 1 else ""
             try:
-                result = search_music(values[0] if len(values) == 1 else "")
+                result = popular_music(value) if is_chart else search_music(value)
             except YouTubeError as error:
                 self.send_json(error.status, {"error": str(error)})
             else:

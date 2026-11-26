@@ -17,6 +17,45 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_youtube_chart_uses_music_category_and_allowed_region(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/youtube/chart?region="
+            headers = {"X-SmartBot-YouTube": "music"}
+            try:
+                with (patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": "test-key"}),
+                      patch("youtube_api.HTTPSConnection") as upstream):
+                    for request, code in (
+                        (url + "FR", 403),
+                        (Request(url + "../", headers=headers), 400),
+                        (Request(url + "FR&region=VN", headers=headers), 400),
+                    ):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(request, timeout=2)
+                        self.assertEqual(error.exception.code, code)
+                    upstream.assert_not_called()
+                    response = upstream.return_value.getresponse.return_value
+                    response.status = 200
+                    response.read.return_value = b'{"items":[{"id":"60ItHLz5WEA","status":{"embeddable":true}}]}'
+                    with urlopen(Request(url + "VN", headers=headers), timeout=2) as result:
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result)["items"][0]["id"], "60ItHLz5WEA")
+                    upstream.assert_called_once_with("www.googleapis.com", timeout=8)
+                    call = upstream.return_value.request.call_args
+                    path = urlsplit(call.args[1])
+                    self.assertEqual(path.path, "/youtube/v3/videos")
+                    params = parse_qs(path.query)
+                    self.assertEqual(params["chart"], ["mostPopular"])
+                    self.assertEqual(params["regionCode"], ["VN"])
+                    self.assertEqual(params["videoCategoryId"], ["10"])
+                    self.assertIn("status/embeddable", params["fields"][0])
+                    self.assertNotIn("key", params)
+                    self.assertEqual(call.kwargs["headers"], {"X-Goog-Api-Key": "test-key"})
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
     def test_youtube_search_uses_the_local_key_and_filters_for_embeddable_music(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})

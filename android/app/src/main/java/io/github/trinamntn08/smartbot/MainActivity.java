@@ -324,8 +324,9 @@ public final class MainActivity extends Activity {
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
         String youtubePath = ASSET_PATH + "api/youtube";
-        if (youtubePath.equals(uri.getPath())) return youtubeSearch.read(false, request);
-        if ((youtubePath + "/search").equals(uri.getPath())) return youtubeSearch.read(true, request);
+        if (youtubePath.equals(uri.getPath())) return youtubeSearch.read("", request);
+        if ((youtubePath + "/search").equals(uri.getPath())) return youtubeSearch.read("search", request);
+        if ((youtubePath + "/chart").equals(uri.getPath())) return youtubeSearch.read("chart", request);
         if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
         if ((ASSET_PATH + "api/markets/crypto").equals(uri.getPath())) return MarketFeed.crypto(request);
         if ((ASSET_PATH + "api/markets/vietnam").equals(uri.getPath())) return MarketFeed.vietnam(request);

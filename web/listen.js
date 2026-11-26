@@ -159,12 +159,11 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       </div>
     </form>`;
     content.innerHTML = selected ? `
-      ${service === 'youtube' ? '<section class="youtube-search" aria-labelledby="youtube-search-title"></section>' : ''}
-      <a class="music-launch" href="${selected.url}" rel="noopener noreferrer">
+      ${service === 'youtube' ? '<section class="youtube-search" aria-labelledby="youtube-search-title"></section>' : `<a class="music-launch" href="${selected.url}" rel="noopener noreferrer">
         <span class="listen-art">${musicNote}</span>
         <span>Open ${selected.name}</span>
         ${external}
-      </a>
+      </a>`}
       ${service === 'spotify' ? spotifyMarkup(showPlaylistForm) : ''}
       <details class="music-service-settings">
         <summary>Change service</summary>
@@ -177,7 +176,9 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
           ${form}
         </div>
       </section>`;
-    for (const link of content.querySelectorAll('.music-launch, .music-secondary-link')) {
+    const youtubeSearch = content.querySelector('.youtube-search');
+    if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer);
+    for (const link of content.querySelectorAll('.music-launch, .music-secondary-link, .youtube-source')) {
       if (location.origin !== 'https://appassets.androidplatform.net') link.target = '_blank';
       link.addEventListener('click', () => {
         spotifyPlayer.close();
@@ -185,8 +186,6 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
         pausePodcasts();
       });
     }
-    const youtubeSearch = content.querySelector('.youtube-search');
-    if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer);
     content.querySelector('[data-open-spotify]')?.addEventListener('click', () => spotifyPlayer.open(playlist));
     const playlistForm = content.querySelector('[data-spotify-playlist]');
     if (playlistForm) {
@@ -221,7 +220,8 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
         unsavedService = choice;
       }
       renderService();
-      content.querySelector('.youtube-approval:not([hidden]) button, .youtube-search-tools:not([hidden]) input, .music-launch').focus();
+      const showApproval = content.querySelector('.youtube-approval:not([hidden]) button');
+      (showApproval ?? content.querySelector('.youtube-source, .music-launch')).focus();
     });
   }
   renderService();
