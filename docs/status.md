@@ -19,6 +19,8 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
+The Workspace home screen removes the visible heading, Books description, and separate library button. The Books title and image share one link, and Workspace retains a heading for screen readers. Chromium verified the layout at 320 and 1440 CSS pixels, keyboard and pointer entry into Books, keyboard focus on return, and offline reopening. All 26 web, 12 Python, and five podcast service tests passed.
+
 Mobile-width Chromium verified Markets entry, re-entry, reload, five-minute crypto quote refresh, foreground return, and reconnection with controlled responses. Quote updates preserved the chart, ignored malformed or older data, and used saved daily closes on an offline reload. Stock charts requested fresh daily history on entry and reload. The local adapter returned live BTC/USD and ETH/USD ticker responses from Bitstamp. All 26 web, 12 Python, and five podcast service tests passed. Android compilation and lint passed with zero lint errors. Physical phone testing is pending.
 
 After merging the compact header and Ask SmartBot into `main`, Chromium verified the one-row header, offline navigation, Google Search, saved provider selection, tap-to-dismiss, and the Markets candlestick chart. All 25 web and 12 Python tests passed. The combined Android 0.3.4 APK passed signature and ZIP alignment checks, matched all 245 bundled web files, and reported zero lint errors and six warnings. Physical phone testing is pending.

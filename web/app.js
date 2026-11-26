@@ -203,7 +203,7 @@ function render(focusHeading = false) {
     keepReadingPlanOpen = false;
   }
 
-  if (focusHeading) view.querySelector('h1').focus();
+  if (focusHeading) view.querySelector(page === 'workspace' ? '.feature-card' : 'h1').focus();
 }
 
 function showError(message) {

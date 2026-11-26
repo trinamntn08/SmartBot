@@ -15,13 +15,9 @@ function sectionImage(id) {
 }
 
 export function workspace() {
-  return `<h1 tabindex="-1">Your workspace</h1>
+  return `<h1 class="visually-hidden">Workspace</h1>
     <a class="feature-card" href="#books">
-      <div class="feature-copy">
-        <h2>Books</h2>
-        <p>Import a PDF or text file and pick up where you left off.</p>
-        <span class="feature-action">Open library <span class="arrow" aria-hidden="true"></span></span>
-      </div>
+      <h2 class="feature-title">Books</h2>
       <img src="./assets/books.webp" alt="" width="1536" height="1024">
     </a>
     <ul class="workspace-grid" role="list">${sections.map(({ id, title, summary }) => `
