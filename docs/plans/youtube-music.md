@@ -37,6 +37,8 @@ The Music screen now opens with regional rows from YouTube's public music charts
 
 All 27 web, 15 Python, and seven podcast service tests passed. Chromium with controlled data verified browsing without a search, keyboard scrolling, eligibility filtering, a failed region alongside working charts, re-entry, and the layout at 320 CSS pixels and 200% text size. Impeccable's only flag was for an existing font declaration.
 
+The published preview loaded 36 current chart cards with official thumbnails. Desktop and mobile checks covered opening a live chart video in the embedded player, searching, and returning keyboard focus to the selected card on close. A visual pass aligned the thumbnail cards and reserved two lines for titles so channel names line up within each row.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
