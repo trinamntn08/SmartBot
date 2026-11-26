@@ -11,6 +11,7 @@ function time(seconds) {
 
 export function createPodcastPlayer(repository, panel, recordActivity) {
   const title = panel.querySelector('[data-player-title]');
+  const musicLink = panel.querySelector('.podcast-player-title');
   const publisher = panel.querySelector('[data-player-publisher]');
   const toggle = panel.querySelector('[data-player-toggle]');
   const rewind = panel.querySelector('[data-player-rewind]');
@@ -21,9 +22,11 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   const speed = panel.querySelector('.podcast-speed');
   const speedButton = speed.querySelector('summary');
   const speedLabel = speed.querySelector('[data-player-rate]');
-  const speedForm = speed.querySelector('form');
-  const speedInput = speedForm.querySelector('input');
-  const presets = [...speedForm.querySelectorAll('[data-rate]')];
+  const speedInput = speed.querySelector('input');
+  const minRate = Number(speedInput.min);
+  const maxRate = Number(speedInput.max);
+  const dismissButton = panel.querySelector('[data-player-dismiss]');
+  const view = document.querySelector('#view');
   const message = panel.querySelector('[role="status"]');
   const audio = hasNativePodcastPlayer ? null : new Audio();
   const listeners = new Set();
@@ -37,6 +40,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   let seeking = false;
   let restorePosition;
   let listening;
+  let dismissedEpisode;
 
   function trackPlayback(continuePlaying = false, force = true) {
     const now = performance.now();
@@ -65,8 +69,8 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   }
 
   function render() {
-    panel.hidden = !current;
-    if (!current) return;
+    panel.hidden = !current || dismissedEpisode === current.episode.id;
+    if (panel.hidden) return;
     if (title.textContent !== current.episode.title) {
       title.textContent = current.episode.title;
       title.title = current.episode.title;
@@ -87,12 +91,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     if (!seeking) seek.value = current.position;
     renderTimeline();
     duration.textContent = current.duration ? time(current.duration) : '–:––';
-    const rateText = `${currentRate()}×`;
-    if (speedLabel.textContent !== rateText) {
-      speedLabel.textContent = rateText;
-      speedButton.setAttribute('aria-label', `Playback speed, ${rateText}`);
-      speedButton.title = `Playback speed, ${rateText}`;
-    }
+    if (!speed.open) renderRate(currentRate());
     const status = current.error || (current.buffering ? 'Buffering…' : '');
     if (message.textContent !== status) message.textContent = status;
   }
@@ -127,6 +126,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
       const state = await nativePodcast(action, args);
       if (request !== nativeRequest) return;
       if (current?.episode.id !== state?.episode?.id) seeking = false;
+      if (action === 'play' || (state?.playing && !current?.playing)) dismissedEpisode = undefined;
       current = state?.active ? state : null;
       updateRecent(state?.episode ? state : null);
       render();
@@ -173,7 +173,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   if (audio) {
     audio.preload = 'metadata';
     const rate = repository.playbackRate();
-    if (rate >= Number(speedInput.min) && rate <= Number(speedInput.max)) {
+    if (rate >= minRate && rate <= maxRate) {
       audio.defaultPlaybackRate = rate;
       audio.playbackRate = rate;
     }
@@ -222,11 +222,13 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     }
     const attempt = ++startSequence;
     if (current?.episode.id === episode.id && current.episode.audioUrl === episode.audioUrl) {
+      dismissedEpisode = undefined;
       playAudio();
       return;
     }
     const saved = await repository.position(episode.id).catch(() => null);
     if (attempt !== startSequence) return;
+    dismissedEpisode = undefined;
     trackPlayback();
     checkpoint(true);
     seeking = false;
@@ -257,6 +259,16 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     return audio?.playbackRate ?? current?.rate ?? 1;
   }
 
+  function renderRate(rate) {
+    const rateText = `${Number(rate.toFixed(2))}×`;
+    speedInput.style.setProperty('--podcast-progress', `${100 * (rate - minRate) / (maxRate - minRate)}%`);
+    speedInput.setAttribute('aria-valuetext', rateText);
+    if (speedLabel.textContent === rateText) return;
+    speedLabel.textContent = rateText;
+    speedButton.setAttribute('aria-label', `Playback speed, ${rateText}`);
+    speedButton.title = `Playback speed, ${rateText}`;
+  }
+
   function closeSpeed(restoreFocus) {
     if (!speed.open) return;
     speed.open = false;
@@ -275,11 +287,36 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     } else {
       try { await callNative('speed', { rate }); }
       catch (error) {
+        speedInput.value = currentRate();
+        renderRate(currentRate());
+        nativeFailure(error);
+      }
+    }
+  }
+
+  async function dismiss() {
+    const id = current.episode.id;
+    if (audio) {
+      trackPlayback();
+      audio.pause();
+      if (audio.readyState > 0 && restorePosition === undefined) current.position = audio.currentTime;
+      checkpoint(true);
+    } else {
+      try { await callNative('pause'); }
+      catch (error) {
         nativeFailure(error);
         return;
       }
+      if (current?.episode.id !== id || current.playing) return;
     }
-    closeSpeed(true);
+    const restoreFocus = document.activeElement === dismissButton;
+    dismissedEpisode = id;
+    closeSpeed(false);
+    render();
+    if (restoreFocus) {
+      const resume = view.querySelector('.podcast-continue:not([hidden]) button');
+      (resume || view).focus({ preventScroll: true });
+    }
   }
 
   toggle.addEventListener('click', () => {
@@ -309,9 +346,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     if (speed.open) return;
     const rate = currentRate();
     speedInput.value = rate;
-    for (const preset of presets) {
-      preset.setAttribute('aria-pressed', String(Number(preset.dataset.rate) === rate));
-    }
+    renderRate(speedInput.valueAsNumber);
   });
   speed.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || !speed.open) return;
@@ -324,13 +359,9 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   document.addEventListener('pointerdown', event => {
     if (!speed.contains(event.target)) closeSpeed(false);
   });
-  speedForm.addEventListener('submit', event => {
-    event.preventDefault();
-    void setRate(speedInput.valueAsNumber);
-  });
-  for (const preset of presets) {
-    preset.addEventListener('click', () => void setRate(Number(preset.dataset.rate)));
-  }
+  speedInput.addEventListener('input', () => renderRate(speedInput.valueAsNumber));
+  speedInput.addEventListener('change', () => void setRate(speedInput.valueAsNumber));
+  dismissButton.addEventListener('click', () => void dismiss());
 
   let polling = false;
   async function syncNative() {
@@ -343,6 +374,14 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
 
   return {
     play,
+    setExpanded(expanded) {
+      panel.classList.toggle('is-compact', !expanded);
+      if (expanded) musicLink.removeAttribute('href');
+      else {
+        musicLink.setAttribute('href', '#music');
+        closeSpeed(false);
+      }
+    },
     subscribe(listener) {
       listeners.add(listener);
       listener(recent);

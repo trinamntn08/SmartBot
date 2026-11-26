@@ -149,6 +149,7 @@ function render(focusHeading = false) {
   const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
   const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
+  podcastPlayer.setExpanded(page === 'music');
   marketRepository.setOpen(page === 'markets');
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
