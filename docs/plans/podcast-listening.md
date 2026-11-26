@@ -62,6 +62,8 @@ The preview from `9681c07` on `main` passed playback and offline reopening for t
 
 November 26, 2026. Music embeds the saved Spotify playlist in Spotify's official player. SmartBot validates the playlist link, stores the playlist ID on this device, and lets you replace or remove it. Android permits the Spotify playlist embed in a subframe. Chromium verified link validation, save and reload, service switching, replacement, removal, offline recovery, and player layout from 320 to 1440 CSS pixels and at 200% text size. Podcast playback and resume checks and all 46 automated tests passed.
 
+The preview from `80c7a89` on `main` played a Spotify preview in signed-out Chrome without opening another window and restored the saved playlist after an offline reload and reconnection. The Android debug APK passed build, signature continuity, ZIP alignment, and comparison of all 250 bundled web files. Lint reported zero errors and six warnings. Full-song playback and Android runtime playback remain unverified.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
