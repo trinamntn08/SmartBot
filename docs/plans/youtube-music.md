@@ -58,6 +58,8 @@ Android no longer prompts for a personal YouTube key. Seven music picks are avai
 
 The shared Node service was verified locally against live YouTube charts in all three regions and live song search. The Windows preview loaded live charts and search with its saved key and reopened offline. The Android debug APK built from `16c9c47` with matching signing certificate, ZIP alignment, 257 matching assets, and no key-entry bridge. Lint reported zero errors and six warnings. No hosted service or Android device was connected.
 
+The handoff APK was rebuilt from `d2bfd61` after the mobile Workspace update reached main. All 27 web tests and the Android browser fixture passed again. The rebuilt APK has 257 matching assets, the same signature, valid ZIP alignment, and zero lint errors.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
