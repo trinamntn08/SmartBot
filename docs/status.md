@@ -20,6 +20,8 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
+Workspace card titles use the full card width, with the arrow beside the description. Chromium kept all five titles on one line at 19 widths from 320 to 1440 CSS pixels with the bundled font and its fallback. Keyboard entry into Languages, return, reload, and activation at 200% text size passed. All 27 web, 12 Python, and seven podcast service tests passed.
+
 Chromium verified the six appearance combinations at 320 CSS pixels and reviewed the desktop layout at 1440 CSS pixels. Settings fit the 320-pixel viewport at 200% text size. Checks covered keyboard selection, system color mode changes, reload, two-tab sync, storage errors, and offline use with an imported book and bundled Markets data. The lowest measured text contrast was 5.27:1. All 27 web, 12 Python, and seven podcast service tests passed.
 
 The Workspace home screen removes the visible heading, Books description, and separate library button. The Books title and image share one link, and Workspace retains a heading for screen readers. Chromium verified the layout at 320 and 1440 CSS pixels, keyboard and pointer entry into Books, keyboard focus on return, and offline reopening. All 26 web, 12 Python, and five podcast service tests passed.

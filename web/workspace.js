@@ -26,8 +26,8 @@ export function workspace() {
           ${sectionImage(id)}
           <div class="section-copy">
             <h2>${title}</h2>
-            <span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>
             <p>${summary}</p>
+            <span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>
           </div>
         </a>
       </li>`).join('')}
