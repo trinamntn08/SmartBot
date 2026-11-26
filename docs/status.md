@@ -4,7 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
-- **Workspace → Customize** lets you swap any two cards, including the featured card. Drag a move handle or select two handles. Use the minus button to hide a card and **Settings → Workspace sections** to show it again in its saved position. The order and visibility are saved on this device.
+- Press and hold a **Workspace** card to arrange it. Drag it onto another card to swap them, or release to use the move and hide controls. Tap **Done** when finished. **Settings → Workspace sections** lets you show hidden cards in their saved positions and open the keyboard-accessible reorder controls. The order and visibility are saved on this device.
 - **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
@@ -20,6 +20,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified that short taps open Workspace cards, swipes scroll, and half-second holds open edit mode at 320 and 1440 CSS pixels. Checks covered dragging directly after a hold with touch and mouse, edge scrolling, cancelled drags, keyboard reordering from Settings, hiding and restoring sections, and 200% text size. All 46 automated tests passed. A physical Android check remains open.
 
 Chromium verified Workspace customization at 320 and 1440 CSS pixels. Checks covered mouse and touch dragging, scrolling while dragging, keyboard and tap swaps, cancelled drops, enlarged text at 200%, hiding every card, restoring cards from Settings, saved order after reload, and unavailable storage. The published preview kept the layout through an offline reload and restored a section offline. An imported book reopened after its card was hidden and restored. All 46 automated tests passed. A physical Android check remains open.
 

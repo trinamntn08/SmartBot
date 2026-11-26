@@ -2,7 +2,7 @@ import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, upda
 import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
 import { renderAssistantSettings } from './assistant.js';
-import { findSection, renderWorkspace, renderWorkspaceSettings, sectionPreview } from './workspace.js';
+import { findSection, renderWorkspace, renderWorkspaceSettings, sectionPreview, workspaceEditRoute } from './workspace.js';
 import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
 import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
@@ -195,7 +195,7 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'workspace') {
-    renderWorkspace(view, focusHeading);
+    renderWorkspace(view, focusHeading, route === workspaceEditRoute);
     return;
   }
   if (section) view.innerHTML = sectionPreview(section);

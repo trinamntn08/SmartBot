@@ -10,6 +10,8 @@ const sections = [
 ];
 const repository = workspaceRepository(sections.map(({ id }) => id));
 const saveError = 'Your Workspace changes could not be saved on this device.';
+export const workspaceEditRoute = 'workspace-edit';
+const holdDuration = 500;
 
 export function findSection(route) {
   return sections.find(({ id }) => id === route);
@@ -19,22 +21,20 @@ function sectionImage(id) {
   return `<div class="section-image section-image--${id}" aria-hidden="true"></div>`;
 }
 
-function workspaceCard({ id, title, subtitle }, featured, editing) {
-  const tag = editing ? 'div' : 'a';
-  const link = editing ? '' : ` href="#${id}"`;
+function workspaceCard({ id, title, subtitle }, featured) {
   const image = featured && id === 'books'
-    ? '<img src="./assets/books.webp" alt="" width="1536" height="1024">' : sectionImage(id);
+    ? '<img src="./assets/books.webp" alt="" width="1536" height="1024" draggable="false">' : sectionImage(id);
   const copy = featured
     ? `<div class="feature-copy"><h2 class="feature-title">${title}</h2><p>${subtitle}</p></div>`
     : `<div class="section-copy">
         <h2>${title}</h2><p>${subtitle}</p>
-        ${editing ? '' : '<span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>'}
+        <span class="section-arrow" aria-hidden="true"><span class="arrow"></span></span>
       </div>`;
   return `<li data-section="${id}"${featured ? ' class="workspace-feature"' : ''}>
-    <${tag} class="${featured ? 'feature-card' : 'section-card'}"${link}>
+    <a class="${featured ? 'feature-card' : 'section-card'}" href="#${id}" draggable="false">
       ${featured ? copy + image : image + copy}
-    </${tag}>
-    ${editing ? `<button type="button" class="quiet workspace-move" aria-label="Move ${title}" aria-pressed="false" title="Move ${title}">
+    </a>
+    <button type="button" class="quiet workspace-move" aria-label="Move ${title}" aria-describedby="workspace-instructions" aria-pressed="false" title="Move ${title}">
       <svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor" aria-hidden="true">
         <circle cx="7" cy="5" r="1.4"/><circle cx="13" cy="5" r="1.4"/>
         <circle cx="7" cy="10" r="1.4"/><circle cx="13" cy="10" r="1.4"/>
@@ -45,44 +45,50 @@ function workspaceCard({ id, title, subtitle }, featured, editing) {
       <svg viewBox="0 0 20 20" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
         <path d="M5 10h10"/>
       </svg>
-    </button>` : ''}
+    </button>
   </li>`;
 }
 
-export function renderWorkspace(view, focusHeading) {
+export function renderWorkspace(view, focusHeading, openEditor) {
   view.innerHTML = `<h1 class="visually-hidden">Workspace</h1>
-    <div class="workspace-toolbar">
-      <p class="workspace-instructions" hidden>Drag a handle or select two handles to swap sections.</p>
-      <button type="button" class="quiet workspace-customize">Customize</button>
-    </div>
     <p class="workspace-status" role="status"></p>
     <ul class="workspace-grid" role="list"></ul>
     <div class="card workspace-empty" hidden>
       <p>All Workspace sections are hidden.</p>
       <a href="#settings">Show sections in Settings</a>
+    </div>
+    <div class="workspace-toolbar" hidden>
+      <p id="workspace-instructions" class="workspace-instructions">Drag or select two handles.</p>
+      <button type="button" class="quiet">Done</button>
     </div>`;
   const grid = view.querySelector('.workspace-grid');
   const toolbar = view.querySelector('.workspace-toolbar');
-  const customize = toolbar.querySelector('button');
+  const done = toolbar.querySelector('button');
   const instructions = toolbar.querySelector('p');
   const status = view.querySelector('.workspace-status');
   const empty = view.querySelector('.workspace-empty');
   let layout = repository.read();
   let editing = false;
+  let returnTo;
   let selected;
+  let press;
   let drag;
   let suppressClick = false;
 
+  function updateMode() {
+    grid.classList.toggle('is-editing', editing);
+    toolbar.hidden = !editing;
+    instructions.hidden = grid.children.length < 2;
+    for (const card of grid.children) card.firstElementChild.inert = editing;
+  }
+
   function draw() {
     const visible = layout.order.filter(id => !layout.hidden.has(id));
-    grid.innerHTML = visible.map((id, index) => workspaceCard(findSection(id), index === 0, editing)).join('');
-    grid.classList.toggle('is-editing', editing);
+    grid.innerHTML = visible.map((id, index) => workspaceCard(findSection(id), index === 0)).join('');
     grid.hidden = !visible.length;
     empty.hidden = visible.length > 0;
-    toolbar.hidden = !editing && !visible.length;
-    instructions.hidden = !editing || visible.length < 2;
-    customize.textContent = editing ? 'Done' : 'Customize';
     for (const handle of grid.querySelectorAll('.workspace-move')) handle.disabled = visible.length < 2;
+    updateMode();
   }
 
   function announce(message, error = false) {
@@ -108,7 +114,7 @@ export function renderWorkspace(view, focusHeading) {
     layout = updated;
     selected = undefined;
     draw();
-    (grid.querySelector(focus) ?? customize).focus();
+    (grid.querySelector(focus) ?? done).focus();
     announce(message);
   }
 
@@ -122,17 +128,23 @@ export function renderWorkspace(view, focusHeading) {
     `[data-section="${from}"] .workspace-move`);
   }
 
-  customize.addEventListener('click', () => {
-    editing = !editing;
-    selected = undefined;
-    layout = repository.read();
-    draw();
-    if (toolbar.hidden) empty.querySelector('a').focus();
-  });
+  function closeEditor() {
+    editing = false;
+    select(undefined);
+    updateMode();
+    announce('');
+    if (location.hash === `#${workspaceEditRoute}`) history.replaceState(null, '', '#workspace');
+    const destination = grid.querySelector(`[data-section="${returnTo}"] a`) ?? grid.querySelector('a');
+    (destination ?? empty.querySelector('a')).focus({ preventScroll: true });
+  }
+  done.addEventListener('click', closeEditor);
 
   grid.addEventListener('click', (event) => {
+    if (suppressClick && event.detail) {
+      event.preventDefault();
+      return;
+    }
     if (!editing) return;
-    if (suppressClick && event.detail) return;
     const card = event.target.closest('[data-section]');
     if (!card) return;
     const id = card.dataset.section;
@@ -147,9 +159,14 @@ export function renderWorkspace(view, focusHeading) {
   });
 
   grid.addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape' || !selected) return;
+    if (event.key !== 'Escape' || !editing || drag) return;
     event.preventDefault();
-    select(undefined);
+    if (selected) select(undefined);
+    else closeEditor();
+  });
+
+  grid.addEventListener('contextmenu', (event) => {
+    if (event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents) event.preventDefault();
   });
 
   function updateDropTarget() {
@@ -170,32 +187,73 @@ export function renderWorkspace(view, focusHeading) {
     drag.frame = window.scrollY !== top ? requestAnimationFrame(scrollWhileDragging) : undefined;
   }
 
+  function cancelPress() {
+    clearTimeout(press?.timer);
+    press = undefined;
+  }
+
+  function beginDrag() {
+    select(undefined);
+    drag.source.classList.add('is-dragging');
+    suppressClick = true;
+  }
+
   grid.addEventListener('pointerdown', (event) => {
-    if (!event.isPrimary || event.button !== 0 || drag) return;
+    if (!event.isPrimary) {
+      if (event.pointerType === 'touch') cancelPress();
+      return;
+    }
+    if (event.button !== 0 || drag) return;
     suppressClick = false;
-    const handle = event.target.closest('.workspace-move');
-    if (!handle || handle.disabled) return;
     const { pointerId, clientX: x, clientY: y } = event;
-    drag = { pointerId, source: handle.closest('[data-section]'), startX: x, startY: y, x, y };
-    handle.setPointerCapture(pointerId);
+    const source = event.target.closest('[data-section]');
+    if (!source) return;
+    const pointer = { pointerId, source, startX: x, startY: y, x, y };
+    if (editing) {
+      const handle = event.target.closest('.workspace-move');
+      if (!handle || handle.disabled) return;
+      drag = { ...pointer, capture: handle };
+      handle.setPointerCapture(pointerId);
+      return;
+    }
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    cancelPress();
+    press = { ...pointer, timer: setTimeout(() => {
+      if (!grid.isConnected) return;
+      drag = { ...pointer, capture: grid, fromHold: true };
+      press = undefined;
+      grid.setPointerCapture(pointerId);
+      returnTo = source.dataset.section;
+      editing = true;
+      updateMode();
+      beginDrag();
+      announce('Reordering Workspace cards.');
+    }, holdDuration) };
   });
 
+  // A swipe before the hold scrolls normally. Once editing starts, keep the same touch for dragging.
+  grid.addEventListener('touchmove', (event) => {
+    if (drag?.fromHold && event.touches.length === 1 && event.cancelable) event.preventDefault();
+  }, { passive: false });
+
   grid.addEventListener('pointermove', (event) => {
+    if (event.pointerId === press?.pointerId) {
+      if (Math.hypot(event.clientX - press.startX, event.clientY - press.startY) > 8) cancelPress();
+      return;
+    }
     if (event.pointerId !== drag?.pointerId) return;
     drag.x = event.clientX;
     drag.y = event.clientY;
     if (!suppressClick && Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 6) return;
-    if (!suppressClick) {
-      select(undefined);
-      drag.source.classList.add('is-dragging');
-      suppressClick = true;
-    }
+    if (!suppressClick) beginDrag();
     updateDropTarget();
     drag.frame ??= requestAnimationFrame(scrollWhileDragging);
   });
 
   function finishDrag(event) {
+    if (event.pointerId === press?.pointerId) cancelPress();
     if (event.pointerId !== drag?.pointerId) return;
+    if (event.type === 'lostpointercapture' && event.target !== drag.capture) return;
     if (event.type === 'pointerup' && suppressClick) {
       drag.x = event.clientX;
       drag.y = event.clientY;
@@ -210,9 +268,18 @@ export function renderWorkspace(view, focusHeading) {
   }
 
   for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) grid.addEventListener(event, finishDrag);
+  grid.addEventListener('pointerleave', (event) => {
+    if (event.pointerId === press?.pointerId) cancelPress();
+  });
 
   draw();
-  if (focusHeading) (grid.querySelector('a') ?? empty.querySelector('a')).focus();
+  if (openEditor && !grid.hidden) {
+    editing = true;
+    updateMode();
+    (grid.querySelector('.workspace-move:enabled') ?? grid.querySelector('.workspace-hide')).focus();
+  } else if (focusHeading) {
+    (grid.querySelector('a') ?? empty.querySelector('a')).focus();
+  }
 }
 
 export function renderWorkspaceSettings(view) {
@@ -224,13 +291,16 @@ export function renderWorkspaceSettings(view) {
     <div class="workspace-choices">${sections.map(({ id, title }) => `<label>
       <input type="checkbox" value="${id}"> ${title}
     </label>`).join('')}</div>
+    <a class="workspace-edit-link" href="#${workspaceEditRoute}">Reorder Workspace cards</a>
     <p class="workspace-status" role="status"></p>`;
   view.append(panel);
 
   const status = panel.querySelector('[role="status"]');
   const inputs = panel.querySelectorAll('input');
+  const editLink = panel.querySelector('.workspace-edit-link');
   const sync = ({ hidden }) => {
     for (const input of inputs) input.checked = !hidden.has(input.value);
+    editLink.hidden = hidden.size === sections.length;
   };
   sync(repository.read());
   panel.addEventListener('change', ({ target: { value, checked } }) => {
