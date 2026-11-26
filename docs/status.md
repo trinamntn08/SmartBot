@@ -21,7 +21,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Chromium verified that short taps open Workspace cards, swipes scroll, and half-second holds open edit mode at 320 and 1440 CSS pixels. Checks covered dragging directly after a hold with touch and mouse, edge scrolling, cancelled drags, keyboard reordering from Settings, hiding and restoring sections, and 200% text size. All 46 automated tests passed. A physical Android check remains open.
+Chromium verified that short taps open Workspace cards, swipes scroll, and half-second holds open edit mode at 320 and 1440 CSS pixels. Checks covered dragging directly after a hold with touch and mouse, edge scrolling, cancelled drags, keyboard reordering from Settings, hiding and restoring sections, and 200% text size. The published preview retained the saved order and restored a hidden card offline. All 46 automated tests passed. A physical Android check remains open.
 
 Chromium verified Workspace customization at 320 and 1440 CSS pixels. Checks covered mouse and touch dragging, scrolling while dragging, keyboard and tap swaps, cancelled drops, enlarged text at 200%, hiding every card, restoring cards from Settings, saved order after reload, and unavailable storage. The published preview kept the layout through an offline reload and restored a section offline. An imported book reopened after its card was hidden and restored. All 46 automated tests passed. A physical Android check remains open.
 
@@ -112,6 +112,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The Workspace long-press APK was built from `25e44be` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte checks of all 251 web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the gesture checks using the packaged files at the Android asset origin. Android runtime verification remains open because no phone or emulator was connected.
 
 The full-view reader APK built from `025577b` on `main`. Gradle build, signature, ZIP alignment, and byte-for-byte comparison of all 249 web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the reader checks with the packaged files at the Android asset origin. A physical phone check is pending.
 
