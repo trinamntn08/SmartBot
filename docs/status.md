@@ -4,6 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
+- **Workspace → Customize** lets you swap any two cards, including the featured card. Drag a move handle or select two handles. Use the minus button to hide a card and **Settings → Workspace sections** to show it again in its saved position. The order and visibility are saved on this device.
 - **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
 - **Ask SmartBot** opens from a movable chat bubble and closes when you tap outside the composer. Google Search is the default and opens results directly in your browser, including from the Android app. **Settings → Assistant** saves your provider choice. GPT and Gemini support typed questions and editable voice transcripts in the browser preview when their API keys are configured.
@@ -19,6 +20,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Chromium verified Workspace customization at 320 and 1440 CSS pixels. Checks covered mouse and touch dragging, scrolling while dragging, keyboard and tap swaps, cancelled drops, enlarged text at 200%, hiding every card, restoring cards from Settings, saved order after reload, and unavailable storage. All 46 automated tests passed. A physical Android check remains open.
 
 All six Workspace cards have short, playful subtitles. On tight cards the subtitle uses the full width. Chromium checked dark and light mode from 320 to 1440 CSS pixels, 200% text size at 320 pixels, and touch and keyboard navigation to the six destinations. The published preview kept all six subtitles and destinations after an offline reload. All 27 web tests passed.
 
