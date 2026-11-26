@@ -22,6 +22,10 @@ The preview and Android use YouTube Data API v3 to search for embeddable public 
 
 All 27 web tests, 13 Python tests, and seven podcast service tests passed. Chromium at 320 CSS pixels checked keyboard setup, quota and empty results, and layout at 200% text size with controlled search responses. A real YouTube music video with a duration over three minutes played inside SmartBot. Playback continued through an in-app navigation with the same iframe and paused when scrolled out of view. Closing the player returned focus to search.
 
+The local preview on port 8003 loaded the published build through its service worker and repeated the real video check with controlled search responses. Spotify continuity and switching to podcast playback passed in a separate Chromium check. A simulated Android bridge verified saving and removing the key, reloading the app, and recovering search after going offline.
+
+The Android debug APK built from `c5c1a94`. Gradle lint reported zero errors and eight warnings. Signature continuity, ZIP alignment, and all 254 bundled web assets passed verification. No Android device was connected.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
