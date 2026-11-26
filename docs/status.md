@@ -14,6 +14,7 @@ Last updated November 26, 2026.
 - The top bar has direct links to **Books** and **News**. The three-dot menu opens the other sections and Settings. Tap **SmartBot** to return home.
 - Android opens **Music picks** after first-use approval without asking for a personal key. Live YouTube charts and catalog search for new installs are ready for a shared service deployment. [Android music service](plans/youtube-music.md#android-music-service)
 - **Markets** opens **VN-Index** and **CAC 40** from the default watchlist. Search includes selected Euronext listings in Paris, Amsterdam, Brussels, and Lisbon, including **Valeo**, alongside U.S. stocks and ETFs, Vietnamese stocks, and USD crypto pairs. DNSE supplies VN-Index candlesticks in points. Euronext supplies closing-price lines with index levels in points and stock prices in EUR. Downloaded charts reopen offline. Eight U.S. equities and BTC/USD ship with daily candles through November 24, 2026. For crypto, Markets shows the latest Bitstamp trade and refreshes it every five minutes while visible and online. [Markets](../README.md#markets)
+- Every Markets watchlist entry can be removed. Search can restore a removed default, and the watchlist can stay empty across app restarts.
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files and can convert selectable PDF text to EPUB. Open a book to resume in an edge-to-edge reader. Tap the page or use **Enter full view** to hide the reader toolbar. **Aa** adjusts text size, typeface, line spacing, and page color. Preferences apply to books on this device. PDF and EPUB downloads are available under **Download files** in the library.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -22,6 +23,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The watchlist removal update passed 31 web, 16 Python, and eight podcast-service tests. The repository check exercised older watchlist records, removal of all defaults, and restoring entries without duplicates. Published browser and APK checks and physical phone verification remain open.
 
 Chromium at 320 CSS pixels verified live VN-Index candlesticks, a year of CAC 40 closes, and Valeo search and prices in EUR. All three charts reopened offline, and the existing watchlist was preserved. Live provider checks returned 272 VN-Index candles and daily history for all 13 Euronext listings. All 30 web, 16 Python, and eight podcast-service tests passed. The Android market adapter returned live history for VN-Index, CAC 40, and Valeo in a host JVM check. The published debug APK passed lint, signature, and ZIP alignment checks, and all 261 bundled web files matched. Physical phone verification remains open.
 

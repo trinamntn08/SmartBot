@@ -10,6 +10,19 @@ const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitc
 const defaults = new Set(defaultMarkets.map(({ symbol }) => symbol));
 let snapshot;
 
+function readWatchlist() {
+  try {
+    const value = JSON.parse(localStorage.getItem(watchlistKey));
+    const added = Array.isArray(value) ? value : value?.added;
+    return {
+      added: Array.isArray(added) ? added : [],
+      removed: Array.isArray(value?.removed) ? value.removed : [],
+    };
+  } catch {
+    return { added: [], removed: [] };
+  }
+}
+
 export const marketRepository = {
   wasOpen() {
     try {
@@ -41,24 +54,30 @@ export const marketRepository = {
     }
   },
   watchlist() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(watchlistKey));
-      const seen = new Set(defaults);
-      return saved.flatMap(({ symbol, name }) => {
-        const listing = marketSymbol(symbol, name);
-        if (!listing || seen.has(symbol)) return [];
-        seen.add(symbol);
-        return [listing];
-      });
-    } catch {
-      return [];
-    }
+    const { added, removed } = readWatchlist();
+    const hidden = new Set(removed);
+    const seen = new Set(defaults);
+    const custom = added.flatMap(entry => {
+      const listing = marketSymbol(entry?.symbol, entry?.name);
+      if (!listing || seen.has(listing.symbol)) return [];
+      seen.add(listing.symbol);
+      return [listing];
+    });
+    return [...defaultMarkets.filter(({ symbol }) => !hidden.has(symbol)), ...custom];
   },
   setSaved(listing, saved) {
-    const watchlist = this.watchlist().filter(({ symbol }) => symbol !== listing.symbol);
-    if (saved) watchlist.push(listing);
+    const { added, removed } = readWatchlist();
+    const { symbol, name } = listing;
+    const preferences = { added, removed };
+    if (defaults.has(symbol)) {
+      preferences.removed = removed.filter(entry => entry !== symbol);
+      if (!saved) preferences.removed.push(symbol);
+    } else {
+      preferences.added = added.filter(entry => entry?.symbol !== symbol);
+      if (saved) preferences.added.push({ symbol, name });
+    }
     try {
-      localStorage.setItem(watchlistKey, JSON.stringify(watchlist.map(({ symbol, name }) => ({ symbol, name }))));
+      localStorage.setItem(watchlistKey, JSON.stringify(preferences));
       return true;
     } catch {
       return false;

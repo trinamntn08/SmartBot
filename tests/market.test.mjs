@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { fetchMarketHistory } from '../web/market-provider.js';
+import { marketRepository } from '../web/market-repository.js';
 import { defaultMarkets, marketSymbol, searchMarkets } from '../web/market-symbols.js';
 
 test('regional listings are searchable and preserve their exchange and units on restore', async (context) => {
@@ -58,4 +59,35 @@ test('Euronext charts use the market-local closing cutoff and retain ordered dai
   now = parisSummerCutoff;
   const atClose = await fetchMarketHistory(symbol);
   assert.deepEqual(atClose.prices.at(-1), { date: '2026-07-21', close: 11.065 });
+});
+
+test('the watchlist preserves older additions and can remove and restore every default', (context) => {
+  const key = 'smartbot-market-watchlist';
+  const entries = new Map([[key, JSON.stringify([{ symbol: 'NFLX', name: 'Netflix' }])]]);
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: key => entries.get(key) ?? null,
+      setItem: (key, value) => entries.set(key, value),
+    },
+  });
+  context.after(() => {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else delete globalThis.localStorage;
+  });
+
+  const netflix = marketSymbol('NFLX', 'Netflix');
+  assert.deepEqual(marketRepository.watchlist(), [...defaultMarkets, netflix]);
+  for (const listing of defaultMarkets) assert(marketRepository.setSaved(listing, false));
+  assert.deepEqual(marketRepository.watchlist(), [netflix]);
+  assert(marketRepository.setSaved(netflix, false));
+  assert.deepEqual(marketRepository.watchlist(), []);
+
+  const index = marketSymbol('HOSE:VNINDEX');
+  assert(marketRepository.setSaved(index, true));
+  assert(marketRepository.setSaved(index, true));
+  assert.deepEqual(marketRepository.watchlist(), [index]);
+  assert(marketRepository.setSaved(netflix, true));
+  assert.deepEqual(marketRepository.watchlist(), [index, netflix]);
 });

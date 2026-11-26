@@ -36,6 +36,7 @@ main[data-page="markets"] {
 }
 
 .market-search { max-width: 24rem; margin-block-end: 0.9rem; }
+.market-empty { color: var(--muted); }
 .market-search-label { display: block; margin-block-end: 0.2rem; color: var(--muted); font-size: 0.8rem; }
 .market-search input {
   width: 100%;

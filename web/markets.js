@@ -40,13 +40,14 @@ export function renderMarkets(view, focusHeading) {
       <ul id="market-search-results" class="market-search-results" hidden></ul>
       <p class="market-search-status" role="status"></p>
     </form>
+    <p class="market-empty" role="status" hidden>Your watchlist is empty. Search to add a symbol.</p>
     <section class="market-panel" aria-labelledby="market-instrument-name">
       <header class="market-instrument-row">
         <div class="market-instrument">
           <h2 id="market-instrument-name"></h2>
           <p></p>
         </div>
-        <button type="button" class="market-remove" hidden>Remove</button>
+        <button type="button" class="market-remove">Remove</button>
       </header>
       <p class="market-status" role="status"></p>
       <div class="market-quote" hidden></div>
@@ -80,6 +81,7 @@ export function renderMarkets(view, focusHeading) {
     </section>`;
   const panel = view.querySelector('.market-panel');
   const ticker = view.querySelector('[name="symbol"]');
+  const empty = view.querySelector('.market-empty');
   const search = view.querySelector('.market-search');
   const searchInput = search.querySelector('input');
   const results = search.querySelector('ul');
@@ -106,10 +108,14 @@ export function renderMarkets(view, focusHeading) {
   let matches = [];
 
   function setListings(selected) {
-    listings = [...defaultMarkets, ...marketRepository.watchlist()];
+    listings = marketRepository.watchlist();
     ticker.replaceChildren(...listings.map(({ symbol, label, name }) =>
       new Option(name === label ? label : `${label} · ${name}`, symbol)));
     if (listings.some(({ symbol }) => symbol === selected)) ticker.value = selected;
+    const hasListings = listings.length > 0;
+    ticker.closest('.market-ticker').hidden = !hasListings;
+    panel.hidden = !hasListings;
+    empty.hidden = hasListings;
   }
 
   function clearSearch() {
@@ -131,7 +137,7 @@ export function renderMarkets(view, focusHeading) {
     results.hidden = true;
     searchStatus.textContent = '';
     if (!query.trim()) return;
-    const found = await searchMarkets(query, listings.slice(defaultMarkets.length));
+    const found = await searchMarkets(query, listings);
     if (controller.signal.aborted) return;
     matches = found;
     for (const listing of matches) {
@@ -164,7 +170,7 @@ export function renderMarkets(view, focusHeading) {
     searchRequest = controller;
     const { signal } = controller;
     try {
-      if (!marketRepository.get(symbol)) {
+      if (!defaultMarkets.some(item => item.symbol === symbol) && !marketRepository.get(symbol)) {
         if (navigator.onLine === false) {
           searchStatus.textContent = 'Connect to the internet to add this symbol.';
           return;
@@ -187,7 +193,7 @@ export function renderMarkets(view, focusHeading) {
   function openListing(symbol) {
     clearSearch();
     setListings(symbol);
-    ticker.focus();
+    (listings.length ? ticker : searchInput).focus();
     selectListing();
   }
 
@@ -197,12 +203,12 @@ export function renderMarkets(view, focusHeading) {
   }
 
   async function refreshQuote() {
-    const { market, symbol } = listings[ticker.selectedIndex];
-    if (market !== 'Crypto' || document.hidden || navigator.onLine === false || quoteRequest) return;
+    const listing = listings[ticker.selectedIndex];
+    if (listing?.market !== 'Crypto' || document.hidden || navigator.onLine === false || quoteRequest) return;
     const controller = new AbortController();
     quoteRequest = controller;
     try {
-      const latest = await fetchCryptoQuote(symbol, controller.signal);
+      const latest = await fetchCryptoQuote(listing.symbol, controller.signal);
       if (controller.signal.aborted || (trade && latest.time < trade.time)) return;
       trade = latest;
       drawQuote();
@@ -232,13 +238,14 @@ export function renderMarkets(view, focusHeading) {
 
   async function load(force = false) {
     request?.abort();
+    const listing = listings[ticker.selectedIndex];
+    if (!listing) return;
     const controller = new AbortController();
     request = controller;
     const { signal } = controller;
-    const { symbol: selected, name: title, label, market, tradingView } = listings[ticker.selectedIndex];
+    const { symbol: selected, name: title, label, market, tradingView } = listing;
     name.textContent = title;
     exchangeLabel.textContent = `${label} · ${market}`;
-    remove.hidden = ticker.selectedIndex < defaultMarkets.length;
     remove.setAttribute('aria-label', `Remove ${label} from watchlist`);
     const saved = marketRepository.get(selected);
     prices = undefined;
@@ -307,7 +314,7 @@ export function renderMarkets(view, focusHeading) {
     trade = undefined;
     window.clearInterval(quoteTimer);
     void load(force);
-    if (listings[ticker.selectedIndex].market === 'Crypto') {
+    if (listings[ticker.selectedIndex]?.market === 'Crypto') {
       void refreshQuote();
       quoteTimer = window.setInterval(refreshQuote, cryptoRefreshInterval);
     }
@@ -330,7 +337,7 @@ export function renderMarkets(view, focusHeading) {
   });
   remove.addEventListener('click', () => {
     const selected = listings[ticker.selectedIndex];
-    if (marketRepository.setSaved(selected, false)) openListing(defaultMarkets[0].symbol);
+    if (marketRepository.setSaved(selected, false)) openListing();
     else status.textContent = 'This device could not update your watchlist.';
   });
   period.addEventListener('click', (event) => {

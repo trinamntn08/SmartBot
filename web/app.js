@@ -363,7 +363,7 @@ try {
       spotifyPlayer.close();
       youtubePlayer.close();
     });
-  if (!location.hash && marketRepository.wasOpen() && marketRepository.lastChart()?.symbol) {
+  if (!location.hash && marketRepository.wasOpen()) {
     history.replaceState(null, '', '#markets');
   }
   await refresh();
