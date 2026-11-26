@@ -1,5 +1,6 @@
 import { hasNativePodcastPlayer, nativePodcast } from './podcast-native.js';
 import { franceinfo, loadPodcast, searchPodcasts } from './podcast-provider.js';
+import { listenHeader } from './listen.js';
 
 function element(tag, text, className) {
   const node = document.createElement(tag);
@@ -26,6 +27,7 @@ const icons = {
   external: '<path d="M13 5h6v6m0-6-8 8m8 1v5H5V5h5"/>',
   episodes: '<path d="m9 6 6 6-6 6"/>',
   play: '<path fill="currentColor" stroke="none" d="M8 5v14l11-7z"/>',
+  headphones: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="4" y="12" width="4" height="7" rx="2"/><rect x="16" y="12" width="4" height="7" rx="2"/>',
 };
 
 function icon(name) {
@@ -43,16 +45,12 @@ function iconButton(label, name, action) {
 }
 
 const date = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' });
-let unsubscribe;
-let cancelRequest;
 
 export function renderPodcasts(view, repository, player, focus) {
-  unsubscribe?.();
-  cancelRequest?.();
-  const panel = element('div', '', 'podcasts');
-  panel.innerHTML = `<section class="podcast-discovery" aria-labelledby="music-title">
-      <h1 id="music-title" tabindex="-1">Music</h1>
-      <img class="podcast-discovery-art" src="./assets/podcast-studio.webp" width="1152" height="768" alt="">
+  const panel = element('div', '', 'listen podcasts');
+  panel.innerHTML = `${listenHeader('podcasts', `<button type="button" class="listen-tool" data-find-podcasts
+      aria-expanded="false" aria-controls="podcast-discovery">${icon('search')} Find podcasts</button>`)}
+    <section id="podcast-discovery" class="podcast-discovery" aria-label="Find podcasts" hidden>
       <div class="podcast-discovery-tools">
         <form data-podcast-search>
           <div class="podcast-form-row">
@@ -103,12 +101,21 @@ export function renderPodcasts(view, repository, player, focus) {
   const detail = panel.querySelector('.podcast-show');
   const shelves = panel.querySelector('.podcast-shelves');
   const library = panel.querySelector('.podcast-library');
+  const suggestedSection = panel.querySelector('.podcast-pick');
   const followedShows = panel.querySelector('.podcast-followed');
   const continuePanel = panel.querySelector('.podcast-continue');
   const queryInput = panel.querySelector('[name="query"]');
+  const find = panel.querySelector('[data-find-podcasts]');
+  const discoveryPanel = panel.querySelector('#podcast-discovery');
   let follows = [];
   let selected;
   let discovery;
+  let showTrigger;
+
+  function showDiscovery(visible) {
+    discoveryPanel.hidden = !visible;
+    find.setAttribute('aria-expanded', String(visible));
+  }
 
   async function run(action, trigger) {
     if (trigger) trigger.disabled = true;
@@ -123,7 +130,6 @@ export function renderPodcasts(view, repository, player, focus) {
     discovery?.abort();
     const controller = new AbortController();
     discovery = controller;
-    cancelRequest = () => controller.abort();
     await run(async () => {
       announcement.textContent = message;
       try { await action(controller.signal); }
@@ -170,8 +176,12 @@ export function renderPodcasts(view, repository, player, focus) {
       announcement.textContent = '';
       results.hidden = !hasResults;
       shelves.hidden = hasResults;
-      if (hasResults) results.querySelector('h2').focus();
-      else queryInput.focus();
+      if (hasResults) {
+        showDiscovery(true);
+        results.querySelector('h2').focus();
+      } else {
+        (showTrigger?.getClientRects().length ? showTrigger : find).focus();
+      }
     });
     back.classList.add('quiet', 'podcast-show-back');
     card.append(back, heading, element('p', show.publisher, 'podcast-notice'));
@@ -214,6 +224,7 @@ export function renderPodcasts(view, repository, player, focus) {
     detail.hidden = false;
     results.hidden = true;
     shelves.hidden = true;
+    showDiscovery(false);
     if (moveFocus) heading.focus();
   }
 
@@ -221,6 +232,7 @@ export function renderPodcasts(view, repository, player, focus) {
     follows = await repository.shows();
     if (!panel.isConnected) return;
     library.hidden = !follows.length;
+    suggestedSection.hidden = Boolean(follows.length);
     if (!follows.length) {
       followedShows.replaceChildren();
       return;
@@ -234,10 +246,19 @@ export function renderPodcasts(view, repository, player, focus) {
       const open = iconButton(`Episodes for ${show.title}`, 'episodes', () => {
         discovery?.abort();
         status.textContent = '';
+        showTrigger = open;
         showDetails(show, true);
       });
       open.classList.add('quiet');
-      row.append(copy, open);
+      row.append(copy);
+      const latest = show.episodes[0];
+      if (latest) {
+        const play = iconButton(`Play latest episode of ${show.title}`, 'play',
+          trigger => run(() => player.play(episodeToPlay(show, latest)), trigger));
+        play.classList.add('quiet');
+        row.append(play);
+      }
+      row.append(open);
       list.append(row);
     }
     followedShows.replaceChildren(list);
@@ -259,6 +280,7 @@ export function renderPodcasts(view, repository, player, focus) {
       const feedForm = trigger?.form;
       const fromRss = feedForm?.matches('[data-podcast-feed]');
       if (fromRss) feedForm.closest('details').open = false;
+      if (!refresh) showTrigger = fromRss ? find : trigger;
       announcement.textContent = refresh ? 'Episodes refreshed.' : '';
       showDetails(show, fromRss || selected?.feedUrl !== show.feedUrl || refresh);
     }, trigger);
@@ -271,8 +293,29 @@ export function renderPodcasts(view, repository, player, focus) {
   suggestedCopy.append(element('strong', franceinfo.title), element('span', franceinfo.publisher, 'podcast-notice'));
   const arrow = element('span', '', 'arrow');
   arrow.setAttribute('aria-hidden', 'true');
-  suggested.append(suggestedCopy, arrow);
+  const artwork = element('img', '', 'podcast-pick-art');
+  artwork.src = './assets/podcast-studio.webp';
+  artwork.alt = '';
+  artwork.width = 64;
+  artwork.height = 64;
+  suggested.append(artwork, suggestedCopy, arrow);
   panel.querySelector('.podcast-example').append(suggested);
+  find.addEventListener('click', () => {
+    const opening = discoveryPanel.hidden;
+    showDiscovery(opening);
+    if (opening) queryInput.focus();
+    else {
+      discovery?.abort();
+      if (detail.hidden) {
+        queryInput.value = '';
+        resultList.replaceChildren();
+        results.hidden = true;
+        shelves.hidden = false;
+      }
+      status.textContent = '';
+      announcement.textContent = '';
+    }
+  });
   panel.querySelector('[data-podcast-feed]').addEventListener('submit', event => {
     event.preventDefault();
     void openShow(event.currentTarget.elements.url.value.trim(), event.submitter);
@@ -317,18 +360,27 @@ export function renderPodcasts(view, repository, player, focus) {
       resultList.replaceChildren(list);
       results.hidden = false;
       shelves.hidden = true;
+      results.querySelector('h2').focus();
     }, event.submitter);
   });
 
-  unsubscribe = player.subscribe(recent => {
+  const unsubscribe = player.subscribe(recent => {
     if (!panel.isConnected) return;
     continuePanel.hidden = !recent || recent.ended;
     if (continuePanel.hidden) return;
     const copy = element('div', '', 'podcast-row-copy');
     copy.append(element('h2', 'Continue listening'), element('strong', recent.episode.title));
+    if (recent.episode.publisher) copy.append(element('p', recent.episode.publisher, 'podcast-notice'));
+    const artwork = element('span', '', 'listen-art');
+    artwork.setAttribute('aria-hidden', 'true');
+    artwork.innerHTML = icon('headphones');
     const resume = iconButton('Resume episode', 'play', trigger => run(() => player.play(recent.episode), trigger));
-    continuePanel.replaceChildren(copy, resume);
+    continuePanel.replaceChildren(artwork, copy, resume);
   });
   player.connect();
   void run(showLibrary);
+  return () => {
+    unsubscribe();
+    discovery?.abort();
+  };
 }

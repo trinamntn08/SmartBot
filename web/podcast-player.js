@@ -374,11 +374,16 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
 
   return {
     play,
+    pause() {
+      ++startSequence;
+      if (audio) audio.pause();
+      else void callNative('pause').catch(error => { if (current) nativeFailure(error); });
+    },
     setExpanded(expanded) {
       panel.classList.toggle('is-compact', !expanded);
       if (expanded) musicLink.removeAttribute('href');
       else {
-        musicLink.setAttribute('href', '#music');
+        musicLink.setAttribute('href', '#podcasts');
         closeSpeed(false);
       }
     },

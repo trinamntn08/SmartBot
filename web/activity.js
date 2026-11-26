@@ -2,8 +2,8 @@ import { localDay } from './planner.js';
 
 export const activityCategories = [
   { id: 'reading', label: 'Books', route: 'books' },
-  { id: 'podcasts', label: 'Podcasts', route: 'music' },
-  { id: 'music', label: 'Music' },
+  { id: 'podcasts', label: 'Podcasts', route: 'podcasts' },
+  { id: 'music', label: 'Music', route: 'tracks' },
   { id: 'news', label: 'News', route: 'news' },
   { id: 'languages', label: 'Languages' },
   { id: 'movies', label: 'Movies' },

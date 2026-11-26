@@ -110,14 +110,17 @@ public final class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (isAppAsset(uri)) return false;
+                boolean musicService = uri.getPort() == -1 && uri.getUserInfo() == null && isMusicService(uri.getHost());
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
-                        && (isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
+                        && (musicService || isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
                         || isMarketSource(uri) || isGoogleSearch(uri))) {
                     try {
                         Intent article = new Intent(Intent.ACTION_VIEW, uri);
-                        Bundle extras = new Bundle();
-                        extras.putBinder("android.support.customtabs.extra.SESSION", null);
-                        article.putExtras(extras);
+                        if (!musicService) {
+                            Bundle extras = new Bundle();
+                            extras.putBinder("android.support.customtabs.extra.SESSION", null);
+                            article.putExtras(extras);
+                        }
                         startActivity(article);
                     } catch (ActivityNotFoundException error) {
                         Toast.makeText(MainActivity.this, "No browser available", Toast.LENGTH_SHORT).show();
@@ -133,6 +136,12 @@ public final class MainActivity extends Activity {
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
             webView.loadUrl(PodcastPlaybackService.OPEN_MUSIC.equals(getIntent().getAction()) ? APP_URL + "#music" : APP_URL);
         }
+    }
+
+    private static boolean isMusicService(String host) {
+        return "open.spotify.com".equals(host) || "music.apple.com".equals(host)
+                || "music.youtube.com".equals(host) || "www.deezer.com".equals(host)
+                || "soundcloud.com".equals(host);
     }
 
     @Override

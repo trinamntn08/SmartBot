@@ -6,6 +6,7 @@ import { findSection, sectionPreview, workspace } from './workspace.js';
 import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
 import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
+import { listeningPage, renderMusic } from './listen.js';
 import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
@@ -32,6 +33,7 @@ let loadActivity;
 let keepReadingPlanOpen = false;
 let stopMarkets;
 let stopNews;
+let stopPodcasts;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -139,6 +141,8 @@ function render(focusHeading = false) {
   stopMarkets = undefined;
   stopNews?.();
   stopNews = undefined;
+  stopPodcasts?.();
+  stopPodcasts = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -146,16 +150,17 @@ function render(focusHeading = false) {
   const isLibrary = route === 'books' || Number.isSafeInteger(bookId);
   const isStory = route.startsWith('story=') || route.startsWith('saved-story=');
   const section = findSection(isStory || route === 'saved-news' ? 'news' : route);
+  const listenPage = listeningPage(route);
   const appPage = ['today', 'activities', 'progress', 'settings'].includes(route);
-  const page = isLibrary ? 'books' : section?.id ?? (appPage ? route : 'workspace');
+  const page = isLibrary ? 'books' : listenPage ?? section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
-  podcastPlayer.setExpanded(page === 'music');
+  podcastPlayer.setExpanded(page === 'podcasts');
   marketRepository.setOpen(page === 'markets');
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
   for (const link of navLinks) {
     link.hidden = !routine.settings && (link.hash === '#activities' || (link.hash === '#progress' && !Object.keys(routine.plans).length));
-    if (link.hash === `#${page}`) link.setAttribute('aria-current', 'page');
+    if (link.hash === `#${page}` || (listenPage && link.hash === '#listen')) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   }
 
@@ -177,8 +182,12 @@ function render(focusHeading = false) {
     stopNews = renderNews(view, repository.savedNews, focusHeading, track);
     return;
   }
-  if (page === 'music') {
-    renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+  if (page === 'podcasts') {
+    stopPodcasts = renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+    return;
+  }
+  if (page === 'tracks') {
+    renderMusic(view, podcastPlayer.pause, focusHeading);
     return;
   }
   if (page === 'markets') {

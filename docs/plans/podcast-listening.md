@@ -1,12 +1,12 @@
 # Podcast listening
 
-Use the Music card to find, follow, and stream public podcasts. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
+The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a shortcut to your chosen service on this device. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
-Open **Music** to search by podcast name, open the suggested show, or expand **Add by RSS**. Opening a show brings its episodes into focus. **Followed shows** and **Continue listening** appear when there are saved shows or an unfinished episode.
+Open **Podcasts** to resume an unfinished episode, play the latest from a followed show, or open the suggested show. **Find podcasts** reveals name search and **Add by RSS**. Opening a show brings its episodes into focus.
 
 Drag the timeline to a specific point or use the 10-second back and forward buttons. Open the speed control and move the slider from 0.25× to 4×. SmartBot keeps the rate when you switch episodes or reopen the app.
 
-Outside Music, the player fits on one row. Select the episode title to open the full player in Music. **Close player** pauses the episode and saves your place so you can use **Continue listening** later.
+Outside Podcasts, the player fits on one row. Select the episode title to open the full player in Podcasts. **Close player** pauses the episode and saves your place so you can use **Continue listening** later.
 
 ## Optional hosted service
 
@@ -19,7 +19,7 @@ The default Android APK searches the Apple Podcasts catalog and downloads public
 ## Verification
 
 - Run `npm --prefix podcast-service test` after installing dependencies. Run the existing Node and Python tests and Android `assembleDebug` and `lintDebug`.
-- Open Music from Workspace. Test franceinfo discovery, a second feed pasted by URL, follow and refresh, playback, seek, retry, and position resume.
+- Open Listen from Workspace. Check music service selection and launch, switching sections, reopening Podcasts, franceinfo discovery, RSS, follow and refresh, playback, seek, retry, and position resume.
 - On the Android pilot phone, stream an episode, lock the screen, and pause and resume using the media controls. Reopen SmartBot and check progress. Confirm that Books and Today work offline.
 
 ## Step record
@@ -55,6 +55,8 @@ November 26, 2026. The Music player aligns the episode, timeline, playback butto
 The browser preview from `410e16d` on `main` passed the alignment and playback checks and reopened the library offline. The Android debug APK passed Gradle build, signature continuity, ZIP alignment, and comparison of all 249 bundled web files. Lint reported zero errors and six warnings. Physical phone checks remain pending.
 
 November 26, 2026. The playback speed button displays one decimal place, while the slider and stored rate retain hundredth-step precision. Chromium verified rounding, trailing zeroes, precise playback and slider announcements, and the rounded label after reopening a saved episode. All 46 automated tests passed.
+
+November 26, 2026. Workspace opens Listen with separate Music and Podcasts sections. Music remembers a service and opens its HTTPS shortcut. Podcasts leads with resume and followed-show playback, and Find podcasts reveals search and RSS. The existing podcast deep link and device-local listening data carry over. Chromium checked the layout from 320 to 1440 CSS pixels and at 200% text size. Controlled feeds and audio verified hidden discovery, keyboard focus, search and RSS, follow and quick play, resume, section and service persistence, and pausing a podcast when launching a music service. All 46 automated tests passed.
 
 ## Handoff
 

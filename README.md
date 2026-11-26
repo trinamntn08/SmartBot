@@ -58,9 +58,13 @@ For crypto, the price above the chart shows the latest Bitstamp trade and its ti
 
 To update the bundled prices, run `python3 scripts/build-market-snapshot.py /path/to/prices.parquet --bitcoin /path/to/btc_usd_daily.csv > web/assets/market-closes.json` with PyArrow installed. To refresh the searchable U.S. equities at the same time, add `--catalog /path/to/constituents.csv /path/to/nasdaq-listed.csv web/assets/market-catalog.json`. To rebuild the Vietnamese search directory, add `--vietnam-catalog /path/to/vietnam_companies.csv web/assets/market-vietnam-catalog.json`. Online U.S. equity updates use HTTP byte ranges and the bundled MIT-licensed hyparquet and fzstd readers. [Equities download](https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet) · [Bitcoin download](https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv) · [S&P 500 names](https://github.com/datasets/s-and-p-500-companies) · [Nasdaq names](https://github.com/datasets/nasdaq-listings) · [Vietnamese company names](https://raw.githubusercontent.com/youngsu-park-69/vietnam-stock-data/40a3c8ebc86be44b98754e87ef845b3454a01ef7/data/vietnam_companies.csv)
 
+## Listen to music
+
+Open **Workspace → Listen → Music** and save your preferred service. Use its shortcut to open the service on later visits, or choose **Change service** to update it.
+
 ## Listen to podcasts
 
-Open **Workspace → Music → Podcasts**. Search by name, paste a public HTTPS RSS link, or open the suggested franceinfo show. Follow shows and use **Continue listening** to pick up where you left off.
+Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Open **Find podcasts** to search by name or add a public HTTPS RSS link.
 
 Streaming uses the publisher’s audio and requires internet. SmartBot requires no listening subscription and inserts no ads. Publishers may include ads in their audio.
 

@@ -16,7 +16,7 @@ One day might look like 5 minutes of news, 10 minutes of reading, and 10 minutes
 
 ## What the app feels like
 
-The app opens on **Workspace**, with cards for Books, News, Languages, Music, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Music** opens podcasts. **Markets** opens stock, ETF, and crypto charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
+The app opens on **Workspace**, with cards for Books, News, Languages, Listen, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Listen** opens the last-used Music or Podcasts section. **Markets** opens stock, ETF, and crypto charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
 
 | Screen | What you see and do |
 | --- | --- |
@@ -25,7 +25,8 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Music, Mo
 | Activities | Enable or pause activities, change defaults for future plans, choose a vocabulary deck, maintain your current book, and manage your news sources. |
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
-| Music | Find and follow podcasts, stream public episodes, and resume from a position stored on your device. |
+| Music | Open your preferred music service using a shortcut stored on your device. |
+| Podcasts | Resume an episode or play the latest from a followed show. Open Find podcasts to search or add an RSS feed. |
 | Markets | Search and save U.S. stocks and ETFs, Vietnamese stocks, and USD crypto pairs. Inspect closing-price lines or candlesticks, and reopen the last symbol, range, and chart type with downloaded prices offline. |
 | Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |
 | Progress | Review a seven-day history and simple totals such as articles read, book sessions, and new words studied. Show skipped or unfinished items neutrally. |

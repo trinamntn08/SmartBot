@@ -1,7 +1,7 @@
 const sections = [
   { id: 'news', title: 'News', subtitle: 'Coffee and headlines.' },
   { id: 'languages', title: 'Languages', subtitle: 'Say that again?', detail: 'Vocabulary decks are in development.' },
-  { id: 'music', title: 'Music', subtitle: 'Podcasts on dish duty.' },
+  { id: 'listen', title: 'Listen', subtitle: 'Songs and stories.' },
   { id: 'movies', title: 'Movies', subtitle: 'Pass the popcorn.', detail: 'Film browsing and watchlists are in development.' },
   { id: 'markets', title: 'Markets', subtitle: 'Charts with plot twists.' },
 ];
