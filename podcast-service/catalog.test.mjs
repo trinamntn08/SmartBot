@@ -51,7 +51,7 @@ test('restricts destinations and keeps pasted feeds independent of directory cre
   })).episodes.length, 2);
 });
 
-test('maps the directory response and offers the starter if the directory is unavailable', async () => {
+test('uses the configured Podcast Index catalog', async () => {
   const result = await searchCatalog('other show', { PODCAST_INDEX_KEY: 'key', PODCAST_INDEX_SECRET: 'secret' }, async (url, options) => {
     assert.equal(new URL(url).searchParams.get('q'), 'other show');
     assert.equal(options.headers['X-Auth-Key'], 'key');
@@ -62,8 +62,31 @@ test('maps the directory response and offers the starter if the directory is una
     ] })) };
   });
   assert.deepEqual(result, { shows: [{ title: 'Other Show', publisher: 'Publisher', feedUrl: feedUrl.href }], limited: false });
-  assert.deepEqual(await searchCatalog('Les informes', {}), { shows: [franceinfo], limited: true });
-  await assert.rejects(searchCatalog('other show', {}), { status: 503 });
+});
+
+test('searches Apple Podcasts without credentials and returns distinct public feeds', async () => {
+  const result = await searchCatalog('tri ki cam xuc', {}, async (url, { headers }) => {
+    const endpoint = new URL(url);
+    assert.equal(endpoint.origin + endpoint.pathname, 'https://itunes.apple.com/search');
+    assert.equal(endpoint.searchParams.get('term'), 'tri ki cam xuc');
+    assert.equal(endpoint.searchParams.get('entity'), 'podcast');
+    assert.deepEqual(headers, { Accept: 'application/json' });
+    return { body: Buffer.from(JSON.stringify({ results: [
+      { collectionName: 'Tri Kỷ Cảm Xúc', artistName: 'Publisher', feedUrl: feedUrl.href },
+      { collectionName: 'Duplicate', feedUrl: feedUrl.href },
+      { collectionName: 'Private', feedUrl: 'https://127.0.0.1/feed' },
+      { collectionName: 'Without a feed' },
+    ] })) };
+  });
+  assert.deepEqual(result, { shows: [{ title: 'Tri Kỷ Cảm Xúc', publisher: 'Publisher', feedUrl: feedUrl.href }], limited: false });
+  const empty = await searchCatalog('other show', {}, async () => ({ body: Buffer.from('{"results":[]}') }));
+  assert.deepEqual(empty, { shows: [], limited: false });
+});
+
+test('offers the matching starter if catalog search is unavailable', async () => {
+  const unavailable = async () => { throw new Error('Catalog unreachable'); };
+  assert.deepEqual(await searchCatalog('Les informes', {}, unavailable), { shows: [franceinfo], limited: true });
+  await assert.rejects(searchCatalog('other show', {}, unavailable), { status: 503 });
 });
 
 test('serves errors and allows cross-origin requests from the bundled Android app', async t => {
