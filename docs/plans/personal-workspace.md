@@ -109,7 +109,7 @@ All 27 web and 12 Python tests passed. Chromium at 320 and 1280 CSS pixels verif
 
 November 26, 2026. Topic buttons follow the width of their labels so **All**, **World**, and the other sections use the same gap. **Saved interests** appears in the three-dot menu, and the line below the bar shows the update time when it is selected.
 
-Web and Python tests passed. Browser verification is pending.
+All 27 web and 12 Python tests passed. Chromium measured equal gaps between labels at 320, 640, and 1280 CSS pixels, verified the update line with saved interests selected, and checked that the three-dot menu and offline filtering still worked.
 
 ## Handoff
 
