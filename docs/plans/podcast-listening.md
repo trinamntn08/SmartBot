@@ -52,6 +52,8 @@ The preview from `956f3ac` on `main` reopened Continue listening offline with th
 
 November 26, 2026. The Music player aligns the episode, timeline, playback buttons, speed, and close control on one row at desktop widths. Narrow layouts put speed on the same row as the playback buttons. Chromium verified alignment at nine widths from 320 to 1440 CSS pixels, including both layout breakpoints. Controlled audio verified keyboard and touch playback, seek, skips, speed and focus, resume, retry, and resizing with 200% text. All 27 web, 12 Python, and seven podcast service tests passed.
 
+The browser preview from `410e16d` on `main` passed the alignment and playback checks and reopened the library offline. The Android debug APK passed Gradle build, signature continuity, ZIP alignment, and comparison of all 249 bundled web files. Lint reported zero errors and six warnings. Physical phone checks remain pending.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
