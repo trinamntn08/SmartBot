@@ -24,7 +24,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The watchlist removal update passed 31 web, 16 Python, and eight podcast-service tests. The repository check exercised older watchlist records, removal of all defaults, and restoring entries without duplicates. Published browser and APK checks and physical phone verification remain open.
+Chromium at 320 CSS pixels removed a default, preserved earlier saved entries and prices, reopened an empty watchlist offline, and restored cached and uncached defaults through search. All 31 web, 16 Python, and eight podcast-service tests passed. The published debug APK passed lint, signature, and ZIP alignment checks and matched all 261 bundled web files. Physical phone verification remains open.
 
 Chromium at 320 CSS pixels verified live VN-Index candlesticks, a year of CAC 40 closes, and Valeo search and prices in EUR. All three charts reopened offline, and the existing watchlist was preserved. Live provider checks returned 272 VN-Index candles and daily history for all 13 Euronext listings. All 30 web, 16 Python, and eight podcast-service tests passed. The Android market adapter returned live history for VN-Index, CAC 40, and Valeo in a host JVM check. The published debug APK passed lint, signature, and ZIP alignment checks, and all 261 bundled web files matched. Physical phone verification remains open.
 
