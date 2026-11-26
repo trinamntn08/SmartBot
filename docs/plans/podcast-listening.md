@@ -64,6 +64,8 @@ November 26, 2026. Music embeds the saved Spotify playlist in Spotify's official
 
 The preview from `80c7a89` on `main` played a Spotify preview in signed-out Chrome without opening another window and restored the saved playlist after an offline reload and reconnection. The Android debug APK passed build, signature continuity, ZIP alignment, and comparison of all 250 bundled web files. Lint reported zero errors and six warnings. Full-song playback and Android runtime playback remain unverified.
 
+November 26, 2026. Open Spotify is the primary Music action again. The playlist form and any saved playlist are available in a collapsed section. Opening the section loads the player and closing it unloads the player. Chromium checked the shortcut, keyboard focus, optional setup, saved playlist carryover, and layout from 320 to 1440 CSS pixels and at 200% text size. All 46 automated tests passed. Spotify's catalog interface is available in Spotify itself and full-track streaming from a third-party integration requires Premium.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
