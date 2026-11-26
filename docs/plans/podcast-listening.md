@@ -4,7 +4,9 @@ Use the Music card to find, follow, and stream public podcasts. The browser uses
 
 Open **Music** to search by podcast name, open the suggested show, or expand **Add by RSS**. Opening a show brings its episodes into focus. **Followed shows** and **Continue listening** appear when there are saved shows or an unfinished episode.
 
-Drag the timeline to a specific point or use the 10-second back and forward buttons. Open the speed control to choose a preset or enter a custom rate from 0.25× to 4×. SmartBot keeps the rate when you switch episodes or reopen the app.
+Drag the timeline to a specific point or use the 10-second back and forward buttons. Open the speed control and move the slider from 0.25× to 4×. SmartBot keeps the rate when you switch episodes or reopen the app.
+
+Outside Music, the player fits on one row. Select the episode title to open the full player in Music. **Close player** pauses the episode and saves your place so you can use **Continue listening** later.
 
 ## Optional hosted service
 
@@ -37,6 +39,10 @@ November 26, 2026. Music uses smaller type, compact discovery, and a player with
 The combined build at `fc52c82` passed all 27 web, 12 Python, and five podcast service tests. The local Chromium preview reopened the saved library offline and played a live franceinfo episode with both skips and a custom 1.37× rate. The Android debug APK passed signature and alignment verification and matched all 245 bundled web files. Lint reported zero errors and ten warnings in the Gradle configuration and manifest.
 
 November 26, 2026. The desktop podcast service searches Apple Podcasts when Podcast Index credentials are absent. A live adapter check found **Tri Kỷ Cảm Xúc** by searching `tri ki cam xuc` and loaded 30 episodes from its publisher RSS feed. All 27 web, 12 Python, and seven podcast service tests passed. The service tests cover both catalogs and the unavailable-catalog fallback.
+
+Desktop Chrome verified the same search through Music on the local preview, displayed all 30 episodes, and reopened the followed show offline.
+
+November 26, 2026. The player fits in a single 50-pixel row outside Music, closes on request, and uses one playback speed slider. Chromium checked keyboard and touch adjustment, focus return, dismissal, resume, and the saved rate and position at widths from 320 to 1440 CSS pixels, including 200% text. A simulated Android bridge verified that a dismissed player stays closed across native polls and reopens at the saved position and speed. All 27 web and 12 Python tests passed. Physical Android playback remains unverified.
 
 ## Handoff
 

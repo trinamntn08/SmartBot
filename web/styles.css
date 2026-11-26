@@ -581,8 +581,8 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-player {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, 1.4fr) auto;
-  grid-template-areas: "episode timeline speed" "episode transport speed";
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 1.4fr) auto auto;
+  grid-template-areas: "episode timeline speed dismiss" "episode transport speed dismiss";
   align-items: center;
   gap: 0 1.25rem;
   margin-block-start: 0.75rem;
@@ -609,6 +609,17 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 }
 
 .podcast-player-copy { min-width: 0; }
+.podcast-player-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: inherit;
+  text-decoration: none;
+}
+.podcast-player-title svg { display: none; }
+.podcast-player-title[href] { min-height: 44px; }
+.podcast-player-title[href] svg { display: block; flex: none; color: var(--muted); }
+.podcast-player-title[href]:hover strong { text-decoration: underline; }
 .podcast-player-copy strong, .podcast-player-copy span {
   display: block;
   overflow: hidden;
@@ -635,7 +646,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-timeline span { min-width: 4ch; }
 .podcast-timeline span:last-child { text-align: end; }
 
-.podcast-timeline input {
+.podcast-player input[type="range"] {
   --podcast-progress: 0%;
   --podcast-track: color-mix(in srgb, var(--muted) 70%, var(--line));
   appearance: none;
@@ -650,18 +661,18 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   cursor: pointer;
 }
 
-.podcast-timeline input:disabled { opacity: 0.6; cursor: default; }
-.podcast-timeline input::-webkit-slider-runnable-track {
+.podcast-player input[type="range"]:disabled { opacity: 0.6; cursor: default; }
+.podcast-player input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
   background: linear-gradient(to right, currentColor var(--podcast-progress), var(--podcast-track) var(--podcast-progress));
 }
-.podcast-timeline input::-moz-range-track {
+.podcast-player input[type="range"]::-moz-range-track {
   height: 4px;
   border-radius: 2px;
   background: linear-gradient(to right, currentColor var(--podcast-progress), var(--podcast-track) var(--podcast-progress));
 }
-.podcast-timeline input::-webkit-slider-thumb {
+.podcast-player input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 12px;
   height: 12px;
@@ -669,7 +680,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   border-radius: 50%;
   background: currentColor;
 }
-.podcast-timeline input::-moz-range-thumb {
+.podcast-player input[type="range"]::-moz-range-thumb {
   width: 12px;
   height: 12px;
   border: 0;
@@ -677,7 +688,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   background: currentColor;
 }
 @media (forced-colors: active) {
-  .podcast-timeline input { appearance: auto; }
+  .podcast-player input[type="range"] { appearance: auto; }
 }
 
 .podcast-transport {
@@ -745,20 +756,27 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   z-index: 3;
   inset: calc(100% + 0.35rem) 0 auto auto;
   box-sizing: border-box;
-  width: min(18rem, calc(100vw - 3rem));
-  margin: 0;
-  padding: 0.75rem;
+  width: min(12rem, calc(100vw - 3rem));
+  padding-inline: 0.75rem;
   border: 1px solid var(--line);
   border-radius: 0.7rem;
   background: var(--surface);
-  box-shadow: 0 5px 14px rgb(0 0 0 / 12%);
 }
 
-.podcast-speed-menu label { margin-block-end: 0.45rem; font-weight: 700; }
-.podcast-speed-menu small { display: block; margin-block-start: 0.3rem; color: var(--muted); font-size: 0.75rem; }
-.podcast-speed-presets { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-block-end: 0.55rem; }
-.podcast-speed-presets button { flex: 1 0 auto; padding-inline: 0.4rem; font-size: 0.8125rem; }
-.podcast-speed-presets [aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.podcast-player [data-player-dismiss] {
+  grid-area: dismiss;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.podcast-player [data-player-dismiss]:hover,
+.podcast-player.is-compact [data-player-toggle]:hover { background: var(--accent-soft); color: var(--ink); }
 
 .podcast-player-status { grid-column: 1 / -1; margin: 0.45rem 0 0; color: var(--muted); font-size: 0.8125rem; }
 .podcast-player:not([hidden]) + main[data-page="music"] { padding-block-start: 0.75rem; }
@@ -770,13 +788,33 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
   .podcast-discovery-tools { max-width: none; }
   .podcast-shelves { grid-template-columns: 1fr; gap: 1rem; }
   .podcast-player {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "episode episode" "timeline timeline" "transport speed";
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "episode episode dismiss" "timeline timeline timeline" "transport speed speed";
     column-gap: 0.5rem;
     padding: 0.65rem 0.75rem;
   }
   .podcast-transport { justify-content: flex-start; }
 }
+
+.podcast-player.is-compact {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "episode transport dismiss";
+  max-width: 40rem;
+  column-gap: 0.15rem;
+  padding: 0.125rem 0.375rem 0.125rem 0.65rem;
+}
+
+.podcast-player.is-compact .podcast-player-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.podcast-player.is-compact .podcast-player-icon svg { width: 16px; height: 16px; }
+.podcast-player.is-compact [data-player-toggle] { background: transparent; border-color: transparent; color: var(--ink); }
+.podcast-player.is-compact :is(.podcast-timeline, .podcast-speed, .podcast-skip, [data-player-publisher]) { display: none; }
+.podcast-player.is-compact .podcast-player-status { margin: 0 0.25rem 0.375rem; }
+.podcast-player.is-compact:not([hidden]) + main { padding-block-start: clamp(1rem, 2.4vw, 1.75rem); }
+
 .news-heading, .news-tools, .news-reader-tools {
   display: flex;
   align-items: center;

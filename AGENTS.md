@@ -19,6 +19,7 @@ SmartBot is a personal, mobile-first web app that suggests an editable 15–30 m
 
 ## Implementation boundaries
 
+- Keep interfaces simple and clean. Prefer one familiar control per task. Add secondary controls, labels, or help text only when they serve a distinct user need. Keep touch targets and keyboard focus easy to use.
 - Keep plan selection in the planner, persistent state behind repositories, and third-party data behind provider adapters. Today and the widget use the same stored plan and actions.
 - Preserve user edits, completion history, and local progress when time zones, sources, or preferences change. Keep the core routine usable offline and account connections optional.
 - Use original or appropriately licensed vocabulary and news content. Keep credentials and personal progress out of repository files and logs.
