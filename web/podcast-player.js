@@ -10,11 +10,20 @@ function time(seconds) {
 }
 
 export function createPodcastPlayer(repository, panel, recordActivity) {
-  const title = panel.querySelector('strong');
+  const title = panel.querySelector('[data-player-title]');
+  const publisher = panel.querySelector('[data-player-publisher]');
   const toggle = panel.querySelector('[data-player-toggle]');
   const rewind = panel.querySelector('[data-player-rewind]');
-  const seek = panel.querySelector('input');
+  const forward = panel.querySelector('[data-player-forward]');
+  const seek = panel.querySelector('[data-player-seek]');
   const elapsed = panel.querySelector('[data-player-time]');
+  const duration = panel.querySelector('[data-player-duration]');
+  const speed = panel.querySelector('.podcast-speed');
+  const speedButton = speed.querySelector('summary');
+  const speedLabel = speed.querySelector('[data-player-rate]');
+  const speedForm = speed.querySelector('form');
+  const speedInput = speedForm.querySelector('input');
+  const presets = [...speedForm.querySelectorAll('[data-rate]')];
   const message = panel.querySelector('[role="status"]');
   const audio = hasNativePodcastPlayer ? null : new Audio();
   const listeners = new Set();
@@ -22,7 +31,8 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   let recent;
   let lastWrite = 0;
   let startSequence = 0;
-  let pendingNative = 0;
+  let nativeRequest = 0;
+  let nativeActions = 0;
   let nativeTimer;
   let seeking = false;
   let restorePosition;
@@ -33,7 +43,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     if (!force && listening && now - listening.time < 5000) return;
     if (listening && !audio.seeking) {
       const elapsed = now - listening.time;
-      const played = (audio.currentTime - listening.position) * 1000 / audio.playbackRate;
+      const played = (audio.currentTime - listening.position) * 1000 / listening.rate;
       // Natural playback advances with the clock. A discontinuity is a seek or a source change.
       if (played > 0 && played <= elapsed + 500) {
         const end = Date.now();
@@ -42,7 +52,16 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
         recordActivity(activityIntervals(activity, end - Math.min(elapsed, played), end));
       }
     }
-    listening = continuePlaying ? { time: now, position: audio.currentTime } : null;
+    listening = continuePlaying ? { time: now, position: audio.currentTime, rate: audio.playbackRate } : null;
+  }
+
+  function renderTimeline() {
+    const total = current.duration;
+    const position = seeking ? Math.min(total, Number(seek.value)) : current.position;
+    const progress = total ? Math.min(100, 100 * position / total) : 0;
+    elapsed.textContent = time(position);
+    seek.style.setProperty('--podcast-progress', `${progress}%`);
+    seek.setAttribute('aria-valuetext', total ? `${time(position)} of ${time(total)}` : time(position));
   }
 
   function render() {
@@ -52,20 +71,29 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
       title.textContent = current.episode.title;
       title.title = current.episode.title;
     }
+    const byline = current.episode.publisher || '';
+    if (publisher.textContent !== byline) publisher.textContent = byline;
     const action = current.playing ? 'Pause' : current.error ? 'Retry' : 'Play';
     const playback = action.toLowerCase();
     if (toggle.dataset.playback !== playback) {
       toggle.dataset.playback = playback;
       toggle.setAttribute('aria-label', `${action} podcast`);
     }
-    rewind.disabled = !current.duration;
-    seek.disabled = !current.duration;
-    seek.max = current.duration || 0;
+    const canSeek = Boolean(current.duration && current.seekable !== false);
+    rewind.disabled = !canSeek;
+    forward.disabled = !canSeek;
+    seek.disabled = !canSeek;
+    seek.max = Math.ceil(current.duration || 0);
     if (!seeking) seek.value = current.position;
-    seek.setAttribute('aria-valuetext', time(Number(seek.value)));
-    elapsed.textContent = `${time(current.position)}${current.duration ? ` / ${time(current.duration)}` : ''}`;
-    panel.setAttribute('aria-busy', String(Boolean(current.buffering)));
-    const status = current.error || '';
+    renderTimeline();
+    duration.textContent = current.duration ? time(current.duration) : '–:––';
+    const rateText = `${currentRate()}×`;
+    if (speedLabel.textContent !== rateText) {
+      speedLabel.textContent = rateText;
+      speedButton.setAttribute('aria-label', `Playback speed, ${rateText}`);
+      speedButton.title = `Playback speed, ${rateText}`;
+    }
+    const status = current.error || (current.buffering ? 'Buffering…' : '');
     if (message.textContent !== status) message.textContent = status;
   }
 
@@ -92,12 +120,19 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   }
 
   async function callNative(action, args) {
-    const request = ++pendingNative;
-    const state = await nativePodcast(action, args);
-    if (request !== pendingNative) return;
-    current = state?.active ? state : null;
-    updateRecent(state?.episode ? state : null);
-    render();
+    const request = ++nativeRequest;
+    const isAction = action !== 'state';
+    if (isAction) nativeActions++;
+    try {
+      const state = await nativePodcast(action, args);
+      if (request !== nativeRequest) return;
+      if (current?.episode.id !== state?.episode?.id) seeking = false;
+      current = state?.active ? state : null;
+      updateRecent(state?.episode ? state : null);
+      render();
+    } finally {
+      if (isAction) nativeActions--;
+    }
   }
 
   function nativeFailure(error) {
@@ -137,6 +172,11 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
 
   if (audio) {
     audio.preload = 'metadata';
+    const rate = repository.playbackRate();
+    if (rate >= Number(speedInput.min) && rate <= Number(speedInput.max)) {
+      audio.defaultPlaybackRate = rate;
+      audio.playbackRate = rate;
+    }
     for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'play', 'playing', 'pause', 'waiting', 'seeking', 'seeked', 'ended', 'error']) {
       audio.addEventListener(event, syncAudio);
     }
@@ -198,7 +238,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   }
 
   function seekTo(position) {
-    if (!current?.duration) return;
+    if (!current?.duration || current.seekable === false) return;
     const target = Math.max(0, Math.min(current.duration, position));
     if (audio) {
       trackPlayback();
@@ -208,27 +248,93 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     } else void callNative('seek', { position: target }).catch(nativeFailure);
   }
 
+  function skip(seconds, action) {
+    if (audio) seekTo(audio.currentTime + seconds);
+    else void callNative(action).catch(nativeFailure);
+  }
+
+  function currentRate() {
+    return audio?.playbackRate ?? current?.rate ?? 1;
+  }
+
+  function closeSpeed(restoreFocus) {
+    if (!speed.open) return;
+    speed.open = false;
+    if (restoreFocus) speedButton.focus();
+  }
+
+  async function setRate(rate) {
+    if (audio) {
+      const isListening = Boolean(listening);
+      trackPlayback();
+      audio.defaultPlaybackRate = rate;
+      audio.playbackRate = rate;
+      if (isListening) trackPlayback(true);
+      repository.savePlaybackRate(rate);
+      render();
+    } else {
+      try { await callNative('speed', { rate }); }
+      catch (error) {
+        nativeFailure(error);
+        return;
+      }
+    }
+    closeSpeed(true);
+  }
+
   toggle.addEventListener('click', () => {
     if (audio) {
       if (current.playing) audio.pause();
       else playAudio();
     } else void callNative(current.playing ? 'pause' : 'resume').catch(nativeFailure);
   });
-  rewind.addEventListener('click', () => seekTo((audio?.currentTime ?? current.position) - 15));
+  rewind.addEventListener('click', () => skip(-10, 'back'));
+  forward.addEventListener('click', () => skip(10, 'forward'));
   seek.addEventListener('input', () => {
     seeking = true;
-    seek.setAttribute('aria-valuetext', time(Number(seek.value)));
+    renderTimeline();
   });
   seek.addEventListener('change', () => {
     const position = Number(seek.value);
     seeking = false;
     seekTo(position);
   });
-  seek.addEventListener('blur', () => { seeking = false; });
+  seek.addEventListener('blur', () => {
+    if (!seeking) return;
+    seeking = false;
+    render();
+  });
+
+  speedButton.addEventListener('click', () => {
+    if (speed.open) return;
+    const rate = currentRate();
+    speedInput.value = rate;
+    for (const preset of presets) {
+      preset.setAttribute('aria-pressed', String(Number(preset.dataset.rate) === rate));
+    }
+  });
+  speed.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !speed.open) return;
+    event.preventDefault();
+    closeSpeed(true);
+  });
+  speed.addEventListener('focusout', event => {
+    if (event.relatedTarget && !speed.contains(event.relatedTarget)) closeSpeed(false);
+  });
+  document.addEventListener('pointerdown', event => {
+    if (!speed.contains(event.target)) closeSpeed(false);
+  });
+  speedForm.addEventListener('submit', event => {
+    event.preventDefault();
+    void setRate(speedInput.valueAsNumber);
+  });
+  for (const preset of presets) {
+    preset.addEventListener('click', () => void setRate(Number(preset.dataset.rate)));
+  }
 
   let polling = false;
   async function syncNative() {
-    if (polling || document.hidden) return;
+    if (polling || nativeActions || document.hidden) return;
     polling = true;
     try { await callNative('state'); }
     catch (error) { if (current) nativeFailure(error); }

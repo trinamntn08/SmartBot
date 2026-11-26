@@ -23,12 +23,13 @@ export function renderPodcasts(view, repository, player, focus) {
   unsubscribe?.();
   cancelRequest?.();
   const panel = element('div', '', 'podcasts');
-  panel.innerHTML = `<section class="podcast-hero" aria-labelledby="music-title">
-      <div class="podcast-hero-copy">
-        <h1 id="music-title" tabindex="-1">Music</h1>
+  panel.innerHTML = `<section class="podcast-discovery" aria-labelledby="music-title">
+      <h1 id="music-title" tabindex="-1">Music</h1>
+      <img class="podcast-discovery-art" src="./assets/podcast-studio.webp" width="1152" height="768" alt="">
+      <div class="podcast-discovery-tools">
         <form data-podcast-search>
           <div class="podcast-form-row">
-            <input type="search" name="query" maxlength="120" aria-label="Podcast name" placeholder="Podcast name" required>
+            <input type="search" name="query" maxlength="120" aria-label="Podcast name" placeholder="Search podcasts" required>
             <button type="submit">Search</button>
           </div>
         </form>
@@ -41,9 +42,6 @@ export function renderPodcasts(view, repository, player, focus) {
             </div>
           </form>
         </details>
-      </div>
-      <div class="podcast-hero-art">
-        <img src="./assets/podcast-studio.webp" width="1152" height="768" alt="">
       </div>
     </section>
     <section class="podcast-continue" aria-label="Continue listening" hidden></section>
@@ -236,12 +234,14 @@ export function renderPodcasts(view, repository, player, focus) {
     }, trigger);
   }
 
-  const suggested = button(franceinfo.title, trigger => openShow(franceinfo.feedUrl, trigger));
-  suggested.className = 'podcast-pick-button';
+  const suggested = button('', trigger => openShow(franceinfo.feedUrl, trigger));
+  suggested.className = 'quiet podcast-pick-button';
   suggested.setAttribute('aria-label', `View episodes for ${franceinfo.title}`);
+  const suggestedCopy = element('span', '', 'podcast-row-copy');
+  suggestedCopy.append(element('strong', franceinfo.title), element('span', franceinfo.publisher, 'podcast-notice'));
   const arrow = element('span', '', 'arrow');
   arrow.setAttribute('aria-hidden', 'true');
-  suggested.append(arrow);
+  suggested.append(suggestedCopy, arrow);
   panel.querySelector('.podcast-example').append(suggested);
   panel.querySelector('[data-podcast-feed]').addEventListener('submit', event => {
     event.preventDefault();
