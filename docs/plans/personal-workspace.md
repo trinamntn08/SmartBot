@@ -97,9 +97,7 @@ All 31 Node and 12 Python tests passed. At 320 CSS pixels, Chromium received 15 
 
 November 26, 2026. The News header shows the main sections and an expandable **More topics** list. **All** requests every existing feed in the selected languages. The **My topics** section keeps saved interests available, and the last chosen section reopens on return. Topic changes start a new list, and Refresh updates that list's feeds.
 
-All 27 web and 12 Python tests passed. Mobile and desktop browser checks and physical phone verification are pending.
-
-The initial 320-pixel preview put **More topics** on a line by itself. The section controls use tighter spacing on narrow screens to keep it with the other topics.
+All 27 web and 12 Python tests passed. At 320 CSS pixels, Chromium verified touch and keyboard topic selection, pagination, Refresh, saved articles, Settings interests, and offline reopening. The main sections fit in two rows, and the expanded topics fit without horizontal overflow at 200% text size. A live refresh received 22 feed responses, and the 1280-pixel preview displayed live Tuổi Trẻ Sports headlines. Physical phone verification is pending.
 
 ## Handoff
 
