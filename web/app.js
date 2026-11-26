@@ -2,7 +2,7 @@ import { defaultBudget, ensurePlan, localDay, recentPlans, savePreferences, upda
 import { openRepository } from './repository.js';
 import { renderBooks } from './books.js';
 import { renderAssistantSettings } from './assistant.js';
-import { findSection, sectionPreview, workspace } from './workspace.js';
+import { findSection, renderWorkspace, renderWorkspaceSettings, sectionPreview } from './workspace.js';
 import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStory } from './news.js';
 import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
@@ -194,11 +194,15 @@ function render(focusHeading = false) {
     stopMarkets = renderMarkets(view, focusHeading);
     return;
   }
+  if (page === 'workspace') {
+    renderWorkspace(view, focusHeading);
+    return;
+  }
   if (section) view.innerHTML = sectionPreview(section);
-  else if (page === 'workspace') view.innerHTML = workspace();
   else if (page === 'settings') {
     view.innerHTML = '<h1 tabindex="-1">Settings</h1>';
     window.smartBotAppearance?.renderSettings(view);
+    renderWorkspaceSettings(view);
     renderNewsSettings(view);
     renderAssistantSettings(view);
   }
@@ -214,7 +218,7 @@ function render(focusHeading = false) {
     keepReadingPlanOpen = false;
   }
 
-  if (focusHeading) view.querySelector(page === 'workspace' ? '.feature-card' : 'h1').focus();
+  if (focusHeading) view.querySelector('h1').focus();
 }
 
 function showError(message) {
