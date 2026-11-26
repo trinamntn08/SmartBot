@@ -21,7 +21,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Chromium verified Workspace customization at 320 and 1440 CSS pixels. Checks covered mouse and touch dragging, scrolling while dragging, keyboard and tap swaps, cancelled drops, enlarged text at 200%, hiding every card, restoring cards from Settings, saved order after reload, and unavailable storage. All 46 automated tests passed. A physical Android check remains open.
+Chromium verified Workspace customization at 320 and 1440 CSS pixels. Checks covered mouse and touch dragging, scrolling while dragging, keyboard and tap swaps, cancelled drops, enlarged text at 200%, hiding every card, restoring cards from Settings, saved order after reload, and unavailable storage. The published preview kept the layout through an offline reload and restored a section offline. An imported book reopened after its card was hidden and restored. All 46 automated tests passed. A physical Android check remains open.
 
 All six Workspace cards have short, playful subtitles. On tight cards the subtitle uses the full width. Chromium checked dark and light mode from 320 to 1440 CSS pixels, 200% text size at 320 pixels, and touch and keyboard navigation to the six destinations. The published preview kept all six subtitles and destinations after an offline reload. All 27 web tests passed.
 
