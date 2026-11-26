@@ -66,6 +66,8 @@ The preview from `80c7a89` on `main` played a Spotify preview in signed-out Chro
 
 November 26, 2026. Open Spotify is the primary Music action again. The playlist form and any saved playlist are available in a collapsed section. Opening the section loads the player and closing it unloads the player. Chromium checked the shortcut, keyboard focus, optional setup, saved playlist carryover, and layout from 320 to 1440 CSS pixels and at 200% text size. All 46 automated tests passed. Spotify's catalog interface is available in Spotify itself and full-track streaming from a third-party integration requires Premium.
 
+The preview from `177d356` on `main` verified the shortcut and live Spotify preview, deferred player requests until expansion, and kept the saved playlist after an offline restart. The Android debug APK passed build, signature continuity, ZIP alignment, and byte-for-byte comparison of all 251 web files. Lint reported zero errors and six warnings. Phone playback remains unverified.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
