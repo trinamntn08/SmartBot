@@ -796,7 +796,6 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .news-topic-row { flex-wrap: wrap; }
 .news-topic-more { border-block-start: 1px solid var(--line); }
 .news-topic {
-  min-inline-size: 2.75rem;
   padding: 0.5rem 0;
   border: 0;
   border-block-end: 2px solid transparent;
@@ -816,6 +815,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 }
 .news-topic-toggle {
   display: inline-grid;
+  min-inline-size: 2.75rem;
   place-items: center;
 }
 .news-topic-toggle svg {

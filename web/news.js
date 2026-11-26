@@ -233,7 +233,8 @@ export function renderNews(view, savedNews, focus, track) {
   }
 
   function showStatus(...parts) {
-    status.textContent = [currentMenuTopic()?.label, ...parts].filter(Boolean).join(' · ');
+    const label = topic === myNewsTopics ? '' : currentMenuTopic()?.label;
+    status.textContent = [label, ...parts].filter(Boolean).join(' · ');
   }
 
   showMore(false);

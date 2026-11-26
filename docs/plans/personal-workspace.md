@@ -105,6 +105,12 @@ November 26, 2026. One three-dot button beside **Science** opens the additional 
 
 All 27 web and 12 Python tests passed. Chromium at 320 and 1280 CSS pixels verified the icon beside **Science**, the combined list, selection from earlier saved preferences, keyboard dismissal, filtering, and offline reopening. The icon stayed beside **Science** at 200% text size on the narrow viewport. Physical phone verification is pending.
 
+### Refine the News topic bar
+
+November 26, 2026. Topic buttons follow the width of their labels so **All**, **World**, and the other sections use the same gap. **Saved interests** appears in the three-dot menu, and the line below the bar shows the update time when it is selected.
+
+Web and Python tests passed. Browser verification is pending.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.
