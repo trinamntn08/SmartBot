@@ -34,9 +34,9 @@ Select **SmartBot** in the top bar to return to the homepage. Select the three-d
 
 ## News
 
-Open **Settings → News** in the browser or Android app to choose any combination of English, Français, and Tiếng Việt. Select interests there to build a **My topics** edition. Changes save automatically on this device.
+Open **Settings → News** in the browser or Android app to choose any combination of English, Français, and Tiếng Việt. Select interests there to build a **Saved interests** edition. Changes save automatically on this device.
 
-Open **News** and select **All**, a section such as **Business** or **Sports**, or **More topics** for sections such as **AI** and **Open source**. **All** pulls headlines from every topic in your selected languages. The last section you choose opens again next time. Scroll to the end to load the next ten headlines while more are available. The star in the News header opens all your saved articles.
+Open **News** and select **All** or a section such as **Business** or **Sports**. The three-dot button after **Science** opens **Saved interests** and other sections such as **AI** and **Open source**. **All** pulls headlines from every topic in your selected languages. The last section you choose opens again next time. Scroll to the end to load the next ten headlines while more are available. The star in the News header opens all your saved articles.
 
 News marks the feed **For you** after you open an article. Recent reading activity helps it rank related, unread stories within your language and topic choices. Turn **Personalize headlines** off in **Settings → News** to use the freshness-based feed, or use **Reset recommendations** to clear what News learned. Reading activity stays on this device.
 

@@ -99,6 +99,12 @@ November 26, 2026. The News header shows the main sections and an expandable **M
 
 All 27 web and 12 Python tests passed. At 320 CSS pixels, Chromium verified touch and keyboard topic selection, pagination, Refresh, saved articles, Settings interests, and offline reopening. The main sections fit in two rows, and the expanded topics fit without horizontal overflow at 200% text size. A live refresh received 22 feed responses, and the 1280-pixel preview displayed live Tuổi Trẻ Sports headlines. Physical phone verification is pending.
 
+### Combine the News topic menus
+
+November 26, 2026. One three-dot button beside **Science** opens the additional topics and **Saved interests**. An active choice from the menu appears next to the update time. The selected topic and saved interests carry forward.
+
+All 27 web and 12 Python tests passed. Browser and physical phone verification are pending.
+
 ## Handoff
 
 Check the new publisher links and Hacker News discussions on an Android phone alongside the plain-text reader. Verify the assistant with a configured provider, then add optional book passage context and local export and restore.

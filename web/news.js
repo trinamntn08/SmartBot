@@ -9,6 +9,7 @@ const freshFor = 60 * 60 * 1000;
 const mainTopicIds = ['world', 'business', 'tech', 'sports', 'culture', 'science'];
 const storyDate = value => dateFormat.format(new Date(value.length === 10 ? value + 'T12:00:00' : value));
 const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.9 6.5.9-4.7 4.6 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.7-4.6 6.5-.9Z"/></svg>';
+const topicsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>';
 
 export function escapeHtml(text) {
   return String(text).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]);
@@ -159,11 +160,11 @@ export function renderNews(view, savedNews, focus, track) {
   let visible = history.state?.newsEdition === editionKey() ? history.state.newsCount : newsPageSize;
 
   const mainTopics = [{ id: '', label: 'All' }];
-  if (preferences.topics.length) mainTopics.push({ id: myNewsTopics, label: 'My topics' });
   for (const id of mainTopicIds) {
     mainTopics.push(id === 'world' ? { id, label: 'World' } : newsTopics.find(choice => choice.id === id));
   }
   const moreTopics = newsTopics.filter(choice => !mainTopicIds.includes(choice.id));
+  if (preferences.topics.length) moreTopics.unshift({ id: myNewsTopics, label: 'Saved interests' });
   const topicButtons = choices => choices.map(({ id, label }) =>
     `<button class="news-topic" type="button" data-topic="${id}" aria-pressed="${topic === id}">${escapeHtml(label)}</button>`).join('');
   const panel = document.createElement('section');
@@ -172,8 +173,10 @@ export function renderNews(view, savedNews, focus, track) {
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
     <button class="quiet" type="button" data-news-refresh>Refresh</button></div></div>
     <div class="news-edition" role="group" aria-label="News topics">
-      <div class="news-topic-row">${topicButtons(mainTopics)}
-        <button class="news-topic news-topic-toggle" type="button" aria-expanded="false" aria-controls="news-more-topics"><span>More topics</span></button>
+      <div class="news-topic-row">${topicButtons(mainTopics.slice(0, -1))}
+        <div class="news-topic-end">${topicButtons(mainTopics.slice(-1))}
+          <button class="news-topic news-topic-toggle" type="button" aria-label="Topics" title="Topics" aria-expanded="false" aria-controls="news-more-topics">${topicsIcon}</button>
+        </div>
       </div>
       <div class="news-topic-row news-topic-more" id="news-more-topics" hidden>${topicButtons(moreTopics)}</div>
     </div>
@@ -183,7 +186,6 @@ export function renderNews(view, savedNews, focus, track) {
   const status = panel.querySelector('[role=status]');
   const topics = panel.querySelector('.news-edition');
   const topicToggle = topics.querySelector('.news-topic-toggle');
-  const topicToggleLabel = topicToggle.querySelector('span');
   const more = topics.querySelector('#news-more-topics');
   const end = panel.querySelector('[data-news-end]');
   const list = panel.querySelector('ul');
@@ -222,18 +224,25 @@ export function renderNews(view, savedNews, focus, track) {
     history.replaceState({ ...history.state, newsEdition: editionKey(), newsCount: visible }, '');
   }
 
+  const currentMenuTopic = () => moreTopics.find(choice => choice.id === topic);
+
   function showMore(expanded) {
-    const current = moreTopics.find(choice => choice.id === topic);
-    topicToggleLabel.textContent = current && !expanded ? current.label : 'More topics';
-    if (current && !expanded) topicToggle.setAttribute('aria-label', `${current.label} selected, more topics`);
-    else topicToggle.removeAttribute('aria-label');
-    topicToggle.toggleAttribute('data-current', Boolean(current && !expanded));
+    topicToggle.toggleAttribute('data-current', Boolean(currentMenuTopic() && !expanded));
     topicToggle.setAttribute('aria-expanded', String(expanded));
     more.hidden = !expanded;
   }
 
+  function showStatus(...parts) {
+    status.textContent = [currentMenuTopic()?.label, ...parts].filter(Boolean).join(' · ');
+  }
+
   showMore(false);
   topicToggle.onclick = () => showMore(more.hidden);
+  topics.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || more.hidden) return;
+    showMore(false);
+    topicToggle.focus({ preventScroll: true });
+  });
   topics.addEventListener('click', event => {
     const button = event.target.closest('[data-topic]');
     if (!button) return;
@@ -268,7 +277,7 @@ export function renderNews(view, savedNews, focus, track) {
     const updating = navigator.onLine && pending.length > 0;
     refreshButton.disabled = updating;
     if (updating) {
-      status.textContent = 'Updating…';
+      showStatus('Updating…');
       const timeout = setTimeout(() => controller.abort(), 12000);
       await Promise.all(pending.map(async feed => {
         try {
@@ -285,9 +294,8 @@ export function renderNews(view, savedNews, focus, track) {
     const stamp = latest ? 'Updated ' + new Date(latest).toLocaleString(undefined, {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     }) : '';
-    status.textContent = available
-      ? [affinity?.seen.size ? 'For you' : '', stamp].filter(Boolean).join(' · ')
-      : topic ? 'No headlines for this topic.' : 'No headlines available.';
+    if (available) showStatus(affinity?.seen.size ? 'For you' : '', stamp);
+    else showStatus(topic ? 'No headlines for this topic.' : 'No headlines available.');
   }
 
   refreshButton.disabled = true;
