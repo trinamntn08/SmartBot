@@ -25,7 +25,7 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Listen, M
 | Activities | Enable or pause activities, change defaults for future plans, choose a vocabulary deck, maintain your current book, and manage your news sources. |
 | Activity details | See the chosen headlines, book progress, or vocabulary session. Provide a clear completion action and preserve saved progress when you leave. |
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
-| Music | Open your preferred music service in one tap. You can also play a saved Spotify playlist inside SmartBot. |
+| Music | Search and play public YouTube music videos in a visible player. You can also open your preferred service or play a saved Spotify playlist. |
 | Podcasts | Resume an episode or play the latest from a followed show. Open Find podcasts to search or add an RSS feed. |
 | Markets | Search and save U.S. stocks and ETFs, Vietnamese stocks, and USD crypto pairs. Inspect closing-price lines or candlesticks, and reopen the last symbol, range, and chart type with downloaded prices offline. |
 | Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |

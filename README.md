@@ -64,6 +64,12 @@ Open **Workspace → Listen → Music** and save your preferred service. Use its
 
 **Open Spotify** launches Spotify directly. To keep one playlist in SmartBot, expand **Add a Spotify playlist** and paste a playlist link from Spotify's web player. Select **Saved Spotify playlist** to open the player. It stays active when you switch SmartBot screens and shrinks outside Music. Close the player to stop it, or use **Change playlist** to replace or remove the playlist. Playback requires internet, and Spotify may offer previews based on your session and device.
 
+Choose **YouTube Music**, then **Enable YouTube search**, to find public music videos by song or artist and play them in SmartBot. A free YouTube account is sufficient. Search uses an API key and has no account sign-in. Google gives each project 100 searches per day by default. [YouTube API quota](https://developers.google.com/youtube/data/determine_quota_cost)
+
+1. Enable **YouTube Data API v3** in a Google Cloud project and create an API key restricted to that API. [Enable YouTube Data API](https://console.cloud.google.com/apis/library/youtube.googleapis.com) · [Create an API key](https://console.cloud.google.com/apis/credentials)
+2. On Android, enter the key once in **YouTube search setup**. For the browser preview, set `SMARTBOT_YOUTUBE_API_KEY` in the environment that starts the preview, then restart it.
+3. Search for a song or artist and select a result. The official player stays on screen as you move between sections and pauses when it scrolls out of view or SmartBot goes into the background. If a video is unavailable in the player, choose another result or open it on YouTube.
+
 ## Listen to podcasts
 
 Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Open **Find podcasts** to search by name or add a public HTTPS RSS link.

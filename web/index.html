@@ -45,7 +45,7 @@
   </header>
   <div class="shell">
     <section id="spotify-player" class="spotify-player" aria-label="Spotify player" tabindex="-1" hidden>
-      <div class="spotify-player-toolbar">
+      <div class="embedded-player-toolbar">
         <a href="#tracks">Spotify playlist</a>
         <button type="button" class="quiet" aria-label="Close Spotify player" title="Close Spotify player">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -58,6 +58,19 @@
         <iframe title="Spotify playlist player" width="100%" height="352"
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
       </template>
+    </section>
+    <section id="youtube-player" class="youtube-player" aria-label="YouTube player" tabindex="-1" hidden>
+      <div class="embedded-player-toolbar">
+        <a href="#tracks" data-youtube-return>YouTube player</a>
+        <button type="button" class="quiet" aria-label="Close YouTube player" title="Close YouTube player">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="youtube-video"></div>
+      <p class="youtube-search-status" role="status"></p>
+      <a data-youtube-watch rel="noopener" hidden>Watch on YouTube</a>
     </section>
     <section id="podcast-player" class="card podcast-player" aria-label="Podcast player" hidden>
       <div class="podcast-player-episode">

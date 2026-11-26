@@ -17,6 +17,60 @@ from preview import PreviewHandler, PreviewServer
 
 
 class PreviewTests(unittest.TestCase):
+    def test_youtube_search_uses_the_local_key_and_filters_for_embeddable_music(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/youtube"
+            headers = {"X-SmartBot-YouTube": "music"}
+
+            def search(query):
+                return Request(f"{url}/search?q={query}", headers=headers)
+
+            try:
+                with patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": ""}):
+                    with urlopen(Request(url, headers=headers), timeout=2) as result:
+                        self.assertEqual(json.load(result), {"configured": False})
+                    with self.assertRaises(HTTPError) as error:
+                        urlopen(search("music"), timeout=2)
+                    self.assertEqual(error.exception.code, 503)
+
+                with (patch.dict("os.environ", {"SMARTBOT_YOUTUBE_API_KEY": "test-key"}),
+                      patch("youtube_api.HTTPSConnection") as upstream):
+                    for request, status in ((url + "/search?q=music", 403), (search(""), 400),
+                                            (search("music&q=again"), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(request, timeout=2)
+                        self.assertEqual(error.exception.code, status)
+                    upstream.assert_not_called()
+
+                    response = upstream.return_value.getresponse.return_value
+                    response.status = 200
+                    response.read.return_value = b'{"items":[{"id":{"videoId":"60ItHLz5WEA"}}]}'
+                    with urlopen(search("Faded%20%26%20Alan"), timeout=2) as result:
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result)["items"][0]["id"]["videoId"], "60ItHLz5WEA")
+                    upstream.assert_called_once_with("www.googleapis.com", timeout=8)
+                    call = upstream.return_value.request.call_args
+                    path = urlsplit(call.args[1])
+                    self.assertEqual(path.path, "/youtube/v3/search")
+                    params = parse_qs(path.query)
+                    self.assertEqual(params["q"], ["Faded & Alan"])
+                    self.assertEqual(params["videoCategoryId"], ["10"])
+                    self.assertEqual(params["videoEmbeddable"], ["true"])
+                    self.assertNotIn("key", params)
+                    self.assertEqual(call.kwargs["headers"], {"X-Goog-Api-Key": "test-key"})
+
+                    response.status = 403
+                    response.read.return_value = b'{"error":{"errors":[{"reason":"quotaExceeded"}]}}'
+                    with self.assertRaises(HTTPError) as error:
+                        urlopen(search("music"), timeout=2)
+                    self.assertEqual(error.exception.code, 429)
+                    self.assertNotIn("test-key", error.exception.read().decode())
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
     def test_vietnamese_stock_history_uses_a_bounded_request_to_dnse(self):
         with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
             thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})

@@ -601,21 +601,21 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 .music-service-settings summary { min-block-size: 44px; box-sizing: border-box; color: var(--muted); font-weight: 650; }
 .music-service-settings summary:hover { color: var(--ink); }
 
-.spotify-player {
+.spotify-player, .youtube-player {
   position: relative;
   inset-inline-start: min(0px, calc(50% - min(140px, 50vw)));
   inline-size: max(100%, min(280px, 100vw));
   max-inline-size: 44rem;
   margin: 0.5rem auto 0;
 }
-.spotify-player.is-compact { max-inline-size: 40rem; }
-.spotify-player-toolbar {
+.spotify-player.is-compact, .youtube-player.is-compact { max-inline-size: 40rem; }
+.embedded-player-toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
 }
-.spotify-player-toolbar a {
+.embedded-player-toolbar a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -624,7 +624,7 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
   font-size: 0.875rem;
   font-weight: 650;
 }
-.spotify-player-toolbar button {
+.embedded-player-toolbar button {
   display: grid;
   flex: none;
   place-items: center;
@@ -635,7 +635,7 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
   background: transparent;
   color: var(--muted);
 }
-.spotify-player-toolbar button:hover { background: var(--accent-soft); color: var(--ink); }
+.embedded-player-toolbar button:hover { background: var(--accent-soft); color: var(--ink); }
 .spotify-open {
   margin-block-start: 0.35rem;
 }
@@ -647,6 +647,37 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
   border-radius: 0.75rem;
 }
 .spotify-player.is-compact iframe { block-size: 152px; }
+.youtube-video { position: relative; z-index: 2; }
+body:has(dialog[open]) .youtube-video { visibility: hidden; }
+.youtube-video iframe {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  min-block-size: 200px;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
+.youtube-player.is-compact .youtube-video iframe { block-size: 200px; }
+.youtube-search {
+  max-width: 44rem;
+  margin-block-end: 1rem;
+}
+.youtube-search form { margin-block-start: 0.65rem; max-width: 32rem; }
+.youtube-search form input { min-width: 0; max-width: none; margin: 0; }
+.youtube-search-status { margin: 0.65rem 0 0; color: var(--muted); }
+.youtube-search-status:empty, .youtube-results:empty { display: none; }
+.youtube-results { padding: 0; margin: 0.75rem 0 0; list-style: none; }
+.youtube-results li { border-block-start: 1px solid var(--line); }
+.youtube-result {
+  width: 100%;
+  padding: 0.65rem 0;
+  border-color: transparent;
+  background: transparent;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+.youtube-result:hover { border-color: transparent; background: var(--accent-soft); }
+.youtube-search-tools details p { overflow-wrap: anywhere; }
 .spotify-offline {
   margin: 0;
   padding: 0.75rem;

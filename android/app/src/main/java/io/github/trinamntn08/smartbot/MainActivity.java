@@ -71,10 +71,11 @@ public final class MainActivity extends Activity {
                 .addPathHandler(ASSET_PATH, new WebViewAssetLoader.AssetsPathHandler(getApplicationContext()))
                 .build();
         NewsFeed newsFeed = new NewsFeed(getAssets());
+        YouTubeSearch youtubeSearch = new YouTubeSearch(this);
         ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request);
+                return appAsset(assetLoader, newsFeed, youtubeSearch, request);
             }
         });
 
@@ -87,6 +88,10 @@ public final class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(webView, "SmartBotYouTube", Collections.singleton(APP_ORIGIN),
+                    (view, message, origin, isMainFrame, reply) -> {
+                        if (isMainFrame) youtubeSearch.saveKey(message.getData(), reply);
+                    });
             WebViewCompat.addWebMessageListener(webView, "SmartBotFiles",
                     Collections.singleton("https://" + WebViewAssetLoader.DEFAULT_DOMAIN),
                     (view, message, origin, isMainFrame, reply) -> {
@@ -103,18 +108,18 @@ public final class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return appAsset(assetLoader, newsFeed, request);
+                return appAsset(assetLoader, newsFeed, youtubeSearch, request);
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (isAppAsset(uri)) return false;
-                if (!request.isForMainFrame() && isSpotifyPlaylistEmbed(uri)) return false;
+                if (!request.isForMainFrame() && (isSpotifyPlaylistEmbed(uri) || isYouTubeEmbed(uri))) return false;
                 boolean musicService = uri.getPort() == -1 && uri.getUserInfo() == null && isMusicService(uri.getHost());
                 if (request.isForMainFrame() && request.hasGesture() && "https".equals(uri.getScheme())
                         && (musicService || isPublisher(uri.getAuthority()) || newsFeed.isPublisher(uri.getAuthority())
-                        || isMarketSource(uri) || isGoogleSearch(uri))) {
+                        || isMarketSource(uri) || isGoogleSearch(uri) || isYouTubeLink(uri))) {
                     try {
                         Intent article = new Intent(Intent.ACTION_VIEW, uri);
                         if (!musicService) {
@@ -149,6 +154,30 @@ public final class MainActivity extends Activity {
         String path = uri.getEncodedPath();
         return "https".equals(uri.getScheme()) && "open.spotify.com".equals(uri.getEncodedAuthority())
                 && path != null && path.matches("/embed/playlist/[A-Za-z0-9]{22}");
+    }
+
+    private static boolean isYouTubeEmbed(Uri uri) {
+        String path = uri.getEncodedPath();
+        return "https".equals(uri.getScheme()) && "www.youtube.com".equals(uri.getEncodedAuthority())
+                && path != null && path.matches("/embed/[A-Za-z0-9_-]{11}");
+    }
+
+    private static boolean isYouTubeLink(Uri uri) {
+        String host = uri.getEncodedAuthority();
+        String path = uri.getEncodedPath();
+        return ("www.youtube.com".equals(host) && ("/watch".equals(path) || "/t/terms".equals(path)))
+                || ("policies.google.com".equals(host) && "/privacy".equals(path))
+                || ("console.cloud.google.com".equals(host) && "/apis/credentials".equals(path));
+    }
+
+    private static boolean isYouTubeResource(Uri uri) {
+        String host = uri.getHost();
+        return "https".equals(uri.getScheme()) && uri.getUserInfo() == null && uri.getPort() == -1
+                && host != null && ("www.youtube.com".equals(host) || host.endsWith(".googlevideo.com")
+                        || host.endsWith(".ytimg.com") || host.endsWith(".ggpht.com")
+                        || "www.gstatic.com".equals(host) || "fonts.gstatic.com".equals(host)
+                        || "jnn-pa.googleapis.com".equals(host) || "www.google.com".equals(host)
+                        || "googleads.g.doubleclick.net".equals(host) || "static.doubleclick.net".equals(host));
     }
 
     @Override
@@ -283,17 +312,20 @@ public final class MainActivity extends Activity {
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
-    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed,
+    private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, YouTubeSearch youtubeSearch,
             WebResourceRequest request) {
         Uri uri = request.getUrl();
         if (!isAppAsset(uri)) {
-            if (PodcastDiscovery.isHostedRequest(uri)) return null;
+            if (PodcastDiscovery.isHostedRequest(uri) || isYouTubeResource(uri)) return null;
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
             return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden",
                     Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
         }
+        String youtubePath = ASSET_PATH + "api/youtube";
+        if (youtubePath.equals(uri.getPath())) return youtubeSearch.read(false, request);
+        if ((youtubePath + "/search").equals(uri.getPath())) return youtubeSearch.read(true, request);
         if ((ASSET_PATH + "api/markets/archive").equals(uri.getPath())) return MarketFeed.read(request);
         if ((ASSET_PATH + "api/markets/crypto").equals(uri.getPath())) return MarketFeed.crypto(request);
         if ((ASSET_PATH + "api/markets/vietnam").equals(uri.getPath())) return MarketFeed.vietnam(request);

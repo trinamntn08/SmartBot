@@ -18,12 +18,14 @@ from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
 from market_api import MarketError, crypto_history, daily_prices, market_archive, vietnam_history
+from youtube_api import YouTubeError, configured_key, search_music
 
 
 HOST = "127.0.0.1"
 PORT = 8000
 WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 API = "/api/assistant"
+YOUTUBE_API = "/api/youtube"
 MARKET_API = "/api/markets/daily"
 MARKET_ARCHIVE_API = "/api/markets/archive"
 MARKET_CRYPTO_API = "/api/markets/crypto"
@@ -121,8 +123,29 @@ class PreviewHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def log_request(self, code="-", size="-"):
+        if self.path.partition("?")[0] == f"{YOUTUBE_API}/search":
+            self.log_message('"%s %s/search %s" %s %s', self.command, YOUTUBE_API, self.request_version, code, size)
+            return
+        super().log_request(code, size)
+
     def do_GET(self):
         path, _, query = self.path.partition("?")
+        if path in (YOUTUBE_API, f"{YOUTUBE_API}/search"):
+            if not self.local_request() or self.headers.get("X-SmartBot-YouTube") != "music":
+                self.send_json(403, {"error": "Open SmartBot using its local preview address."})
+                return
+            if path == YOUTUBE_API:
+                self.send_json(200, {"configured": bool(configured_key())})
+                return
+            values = parse_qs(query, keep_blank_values=True).get("q", [])
+            try:
+                result = search_music(values[0] if len(values) == 1 else "")
+            except YouTubeError as error:
+                self.send_json(error.status, {"error": str(error)})
+            else:
+                self.send_json(200, result)
+            return
         if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_VIETNAM_API, MARKET_API):
             if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})

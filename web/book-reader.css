@@ -1,5 +1,5 @@
 /* Give the open book its own viewport while the library keeps the app shell. */
-body:has(.book-reader) :is(.app-header, #podcast-player) { display: none; }
+body:has(.book-reader) :is(.app-header, #podcast-player, #youtube-player) { display: none; }
 
 body:has(.book-reader) > .shell,
 body:has(.book-reader) #view {

@@ -8,6 +8,7 @@ import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
 import { listeningPage, renderMusic } from './listen.js';
 import { createSpotifyPlayer } from './spotify-player.js';
+import { createYouTubePlayer } from './youtube-player.js';
 import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
@@ -27,6 +28,7 @@ const statusLabels = { pending: 'Planned', started: 'In progress', completed: 'D
 let repository;
 let podcastPlayer;
 let spotifyPlayer;
+let youtubePlayer;
 let routine;
 let displayedDate;
 let busy = false;
@@ -36,6 +38,7 @@ let keepReadingPlanOpen = false;
 let stopMarkets;
 let stopNews;
 let stopPodcasts;
+let stopMusic;
 let stopWorkspace;
 
 async function recordActivity(entries) {
@@ -146,6 +149,8 @@ function render(focusHeading = false) {
   stopNews = undefined;
   stopPodcasts?.();
   stopPodcasts = undefined;
+  stopMusic?.();
+  stopMusic = undefined;
   stopWorkspace?.();
   stopWorkspace = undefined;
   track();
@@ -161,6 +166,7 @@ function render(focusHeading = false) {
   view.dataset.page = page;
   podcastPlayer.setExpanded(page === 'podcasts');
   spotifyPlayer.setExpanded(page === 'tracks');
+  youtubePlayer.setExpanded(page === 'tracks');
   marketRepository.setOpen(page === 'markets');
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
@@ -193,7 +199,7 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'tracks') {
-    renderMusic(view, spotifyPlayer, podcastPlayer.pause, focusHeading);
+    stopMusic = renderMusic(view, spotifyPlayer, youtubePlayer, podcastPlayer.pause, focusHeading);
     return;
   }
   if (page === 'markets') {
@@ -344,9 +350,19 @@ if (hasNativePodcastPlayer) setInterval(() => { if (!document.hidden) void loadA
 
 try {
   repository = await openRepository();
-  spotifyPlayer = createSpotifyPlayer(document.querySelector('#spotify-player'), view, () => podcastPlayer.pause());
+  spotifyPlayer = createSpotifyPlayer(document.querySelector('#spotify-player'), view, () => {
+    youtubePlayer.close();
+    podcastPlayer.pause();
+  });
+  youtubePlayer = createYouTubePlayer(document.querySelector('#youtube-player'), view, () => {
+    spotifyPlayer.close();
+    podcastPlayer.pause();
+  });
   podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'),
-    recordAutomatically, spotifyPlayer.close);
+    recordAutomatically, () => {
+      spotifyPlayer.close();
+      youtubePlayer.close();
+    });
   if (!location.hash && marketRepository.wasOpen() && marketRepository.lastChart()?.symbol) {
     history.replaceState(null, '', '#markets');
   }

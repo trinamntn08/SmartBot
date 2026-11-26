@@ -1,4 +1,5 @@
 import { spotifyOrigin } from './spotify-player.js';
+import { renderYouTubeSearch } from './youtube-search.js';
 
 const sectionKey = 'smartbot-listen-section';
 const serviceKey = 'smartbot-music-service';
@@ -77,7 +78,7 @@ export function listenHeader(page, action = '') {
   </header>`;
 }
 
-export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
+export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, focus) {
   let service = readMusicService();
   let playlist = readSpotifyPlaylist();
   const musicNote = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
@@ -94,6 +95,7 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
     <div class="music-service"></div>
   </div>`;
   const content = view.querySelector('.music-service');
+  let stopYouTubeSearch;
 
   function savePlaylist(id) {
     playlist = id;
@@ -142,6 +144,8 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
   }
 
   function renderService(showPlaylistForm = false) {
+    stopYouTubeSearch?.();
+    stopYouTubeSearch = undefined;
     const selected = services[service];
     const form = `<form class="music-choice" data-music-choice>
       <label for="music-service" class="visually-hidden">Music service</label>
@@ -155,6 +159,7 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
       </div>
     </form>`;
     content.innerHTML = selected ? `
+      ${service === 'youtube' ? '<section class="youtube-search" aria-labelledby="youtube-search-title"></section>' : ''}
       <a class="music-launch" href="${selected.url}" rel="noopener noreferrer">
         <span class="listen-art">${musicNote}</span>
         <span>Open ${selected.name}</span>
@@ -176,9 +181,12 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
       if (location.origin !== 'https://appassets.androidplatform.net') link.target = '_blank';
       link.addEventListener('click', () => {
         spotifyPlayer.close();
+        youtubePlayer.close();
         pausePodcasts();
       });
     }
+    const youtubeSearch = content.querySelector('.youtube-search');
+    if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer);
     content.querySelector('[data-open-spotify]')?.addEventListener('click', () => spotifyPlayer.open(playlist));
     const playlistForm = content.querySelector('[data-spotify-playlist]');
     if (playlistForm) {
@@ -204,6 +212,7 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
       const choice = event.currentTarget.elements.service.value;
       if (!Object.hasOwn(services, choice)) return;
       if (choice !== 'spotify') spotifyPlayer.close();
+      if (choice !== 'youtube') youtubePlayer.close();
       service = choice;
       try {
         localStorage.setItem(serviceKey, choice);
@@ -212,9 +221,10 @@ export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
         unsavedService = choice;
       }
       renderService();
-      content.querySelector('.music-launch').focus();
+      content.querySelector('.youtube-approval:not([hidden]) button, .youtube-search-tools:not([hidden]) input, .music-launch').focus();
     });
   }
   renderService();
   if (focus) view.querySelector('h1').focus();
+  return () => stopYouTubeSearch?.();
 }
