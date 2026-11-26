@@ -88,10 +88,6 @@ public final class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
-            WebViewCompat.addWebMessageListener(webView, "SmartBotYouTube", Collections.singleton(APP_ORIGIN),
-                    (view, message, origin, isMainFrame, reply) -> {
-                        if (isMainFrame) youtubeSearch.saveKey(message.getData(), reply);
-                    });
             WebViewCompat.addWebMessageListener(webView, "SmartBotFiles",
                     Collections.singleton("https://" + WebViewAssetLoader.DEFAULT_DOMAIN),
                     (view, message, origin, isMainFrame, reply) -> {

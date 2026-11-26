@@ -5,8 +5,6 @@ import android.content.SharedPreferences;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 
-import androidx.webkit.JavaScriptReplyProxy;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+import okhttp3.HttpUrl;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,22 +25,17 @@ import org.json.JSONObject;
 final class YouTubeSearch {
     private static final String KEY = "apiKey";
     private static final int MAX_RESPONSE = 128 * 1024;
+    private static final HttpUrl HOSTED = hostedOrigin(BuildConfig.YOUTUBE_API);
     private final SharedPreferences settings;
 
     YouTubeSearch(Context context) {
         settings = context.getSharedPreferences("youtube-search", Context.MODE_PRIVATE);
     }
 
-    void saveKey(String value, JavaScriptReplyProxy reply) {
-        if (value == null || !value.isEmpty() && !value.matches("[A-Za-z0-9_-]{20,128}")) {
-            reply.postMessage(errorJson("Enter a valid YouTube Data API key."));
-            return;
-        }
-        SharedPreferences.Editor editor = settings.edit();
-        if (value.isEmpty()) editor.remove(KEY);
-        else editor.putString(KEY, value);
-        editor.apply();
-        reply.postMessage(value.isEmpty() ? "{\"configured\":false}" : "{\"configured\":true}");
+    private static HttpUrl hostedOrigin(String setting) {
+        HttpUrl url = HttpUrl.parse(setting);
+        return url != null && url.isHttps() && url.encodedPath().equals("/") && url.query() == null
+                && url.fragment() == null && url.username().isEmpty() && url.password().isEmpty() ? url : null;
     }
 
     WebResourceResponse read(String action, WebResourceRequest request) {
@@ -48,19 +43,28 @@ final class YouTubeSearch {
                 .anyMatch(header -> "X-SmartBot-YouTube".equalsIgnoreCase(header.getKey())
                         && "music".equals(header.getValue()));
         if (!allowed) return error(403, "Open YouTube search inside SmartBot.");
-        String key = settings.getString(KEY, "");
-        if (action.isEmpty()) return json(200, key.isEmpty() ? "{\"configured\":false}" : "{\"configured\":true}");
+        String key = HOSTED == null ? settings.getString(KEY, "") : "";
+        if (action.isEmpty()) {
+            if (HOSTED != null) return hosted("status", null, null);
+            return json(200, key.isEmpty() ? "{\"configured\":false}" : "{\"configured\":true}");
+        }
         boolean chart = "chart".equals(action);
         List<String> queries = request.getUrl().getQueryParameters(chart ? "region" : "q");
         String query = queries.size() == 1 ? queries.get(0).trim() : "";
         if (chart && !query.matches("FR|VN|US")) return error(400, "Choose an available YouTube chart.");
         if (!chart && (query.isEmpty() || query.length() > 120)) return error(400, "Enter a song or artist name.");
-        if (key.isEmpty()) return error(503, "Configure a YouTube Data API key to search.");
+        if (HOSTED != null) return hosted(action, chart ? "region" : "q", query);
+        if (key.isEmpty()) return error(503, "Live YouTube browsing is unavailable.");
         return youtubeVideos(query, key, chart);
     }
 
+    private static WebResourceResponse hosted(String action, String parameter, String value) {
+        HttpUrl.Builder target = HOSTED.newBuilder().addPathSegment("api").addPathSegment("youtube").addPathSegment(action);
+        if (parameter != null) target.addQueryParameter(parameter, value);
+        return request(target.build().url(), null, action);
+    }
+
     private static WebResourceResponse youtubeVideos(String query, String key, boolean chart) {
-        HttpURLConnection connection = null;
         try {
             String resource = chart
                     ? "videos?part=snippet,status&chart=mostPopular&videoCategoryId=10&maxResults=16"
@@ -69,21 +73,32 @@ final class YouTubeSearch {
                     + "&videoCategoryId=10&videoEmbeddable=true&videoSyndicated=true&maxResults=8"
                     + "&fields=items(id/videoId,snippet(title,channelTitle))&q="
                     + URLEncoder.encode(query, StandardCharsets.UTF_8.name());
-            connection = (HttpURLConnection) new URL("https://www.googleapis.com/youtube/v3/" + resource).openConnection();
+            return request(new URL("https://www.googleapis.com/youtube/v3/" + resource), key, chart ? "chart" : "search");
+        } catch (IOException failure) {
+            return error(502, "YouTube could not be reached. Try again.");
+        }
+    }
+
+    private static WebResourceResponse request(URL url, String key, String action) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(8000);
             connection.setReadTimeout(8000);
             connection.setInstanceFollowRedirects(false);
-            connection.setRequestProperty("X-Goog-Api-Key", key);
+            if (key == null) connection.setRequestProperty("X-SmartBot-YouTube", "music");
+            else connection.setRequestProperty("X-Goog-Api-Key", key);
             int status = connection.getResponseCode();
             InputStream stream = status == 200 ? connection.getInputStream() : connection.getErrorStream();
             JSONObject data = stream == null ? new JSONObject() : readObject(stream);
-            if (status == 200 && data.optJSONArray("items") != null) return json(200, data.toString());
-            if (status == 429 || quotaError(data)) {
-                return error(429, chart ? "YouTube's chart limit was reached. Try again later."
-                        : "YouTube's search limit was reached. Try again later.");
+            if (status == 200) {
+                if ("status".equals(action)) {
+                    return json(200, data.optBoolean("configured") ? "{\"configured\":true}" : "{\"configured\":false}");
+                }
+                if (data.optJSONArray("items") != null) return json(200, data.toString());
             }
-            if (status == 400 || status == 401 || status == 403) {
-                return error(403, "Check your API key and enable YouTube Data API v3 for its project.");
+            if (status == 429 || quotaError(data)) {
+                return error(429, "YouTube's request limit was reached. Try again later.");
             }
         } catch (IOException | JSONException failure) {
             return error(502, "YouTube could not be reached. Try again.");

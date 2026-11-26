@@ -4,6 +4,8 @@ plugins {
 
 def podcastApi = providers.gradleProperty('smartbotPodcastApi')
         .orElse(providers.environmentVariable('SMARTBOT_PODCAST_API')).getOrElse('')
+def youtubeApi = providers.gradleProperty('smartbotYoutubeApi')
+        .orElse(providers.environmentVariable('SMARTBOT_YOUTUBE_API')).getOrElse('')
 
 android {
     namespace 'io.github.trinamntn08.smartbot'
@@ -16,6 +18,7 @@ android {
         versionCode 7
         versionName '0.3.4'
         buildConfigField 'String', 'PODCAST_API', groovy.json.JsonOutput.toJson(podcastApi)
+        buildConfigField 'String', 'YOUTUBE_API', groovy.json.JsonOutput.toJson(youtubeApi)
     }
 
     buildFeatures { buildConfig = true }

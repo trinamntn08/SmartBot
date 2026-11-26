@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "outputDirectory": "public",
-  "functions": { "api/podcasts/*.mjs": { "maxDuration": 15 } }
+  "functions": { "api/*/*.mjs": { "maxDuration": 15 } }
 }

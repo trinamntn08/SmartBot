@@ -1,8 +1,11 @@
 import { createServer } from 'node:http';
-import { feed, search } from './handlers.mjs';
+import { feed, musicChart, musicSearch, musicStatus, search } from './handlers.mjs';
 
 const port = Number(process.env.PORT ?? 8787);
-const routes = new Map([['/api/podcasts/search', search], ['/api/podcasts/feed', feed]]);
+const routes = new Map([
+  ['/api/podcasts/search', search], ['/api/podcasts/feed', feed],
+  ['/api/youtube/status', musicStatus], ['/api/youtube/chart', musicChart], ['/api/youtube/search', musicSearch],
+]);
 
 createServer((req, res) => {
   const handler = routes.get(req.url.split('?')[0]);

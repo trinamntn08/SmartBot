@@ -3,6 +3,15 @@ const regions = [
   ['VN', 'Vietnam'],
   ['US', 'United States'],
 ];
+const picks = [
+  ['-Ww_TxYfeLA', 'Về Đi Em', 'Trúc Nhân ft. Rhymastic'],
+  ['oiKj0Z_Xnjc', 'Papaoutai', 'Stromae'],
+  ['60ItHLz5WEA', 'Faded', 'Alan Walker'],
+  ['FN7ALfpGxiI', 'Nơi Này Có Anh', 'Sơn Tùng M-TP'],
+  ['VHoT4N43jK8', 'Alors on danse', 'Stromae'],
+  ['VPRjCeoBqrI', 'A Sky Full of Stars', 'Coldplay'],
+  ['4NRXx6U8ABQ', 'Blinding Lights', 'The Weeknd'],
+].map(([id, title, channel]) => ({ id, title, channel, thumbnail: `https://i.ytimg.com/vi/${id}/mqdefault.jpg` }));
 const cache = new Map();
 const cacheDuration = 15 * 60 * 1000;
 const chevron = path => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
@@ -64,7 +73,7 @@ export function createYouTubeShelves(root, request, onPlay) {
     for (const { target } of entries) syncButtons(target);
   });
   let loading;
-  let loaded = false;
+  let view;
 
   function syncButtons(track) {
     const buttons = track.closest('.youtube-shelf')?.querySelector('.youtube-shelf-controls');
@@ -80,26 +89,31 @@ export function createYouTubeShelves(root, request, onPlay) {
     observer.disconnect();
   }
 
-  function load() {
-    if (loaded) return;
+  function show(next, entries, getVideos) {
+    if (view === next) return;
+    view = next;
     stop();
     loading = new AbortController();
     const { signal } = loading;
-    loaded = true;
-    root.innerHTML = regions.map(([code, name]) => `<section class="youtube-shelf" aria-labelledby="youtube-chart-${code}">
+    root.innerHTML = entries.map(([code, name]) => {
+      const chart = next === 'charts';
+      const title = chart ? `Popular in ${name === 'United States' ? 'the ' : ''}${name}` : name;
+      const navigation = chart ? ` in ${name}` : '';
+      return `<section class="youtube-shelf" aria-labelledby="youtube-chart-${code}">
       <div class="youtube-shelf-heading">
-        <h3 id="youtube-chart-${code}">Popular in ${name === 'United States' ? 'the ' : ''}${name}</h3>
+        <h3 id="youtube-chart-${code}">${title}</h3>
         <div class="youtube-shelf-controls" hidden>
-          <button type="button" class="listen-tool youtube-icon" aria-label="Previous videos in ${name}" title="Previous videos">${chevron('m14 6-6 6 6 6')}</button>
-          <button type="button" class="listen-tool youtube-icon" aria-label="Next videos in ${name}" title="Next videos">${chevron('m10 6 6 6-6 6')}</button>
+          <button type="button" class="listen-tool youtube-icon" aria-label="Previous videos${navigation}" title="Previous videos">${chevron('m14 6-6 6 6 6')}</button>
+          <button type="button" class="listen-tool youtube-icon" aria-label="Next videos${navigation}" title="Next videos">${chevron('m10 6 6 6-6 6')}</button>
         </div>
       </div>
       <div class="youtube-shelf-loading" aria-hidden="true"><span></span><span></span><span></span></div>
       <p class="youtube-shelf-status" role="status"></p>
       <ul class="youtube-shelf-track" aria-labelledby="youtube-chart-${code}" hidden></ul>
-    </section>`).join('');
+    </section>`;
+    }).join('');
     [...root.children].forEach(async (shelf, index) => {
-      const [code] = regions[index];
+      const [code] = entries[index];
       const track = shelf.querySelector('ul');
       const feedback = shelf.querySelector('[role="status"]');
       const skeleton = shelf.querySelector('.youtube-shelf-loading');
@@ -110,15 +124,12 @@ export function createYouTubeShelves(root, request, onPlay) {
         track.scrollBy({ left: direction * track.clientWidth * 0.8 });
       }));
       try {
-        const stored = cache.get(code);
-        const videos = stored && Date.now() - stored.time < cacheDuration ? stored.videos
-          : chartVideos((await request(`/chart?region=${code}`, signal)).items);
+        const videos = await getVideos(code, signal);
         if (signal.aborted) return;
         if (videos.length === 0) {
           feedback.textContent = 'No playable videos in this chart right now.';
           return;
         }
-        if (videos !== stored?.videos) cache.set(code, { time: Date.now(), videos });
         track.replaceChildren(...videos.map(video => videoCard(video, onPlay)));
         track.hidden = false;
         syncButtons(track);
@@ -134,12 +145,23 @@ export function createYouTubeShelves(root, request, onPlay) {
   }
 
   return {
-    load,
+    load() {
+      show('charts', regions, async (code, signal) => {
+        const stored = cache.get(code);
+        if (stored && Date.now() - stored.time < cacheDuration) return stored.videos;
+        const videos = chartVideos((await request(`/chart?region=${code}`, signal)).items);
+        if (videos.length && !signal.aborted) cache.set(code, { time: Date.now(), videos });
+        return videos;
+      });
+    },
+    showPicks() {
+      show('picks', [['picks', 'Music picks']], () => picks);
+    },
     stop,
     reset() {
       stop();
       cache.clear();
-      loaded = false;
+      view = undefined;
       root.replaceChildren();
     },
   };

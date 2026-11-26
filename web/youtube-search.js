@@ -1,44 +1,12 @@
 import { createYouTubeShelves } from './youtube-shelves.js';
 
 const approvalKey = 'smartbot-youtube-enabled';
-const bridge = globalThis.SmartBotYouTube;
+const android = location.origin === 'https://appassets.androidplatform.net';
 const searchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
   stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>`;
 const closeSearchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
   stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>`;
 let enabled = false;
-let pendingKey;
-
-if (bridge) {
-  bridge.onmessage = event => {
-    const pending = pendingKey;
-    if (!pending) return;
-    try {
-      const result = JSON.parse(event.data);
-      if (result.error) throw new Error(result.error);
-      pending.resolve(result.configured);
-    } catch (error) {
-      pending.reject(error);
-    }
-  };
-}
-
-function saveNativeKey(value) {
-  if (pendingKey) return Promise.reject(new Error('A key change is already in progress.'));
-  const response = new Promise((resolve, reject) => {
-    pendingKey = { resolve, reject };
-  });
-  const timeout = setTimeout(() => pendingKey?.reject(new Error('The Android app did not respond.')), 5000);
-  try {
-    bridge.postMessage(value);
-  } catch (error) {
-    pendingKey.reject(error);
-  }
-  return response.finally(() => {
-    clearTimeout(timeout);
-    pendingKey = undefined;
-  });
-}
 
 function approved() {
   try { return enabled || localStorage.getItem(approvalKey) === 'yes'; }
@@ -61,10 +29,6 @@ async function youtubeRequest(path, signal, key) {
   if (!data) throw new Error('YouTube search is unavailable. Restart the SmartBot preview or update the Android app.');
   if (!response.ok) throw new Error(data.error || 'YouTube search is unavailable.');
   return data;
-}
-
-function saveKey(key, signal) {
-  return bridge ? saveNativeKey(key) : youtubeRequest('', signal, key);
 }
 
 function showResults(list, items, player) {
@@ -92,7 +56,7 @@ function showResults(list, items, player) {
 export function renderYouTubeSearch(root, player, settings) {
   const lifecycle = new AbortController();
   root.innerHTML = `<div class="youtube-browse-header">
-    <h2 id="youtube-search-title">Browse music</h2>
+    <h2 id="youtube-search-title" tabindex="-1">Browse music</h2>
     <form id="youtube-song-search" class="youtube-browse-search" hidden>
       <label class="visually-hidden" for="youtube-query">Song or artist</label>
       <div class="music-choice-row">
@@ -111,10 +75,10 @@ export function renderYouTubeSearch(root, player, settings) {
     </div>
   </div>
     <section class="youtube-approval">
-      <p>SmartBot sends requests for charts, song searches, and playback to YouTube. Your key stays on this device.
+      <p>SmartBot sends requests for charts, song searches, and playback to YouTube.
       By enabling this feature, you agree to these privacy terms and the <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a>.
       See <a href="https://policies.google.com/privacy">Google’s privacy policy</a>.</p>
-      <button type="button" data-enable-youtube>Enable YouTube search</button>
+      <button type="button" data-enable-youtube>${android ? 'Enable YouTube' : 'Enable YouTube search'}</button>
     </section>
     <div class="youtube-search-tools" hidden>
       <ul id="youtube-song-results" class="youtube-results" aria-label="YouTube video results"></ul>
@@ -122,7 +86,7 @@ export function renderYouTubeSearch(root, player, settings) {
       <div class="youtube-shelves"></div>
       <details class="music-service-settings" data-youtube-setup hidden>
         <summary>YouTube search setup</summary>
-        <form method="post" action="./api/youtube" data-youtube-key${bridge ? '' : ' hidden'}>
+        ${android ? '' : `<form method="post" action="./api/youtube" data-youtube-key hidden>
           <label for="youtube-key">YouTube Data API key</label>
           <div class="music-choice-row">
             <input id="youtube-key" type="password" name="key" autocomplete="off" spellcheck="false"
@@ -130,11 +94,11 @@ export function renderYouTubeSearch(root, player, settings) {
             <button type="submit">Save key</button>
           </div>
         </form>
-        <p class="youtube-search-status" role="status"></p>
         <p data-youtube-environment hidden>Set <code>SMARTBOT_YOUTUBE_API_KEY</code> in the preview environment and restart the preview.</p>
-        <p><a href="https://console.cloud.google.com/apis/credentials">Google Cloud credentials</a></p>
+        <p><a href="https://console.cloud.google.com/apis/credentials">Google Cloud credentials</a></p>`}
+        <p class="youtube-search-status" role="status"></p>
         <p><a href="https://www.youtube.com/t/terms">YouTube terms</a> · <a href="https://policies.google.com/privacy">Google privacy policy</a></p>
-        <button type="button" class="quiet" data-disable-youtube>Disable YouTube search${bridge ? ' and remove key' : ''}</button>
+        <button type="button" class="quiet" data-disable-youtube>${android ? 'Disable YouTube' : 'Disable YouTube search'}</button>
       </details>
     </div>`;
   const approval = root.querySelector('.youtube-approval');
@@ -153,11 +117,11 @@ export function renderYouTubeSearch(root, player, settings) {
   const shelfList = root.querySelector('.youtube-shelves');
   const shelves = createYouTubeShelves(shelfList, youtubeRequest, video => void player.open(video));
   let configured = false;
-  let canSaveKey = Boolean(bridge);
+  let canSaveKey = false;
   let search;
 
   for (const link of root.querySelectorAll('a')) {
-    if (!bridge) link.target = '_blank';
+    if (!android) link.target = '_blank';
     link.rel = 'noopener';
   }
 
@@ -179,12 +143,17 @@ export function renderYouTubeSearch(root, player, settings) {
     }
   }
 
-  function showBrowse(focus) {
-    configured = true;
+  function showSettings() {
+    if (setup.parentElement === settings) return;
     setup.open = false;
-    setupHeading.textContent = 'Manage YouTube key';
+    setupHeading.textContent = android ? 'YouTube settings' : 'Manage YouTube key';
     settings.append(setup);
     setup.hidden = false;
+  }
+
+  function showBrowse(focus) {
+    configured = true;
+    showSettings();
     searchToggle.hidden = false;
     shelves.load();
     if (focus) searchToggle.focus();
@@ -193,14 +162,25 @@ export function renderYouTubeSearch(root, player, settings) {
   async function openBrowse(focus = false) {
     approval.hidden = true;
     tools.hidden = false;
+    if (android) {
+      showSettings();
+      shelves.showPicks();
+      if (focus) root.querySelector('h2').focus();
+    }
     try {
       const result = await youtubeRequest('', lifecycle.signal);
       if (lifecycle.signal.aborted) return;
-      canSaveKey = Boolean(bridge || result.canSaveKey);
-      keyForm.hidden = !canSaveKey;
-      environmentNotice.hidden = canSaveKey;
-      disable.textContent = canSaveKey ? 'Disable YouTube search and remove key' : 'Disable YouTube search';
-      if (result.configured) showBrowse(focus);
+      if (!android) {
+        canSaveKey = Boolean(result.canSaveKey);
+        keyForm.hidden = !canSaveKey;
+        environmentNotice.hidden = canSaveKey;
+        disable.textContent = canSaveKey ? 'Disable YouTube search and remove key' : 'Disable YouTube search';
+      }
+      if (result.configured) {
+        status.textContent = '';
+        showBrowse(focus);
+      }
+      else if (android) status.textContent = 'Live charts and song search are unavailable.';
       else {
         setup.hidden = false;
         setup.open = true;
@@ -231,7 +211,7 @@ export function renderYouTubeSearch(root, player, settings) {
     button.disabled = true;
     setupStatus.textContent = '';
     try {
-      if (canSaveKey) await saveKey('', lifecycle.signal);
+      if (canSaveKey) await youtubeRequest('', lifecycle.signal, '');
       player.close();
       showSearch(false);
       searchToggle.hidden = true;
@@ -253,7 +233,7 @@ export function renderYouTubeSearch(root, player, settings) {
     }
   });
 
-  keyForm.addEventListener('submit', async event => {
+  keyForm?.addEventListener('submit', async event => {
     event.preventDefault();
     const key = event.currentTarget.elements.key;
     const value = key.value.trim();
@@ -265,11 +245,12 @@ export function renderYouTubeSearch(root, player, settings) {
     const button = event.submitter;
     if (button) button.disabled = true;
     try {
-      await saveKey(value, lifecycle.signal);
+      await youtubeRequest('', lifecycle.signal, value);
       key.value = '';
       if (!lifecycle.signal.aborted) {
-        status.textContent = bridge ? 'YouTube search is ready.' : 'Key saved on this computer.';
+        status.textContent = 'Key saved on this computer.';
         settings.open = false;
+        setup.open = false;
         showBrowse(true);
       }
     } catch (error) {
