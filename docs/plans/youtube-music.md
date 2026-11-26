@@ -56,6 +56,8 @@ Once a key is configured, Music moves the setup form under **Music settings → 
 
 Android no longer prompts for a personal YouTube key. Seven music picks are available after first-use approval. A configured HTTPS service provides live charts and search, and the optional read of an older device key preserves access for existing installs. The Windows preview keeps its local setup. All 27 web, 15 Python, and eight service tests passed. Chromium emulating the Android asset origin verified the fresh install, reopening, an official embedded player from a pick, and controlled live charts and search. The Windows key settings and chart browsing fixtures also passed.
 
+The shared Node service was verified locally against live YouTube charts in all three regions and live song search. The Windows preview loaded live charts and search with its saved key and reopened offline. The Android debug APK built from `16c9c47` with matching signing certificate, ZIP alignment, 257 matching assets, and no key-entry bridge. Lint reported zero errors and six warnings. No hosted service or Android device was connected.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
