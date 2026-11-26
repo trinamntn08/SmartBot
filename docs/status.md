@@ -20,7 +20,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-All six Workspace cards have short, playful subtitles. On tight cards the subtitle uses the full width. Chromium checked dark and light mode from 320 to 1440 CSS pixels, 200% text size at 320 pixels, and touch and keyboard navigation to the six destinations. All 27 web tests passed. The published offline preview check is pending.
+All six Workspace cards have short, playful subtitles. On tight cards the subtitle uses the full width. Chromium checked dark and light mode from 320 to 1440 CSS pixels, 200% text size at 320 pixels, and touch and keyboard navigation to the six destinations. The published preview kept all six subtitles and destinations after an offline reload. All 27 web tests passed.
 
 Chromium verified the Books reader at 320, 390, and 1440 CSS pixels, including settings at 200% text size on the narrow screen. Touch and keyboard checks covered full view, restoring controls, selecting text, and changing appearance mid-section. The published preview saved preferences and book position across an offline reload. Text and converted PDF imports, source-page activity logging, EPUB export, and return to Books passed. All 27 web and 12 Python tests passed.
 
