@@ -20,7 +20,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Chromium verified the Books reader at 320, 390, and 1440 CSS pixels, including settings at 200% text size on the narrow screen. Touch and keyboard checks covered full view, restoring controls, selecting text, changing appearance mid-section, and reopening at the saved section with the same preferences. Text and converted PDF imports, source-page activity logging, EPUB export, and return to Books passed. All 27 web and 12 Python tests passed. Published offline preview and Android package verification are pending.
+Chromium verified the Books reader at 320, 390, and 1440 CSS pixels, including settings at 200% text size on the narrow screen. Touch and keyboard checks covered full view, restoring controls, selecting text, and changing appearance mid-section. The published preview saved preferences and book position across an offline reload. Text and converted PDF imports, source-page activity logging, EPUB export, and return to Books passed. All 27 web and 12 Python tests passed.
 
 Workspace card titles use the full card width, with the arrow beside the description. Chromium kept all five titles on one line at 19 widths from 320 to 1440 CSS pixels with the bundled font and its fallback. Keyboard entry into Languages, return, reload, and activation at 200% text size passed. The published preview refreshed and retained the corrected title and touch navigation after an offline reload at 320 CSS pixels. All 27 web, 12 Python, and seven podcast service tests passed.
 
@@ -105,6 +105,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The full-view reader APK built from `025577b` on `main`. Gradle build, signature, ZIP alignment, and byte-for-byte comparison of all 249 web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the reader checks with the packaged files at the Android asset origin. A physical phone check is pending.
 
 The Workspace title fix was bundled in the SmartBot 0.3.4 debug APK from `f5941e7` on `main`. Gradle assemble and lint passed with zero lint errors and ten warnings. APK signing, signature continuity with the preceding build, ZIP alignment, and byte-for-byte comparison of all 247 web files passed. Android runtime verification is pending because no device was connected.
 
