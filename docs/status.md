@@ -21,7 +21,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Chromium verified direct dragging, the ghost and swap animation, cancelled drags, reduced motion, outside dismissal, and the smaller hide control at 320 and 1440 CSS pixels. The checks also covered normal taps and scrolling, keyboard reordering, hiding and restoring cards, and 200% text size. All 46 automated tests passed. A physical Android check remains open.
+Chromium verified direct dragging, the ghost and swap animation, cancelled drags, reduced motion, outside dismissal, and the smaller hide control at 320 and 1440 CSS pixels. The checks also covered normal taps and scrolling, keyboard reordering, hiding and restoring cards, and 200% text size. The published preview kept the new order and restored a hidden card offline. All 46 automated tests passed. A physical Android check remains open.
 
 Chromium verified that short taps open Workspace cards, swipes scroll, and half-second holds open edit mode at 320 and 1440 CSS pixels. Checks covered dragging directly after a hold with touch and mouse, edge scrolling, cancelled drags, keyboard reordering from Settings, hiding and restoring sections, and 200% text size. The published preview retained the saved order and restored a hidden card offline. All 46 automated tests passed. A physical Android check remains open.
 
@@ -114,6 +114,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The Workspace swap APK built from `6580d63` on `main`. Gradle build, signature continuity, ZIP alignment, and comparison of all 252 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the gesture and reduced-motion checks at the Android asset origin. No phone or emulator was connected for Android runtime verification.
 
 The Workspace long-press APK was built from `25e44be` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte checks of all 251 web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the gesture checks using the packaged files at the Android asset origin. Android runtime verification remains open because no phone or emulator was connected.
 
