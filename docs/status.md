@@ -22,7 +22,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The Workspace drag preview now tracks touch contacts directly through the hold and drag. A Chromium regression check cancelled the pointer stream while keeping the touch active and reproduced the missing preview on the previous revision. The fix passed that check, plus first and repeat drags, quick scrolling swipes, cancelled touches, edge scrolling, mouse and keyboard swaps, and reduced-motion drops. WebKit passed simulated touch drags and drops. All 50 automated tests passed after integration. Physical phone verification remains open.
+The Workspace drag preview now tracks touch contacts directly through the hold and drag. A Chromium regression check cancelled the pointer stream while keeping the touch active and reproduced the missing preview on the previous revision. The fix passed that check, plus first and repeat drags, quick scrolling swipes, cancelled touches, edge scrolling, mouse and keyboard swaps, and reduced-motion drops. WebKit passed simulated touch drags and drops. The preview from published `main` reopened the saved layout and restored a hidden card offline. All 50 automated tests passed after integration. Physical phone verification remains open.
 
 Chromium verified that the first hold enters swap mode and later drags start before the hold threshold. The checks covered successive touch swaps, mouse dragging, taps to select cards, edge scrolling, cancellation, outside dismissal, and keyboard swaps at 320 and 1440 CSS pixels. The published preview also reopened the saved layout and restored a hidden card offline. All 46 automated tests passed.
 
@@ -119,6 +119,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The mobile Workspace swap APK built from `801c3ac` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte comparison of all 257 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium exercised the packaged assets at the Android asset origin, including the first hold and drag, repeat swaps, and reduced motion. A physical Android check remains open.
 
 The repeated Workspace drag APK built from `5c4fbdb` on `main`. Gradle build, signature continuity, ZIP alignment, and comparison of all 252 web assets passed. Lint reported zero errors and ten warnings. Chromium verified immediate repeat drags with the bundled assets. A physical Android check remains open.
 
