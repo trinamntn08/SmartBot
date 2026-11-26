@@ -191,3 +191,8 @@
 
 .appearance-status { margin: 0.65rem 0 0; color: var(--muted); font-size: 0.875rem; }
 .appearance-status:empty { margin: 0; }
+
+@media (max-width: 360px) {
+  .shell:has(> main[data-page="settings"]),
+  main[data-page="settings"] > .card { padding-inline: min(1rem, 5vw); }
+}
