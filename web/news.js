@@ -173,10 +173,9 @@ export function renderNews(view, savedNews, focus, track) {
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
     <button class="quiet" type="button" data-news-refresh>Refresh</button></div></div>
     <div class="news-edition" role="group" aria-label="News topics">
-      <div class="news-topic-row">${topicButtons(mainTopics.slice(0, -1))}
-        <div class="news-topic-end">${topicButtons(mainTopics.slice(-1))}
-          <button class="news-topic news-topic-toggle" type="button" aria-label="Topics" title="Topics" aria-expanded="false" aria-controls="news-more-topics">${topicsIcon}</button>
-        </div>
+      <div class="news-topic-bar">
+        <div class="news-topic-row news-topic-strip">${topicButtons(mainTopics)}</div>
+        <button class="news-topic news-topic-toggle" type="button" aria-label="Topics" title="Topics" aria-expanded="false" aria-controls="news-more-topics">${topicsIcon}</button>
       </div>
       <div class="news-topic-row news-topic-more" id="news-more-topics" hidden>${topicButtons(moreTopics)}</div>
     </div>
@@ -185,6 +184,9 @@ export function renderNews(view, savedNews, focus, track) {
   const refreshButton = panel.querySelector('[data-news-refresh]');
   const status = panel.querySelector('[role=status]');
   const topics = panel.querySelector('.news-edition');
+  const strip = topics.querySelector('.news-topic-strip');
+  const selected = strip.querySelector('[aria-pressed="true"]');
+  if (selected) strip.scrollLeft = Math.max(0, selected.getBoundingClientRect().right - strip.getBoundingClientRect().right);
   const topicToggle = topics.querySelector('.news-topic-toggle');
   const more = topics.querySelector('#news-more-topics');
   const end = panel.querySelector('[data-news-end]');
