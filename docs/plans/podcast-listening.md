@@ -54,6 +54,8 @@ November 26, 2026. The Music player aligns the episode, timeline, playback butto
 
 The browser preview from `410e16d` on `main` passed the alignment and playback checks and reopened the library offline. The Android debug APK passed Gradle build, signature continuity, ZIP alignment, and comparison of all 249 bundled web files. Lint reported zero errors and six warnings. Physical phone checks remain pending.
 
+November 26, 2026. The playback speed button displays one decimal place, while the slider and stored rate retain hundredth-step precision. Chromium verified rounding, trailing zeroes, precise playback and slider announcements, and the rounded label after reopening a saved episode. All 46 automated tests passed.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.

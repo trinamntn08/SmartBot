@@ -260,9 +260,9 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   }
 
   function renderRate(rate) {
-    const rateText = `${Number(rate.toFixed(2))}×`;
     speedInput.style.setProperty('--podcast-progress', `${100 * (rate - minRate) / (maxRate - minRate)}%`);
-    speedInput.setAttribute('aria-valuetext', rateText);
+    speedInput.setAttribute('aria-valuetext', `${Number(rate.toFixed(2))}×`);
+    const rateText = `${(Math.round(rate * 10) / 10).toFixed(1)}×`;
     if (speedLabel.textContent === rateText) return;
     speedLabel.textContent = rateText;
     speedButton.setAttribute('aria-label', `Playback speed, ${rateText}`);
