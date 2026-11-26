@@ -1,6 +1,6 @@
 # YouTube music search
 
-Live search and playback are verified in the Windows browser preview. Android playback on a phone is pending.
+Live search and playback are verified in the Windows browser preview. Android includes music picks and supports live catalog access through a shared service. Deployment and playback on a phone are pending.
 
 ## Outcome
 
@@ -12,6 +12,15 @@ Use Listen → Music to search for public music videos and choose one to play in
 2. Add first-use terms and privacy information, search, selection, and a persistent visible player. Switch cleanly between YouTube, Spotify, and Podcasts.
 3. Verify blank, configured, error, and offline states, a real embedded music video, and Android packaging.
 4. Put playable music charts on the Music screen. Share the chart view across the browser preview and Android, and move song search into a button.
+5. Give fresh Android installs a playable set of music picks and use a hosted catalog for live charts and search.
+
+## Android music service
+
+1. Deploy the existing `podcast-service` directory as a Node.js 22 project. Set `SMARTBOT_YOUTUBE_API_KEY` as a server secret in Production. The same service can continue serving the podcast endpoints. [Deployment settings](https://vercel.com/docs/project-configuration/project-settings)
+2. Set `SMARTBOT_YOUTUBE_API` to the deployment's HTTPS origin when building Android. The Gradle property `-PsmartbotYoutubeApi=https://your-service.vercel.app` also sets the origin. The APK includes this public origin and sends music requests to the service, which adds the secret when it calls YouTube.
+3. Verify charts and search on a clean Android install. The default build opens **Music picks** after enabling YouTube. Upgrades with an existing device key can still use that key until a hosted origin is configured.
+
+The service uses one shared YouTube quota. Searches are limited per IP and charts are cached per instance for 15 minutes. The provider enforces the project-wide quota. [YouTube API quotas](https://developers.google.com/youtube/data/determine_quota_cost)
 
 ## Verification
 
@@ -44,6 +53,8 @@ The final layout passed a second live check in Chrome at desktop and phone width
 Music search now opens inline with the Browse music toolbar. On narrow screens the field uses the heading's space until search closes. Chromium verified control alignment at six widths from 320 to 1440 CSS pixels at 100% and 200% text size, with keyboard focus, search submission, and Escape restoring the charts. All 27 web tests passed.
 
 Once a key is configured, Music moves the setup form under **Music settings → Manage YouTube key**. Setup still opens when an enabled device needs a key. The Chromium fixture verified the first save, reload, replacement, validation feedback, removal, and opening setup again after removal. All 27 web tests passed.
+
+Android no longer prompts for a personal YouTube key. Seven music picks are available after first-use approval. A configured HTTPS service provides live charts and search, and the optional read of an older device key preserves access for existing installs. The Windows preview keeps its local setup. All 27 web, 15 Python, and eight service tests passed. Chromium emulating the Android asset origin verified the fresh install, reopening, an official embedded player from a pick, and controlled live charts and search. The Windows key settings and chart browsing fixtures also passed.
 
 ## Handoff
 

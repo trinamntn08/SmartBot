@@ -1,12 +1,13 @@
 import { isIP } from 'node:net';
 import { loadFeed, searchCatalog } from './catalog.mjs';
 import { PodcastError } from './public-fetch.mjs';
+import { popularMusic, searchMusic, YouTubeError, youtubeStatus } from './youtube.mjs';
 
 const maxBody = 4096;
 const requests = new Map();
 let minute;
 
-function overLimit(req) {
+function overLimit(req, group, limit) {
   const now = Math.floor(Date.now() / 60000);
   if (now !== minute) {
     requests.clear();
@@ -14,9 +15,10 @@ function overLimit(req) {
   }
   const forwarded = process.env.VERCEL === '1' ? req.headers['x-vercel-forwarded-for'] : null;
   const address = typeof forwarded === 'string' && isIP(forwarded) ? forwarded : req.socket.remoteAddress;
-  const count = requests.get(address) ?? 0;
-  if (count >= 60 || !count && requests.size >= 4096) return true;
-  requests.set(address, count + 1);
+  const client = `${group}:${address}`;
+  const count = requests.get(client) ?? 0;
+  if (count >= limit || !count && requests.size >= 4096) return true;
+  requests.set(client, count + 1);
   return false;
 }
 
@@ -53,7 +55,7 @@ function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function endpoint(method, run) {
+function endpoint(method, run, { source = 'podcast', group = source, limit = 60 } = {}) {
   return async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -65,7 +67,7 @@ function endpoint(method, run) {
     }
     if (req.method === 'OPTIONS') {
       res.setHeader('Access-Control-Allow-Methods', method);
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Access-Control-Allow-Headers', source === 'YouTube' ? 'X-SmartBot-YouTube' : 'Content-Type');
       res.setHeader('Access-Control-Max-Age', '600');
       res.statusCode = 204;
       res.end();
@@ -73,20 +75,33 @@ function endpoint(method, run) {
     }
     if (req.method !== method) {
       res.setHeader('Allow', `${method}, OPTIONS`);
-      return json(res, 405, { error: 'This podcast endpoint uses a different method.' });
+      return json(res, 405, { error: `This ${source} endpoint uses a different method.` });
     }
-    if (overLimit(req)) {
+    if (overLimit(req, group, limit)) {
       res.setHeader('Retry-After', '60');
-      return json(res, 429, { error: 'Too many podcast requests. Wait a moment and try again.' });
+      return json(res, 429, { error: `Too many ${source} requests. Wait a moment and try again.` });
     }
     try {
       json(res, 200, await run(req));
     } catch (error) {
-      if (error instanceof PodcastError) json(res, error.status, { error: error.message });
-      else json(res, 502, { error: 'The podcast source could not be opened. Try again.' });
+      if (error instanceof PodcastError || error instanceof YouTubeError) json(res, error.status, { error: error.message });
+      else json(res, 502, { error: `The ${source} source could not be opened. Try again.` });
     }
   };
 }
 
 export const search = endpoint('GET', req => searchCatalog(new URL(req.url, 'http://localhost').searchParams.get('q')));
 export const feed = endpoint('POST', async req => loadFeed((await body(req))?.url));
+
+function musicEndpoint(run, group, limit = 60) {
+  return endpoint('GET', req => {
+    if (req.headers['x-smartbot-youtube'] !== 'music') {
+      throw new YouTubeError(403, 'Open YouTube inside SmartBot.');
+    }
+    return run(new URL(req.url, 'http://localhost').searchParams);
+  }, { source: 'YouTube', group, limit });
+}
+
+export const musicStatus = musicEndpoint(youtubeStatus, 'music');
+export const musicChart = musicEndpoint(params => popularMusic(params.getAll('region')), 'music');
+export const musicSearch = musicEndpoint(params => searchMusic(params.getAll('q')), 'music-search', 8);
