@@ -4,6 +4,8 @@ const approvalKey = 'smartbot-youtube-enabled';
 const bridge = globalThis.SmartBotYouTube;
 const searchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
   stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>`;
+const closeSearchIcon = `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+  stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>`;
 let enabled = false;
 let pendingKey;
 
@@ -91,13 +93,21 @@ export function renderYouTubeSearch(root, player) {
   const lifecycle = new AbortController();
   root.innerHTML = `<div class="youtube-browse-header">
     <h2 id="youtube-search-title">Browse music</h2>
+    <form id="youtube-song-search" class="youtube-browse-search" hidden>
+      <label class="visually-hidden" for="youtube-query">Song or artist</label>
+      <div class="music-choice-row">
+        <input id="youtube-query" data-youtube-query name="query" type="search" maxlength="120"
+          placeholder="Song or artist" required>
+        <button type="submit" class="youtube-icon" aria-label="Search" title="Search">${searchIcon}</button>
+      </div>
+    </form>
     <div class="youtube-browse-actions">
       <a class="youtube-source" href="https://music.youtube.com/" aria-label="Open YouTube Music" title="Open YouTube Music">
         <img class="youtube-logo-light" src="./assets/youtube-logo.svg" alt="" width="76" height="18">
         <img class="youtube-logo-dark" src="./assets/youtube-logo-dark.svg" alt="" width="76" height="18">
       </a>
       <button type="button" class="listen-tool youtube-icon" data-youtube-search-toggle hidden
-        aria-expanded="false" aria-controls="youtube-song-search" aria-label="Search music" title="Search music">${searchIcon}</button>
+        aria-expanded="false" aria-controls="youtube-song-search youtube-song-results" aria-label="Search music" title="Search music">${searchIcon}</button>
     </div>
   </div>
     <section class="youtube-approval">
@@ -107,17 +117,7 @@ export function renderYouTubeSearch(root, player) {
       <button type="button" data-enable-youtube>Enable YouTube search</button>
     </section>
     <div class="youtube-search-tools" hidden>
-      <div id="youtube-song-search" hidden>
-        <form data-youtube-search>
-          <label class="visually-hidden" for="youtube-query">Song or artist</label>
-          <div class="music-choice-row">
-            <input id="youtube-query" data-youtube-query name="query" type="search" maxlength="120"
-              placeholder="Search songs or artists" required>
-            <button type="submit" class="youtube-icon" aria-label="Search" title="Search">${searchIcon}</button>
-          </div>
-        </form>
-        <ul class="youtube-results" aria-label="YouTube video results"></ul>
-      </div>
+      <ul id="youtube-song-results" class="youtube-results" aria-label="YouTube video results"></ul>
       <p class="youtube-search-status" role="status"></p>
       <div class="youtube-shelves"></div>
       <details class="music-service-settings" data-youtube-setup>
@@ -138,7 +138,7 @@ export function renderYouTubeSearch(root, player) {
     </div>`;
   const approval = root.querySelector('.youtube-approval');
   const tools = root.querySelector('.youtube-search-tools');
-  const form = root.querySelector('[data-youtube-search]');
+  const form = root.querySelector('#youtube-song-search');
   const input = form.elements.query;
   const setup = root.querySelector('[data-youtube-setup]');
   const keyForm = root.querySelector('[data-youtube-key]');
@@ -146,7 +146,6 @@ export function renderYouTubeSearch(root, player) {
   const status = root.querySelector('.youtube-search-status');
   const list = root.querySelector('.youtube-results');
   const searchToggle = root.querySelector('[data-youtube-search-toggle]');
-  const searchPanel = root.querySelector('#youtube-song-search');
   const shelfList = root.querySelector('.youtube-shelves');
   const shelves = createYouTubeShelves(shelfList, youtubeRequest, video => void player.open(video));
   let configured = false;
@@ -159,8 +158,12 @@ export function renderYouTubeSearch(root, player) {
   }
 
   function showSearch(open) {
+    const label = open ? 'Close music search' : 'Search music';
     searchToggle.setAttribute('aria-expanded', String(open));
-    searchPanel.hidden = !open;
+    searchToggle.setAttribute('aria-label', label);
+    searchToggle.title = label;
+    searchToggle.innerHTML = open ? closeSearchIcon : searchIcon;
+    form.hidden = !open;
     if (open) input.focus();
     else {
       search?.abort();
@@ -205,8 +208,8 @@ export function renderYouTubeSearch(root, player) {
     void openBrowse(true);
   });
 
-  searchToggle.addEventListener('click', () => showSearch(searchPanel.hidden));
-  searchPanel.addEventListener('keydown', event => {
+  searchToggle.addEventListener('click', () => showSearch(form.hidden));
+  form.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
       event.preventDefault();
       showSearch(false);

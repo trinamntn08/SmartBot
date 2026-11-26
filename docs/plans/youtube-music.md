@@ -41,6 +41,8 @@ The published preview loaded 36 current chart cards with official thumbnails. De
 
 The final layout passed a second live check in Chrome at desktop and phone widths in light and dark modes. The browser preview is running on port 8003. The Android debug APK rebuilt from `a9a9ace` with zero lint errors and eight warnings. Signature continuity, ZIP alignment, and all 257 bundled web assets passed. No Android device was connected.
 
+Music search now opens inline with the Browse music toolbar. On narrow screens the field uses the heading's space until search closes. Chromium verified control alignment at six widths from 320 to 1440 CSS pixels at 100% and 200% text size, with keyboard focus, search submission, and Escape restoring the charts. All 27 web tests passed.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
