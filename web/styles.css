@@ -602,16 +602,51 @@ main:is([data-page="podcasts"], [data-page="tracks"]) { padding-block-start: 1.5
 .music-service-settings summary:hover { color: var(--ink); }
 
 .spotify-player {
+  position: relative;
+  inset-inline-start: min(0px, calc(50% - min(140px, 50vw)));
   inline-size: max(100%, min(280px, 100vw));
   max-inline-size: 44rem;
-  margin-inline-start: min(0px, calc(50% - min(140px, 50vw)));
+  margin: 0.5rem auto 0;
+}
+.spotify-player.is-compact { max-inline-size: 40rem; }
+.spotify-player-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.spotify-player-toolbar a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-inline-end: auto;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+.spotify-player-toolbar button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+.spotify-player-toolbar button:hover { background: var(--accent-soft); color: var(--ink); }
+.spotify-open {
+  margin-block-start: 0.35rem;
 }
 .spotify-player iframe {
   display: block;
   inline-size: 100%;
+  block-size: 352px;
   border: 0;
   border-radius: 0.75rem;
 }
+.spotify-player.is-compact iframe { block-size: 152px; }
 .spotify-offline {
   margin: 0;
   padding: 0.75rem;

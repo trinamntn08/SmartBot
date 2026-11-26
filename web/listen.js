@@ -1,7 +1,8 @@
+import { spotifyOrigin } from './spotify-player.js';
+
 const sectionKey = 'smartbot-listen-section';
 const serviceKey = 'smartbot-music-service';
 const playlistKey = 'smartbot-spotify-playlist';
-const spotifyOrigin = 'https://open.spotify.com';
 const services = {
   spotify: { name: 'Spotify', url: `${spotifyOrigin}/` },
   apple: { name: 'Apple Music', url: 'https://music.apple.com/' },
@@ -76,7 +77,7 @@ export function listenHeader(page, action = '') {
   </header>`;
 }
 
-export function renderMusic(view, pausePodcasts, focus) {
+export function renderMusic(view, spotifyPlayer, pausePodcasts, focus) {
   let service = readMusicService();
   let playlist = readSpotifyPlaylist();
   const musicNote = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
@@ -94,22 +95,6 @@ export function renderMusic(view, pausePodcasts, focus) {
   </div>`;
   const content = view.querySelector('.music-service');
 
-  function syncSpotifyPlayer() {
-    const player = content.querySelector('.spotify-player');
-    if (!player) return;
-    const frame = player.querySelector('iframe');
-    const offline = !navigator.onLine;
-    player.querySelector('.spotify-offline').hidden = !offline;
-    if (offline || !player.closest('details').open) {
-      frame?.remove();
-    } else if (!frame) {
-      const nextFrame = player.querySelector('template').content.firstElementChild.cloneNode(true);
-      nextFrame.src = `${spotifyOrigin}/embed/playlist/${playlist}`;
-      pausePodcasts();
-      player.append(nextFrame);
-    }
-  }
-
   function savePlaylist(id) {
     playlist = id;
     try {
@@ -119,11 +104,15 @@ export function renderMusic(view, pausePodcasts, focus) {
     } catch {
       unsavedPlaylist = id;
     }
-    renderService(true);
-    content.querySelector(id ? '.spotify-player' : '[name="playlist"]').focus();
+    renderService(!id);
+    if (id) spotifyPlayer.open(id);
+    else {
+      spotifyPlayer.close();
+      content.querySelector('[name="playlist"]').focus();
+    }
   }
 
-  function spotifyMarkup() {
+  function spotifyMarkup(showPlaylistForm) {
     const playlistUrl = playlist ? `${spotifyOrigin}/playlist/${playlist}` : '';
     const playlistForm = `<form class="music-choice" data-spotify-playlist>
       <label for="spotify-playlist" class="visually-hidden">Spotify playlist link</label>
@@ -133,15 +122,15 @@ export function renderMusic(view, pausePodcasts, focus) {
         <button type="submit" aria-label="Save playlist">Save</button>
       </div>
     </form>`;
-    if (!playlist) return playlistForm;
+    if (!playlist) return `
+      <details class="music-service-settings"${showPlaylistForm ? ' open' : ''}>
+        <summary>Add a Spotify playlist</summary>
+        ${playlistForm}
+      </details>`;
     return `
-      <div class="spotify-player" role="region" aria-label="Spotify playlist" tabindex="-1">
-        <p class="spotify-offline" role="status" hidden>Connect to the internet to play this Spotify playlist.</p>
-        <template>
-          <iframe title="Spotify playlist player" width="100%" height="352"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
-        </template>
-      </div>
+      <button type="button" class="listen-tool spotify-open" data-open-spotify aria-controls="spotify-player">
+        Saved Spotify playlist
+      </button>
       <details class="music-service-settings">
         <summary>Change playlist</summary>
         ${playlistForm}
@@ -152,7 +141,7 @@ export function renderMusic(view, pausePodcasts, focus) {
       </details>`;
   }
 
-  function renderService(showPlaylist = false) {
+  function renderService(showPlaylistForm = false) {
     const selected = services[service];
     const form = `<form class="music-choice" data-music-choice>
       <label for="music-service" class="visually-hidden">Music service</label>
@@ -171,11 +160,7 @@ export function renderMusic(view, pausePodcasts, focus) {
         <span>Open ${selected.name}</span>
         ${external}
       </a>
-      ${service === 'spotify' ? `
-        <details class="music-service-settings" data-spotify-options${showPlaylist ? ' open' : ''}>
-          <summary>${playlist ? 'Saved Spotify playlist' : 'Add a Spotify playlist'}</summary>
-          ${spotifyMarkup()}
-        </details>` : ''}
+      ${service === 'spotify' ? spotifyMarkup(showPlaylistForm) : ''}
       <details class="music-service-settings">
         <summary>Change service</summary>
         ${form}
@@ -189,9 +174,12 @@ export function renderMusic(view, pausePodcasts, focus) {
       </section>`;
     for (const link of content.querySelectorAll('.music-launch, .music-secondary-link')) {
       if (location.origin !== 'https://appassets.androidplatform.net') link.target = '_blank';
-      link.addEventListener('click', pausePodcasts);
+      link.addEventListener('click', () => {
+        spotifyPlayer.close();
+        pausePodcasts();
+      });
     }
-    content.querySelector('[data-spotify-options]')?.addEventListener('toggle', syncSpotifyPlayer);
+    content.querySelector('[data-open-spotify]')?.addEventListener('click', () => spotifyPlayer.open(playlist));
     const playlistForm = content.querySelector('[data-spotify-playlist]');
     if (playlistForm) {
       const input = playlistForm.elements.playlist;
@@ -204,7 +192,7 @@ export function renderMusic(view, pausePodcasts, focus) {
           input.reportValidity();
         } else if (id === playlist) {
           playlistForm.closest('details').open = false;
-          content.querySelector('.spotify-player').focus();
+          spotifyPlayer.open(id);
         } else {
           savePlaylist(id);
         }
@@ -215,6 +203,7 @@ export function renderMusic(view, pausePodcasts, focus) {
       event.preventDefault();
       const choice = event.currentTarget.elements.service.value;
       if (!Object.hasOwn(services, choice)) return;
+      if (choice !== 'spotify') spotifyPlayer.close();
       service = choice;
       try {
         localStorage.setItem(serviceKey, choice);
@@ -225,14 +214,7 @@ export function renderMusic(view, pausePodcasts, focus) {
       renderService();
       content.querySelector('.music-launch').focus();
     });
-    syncSpotifyPlayer();
   }
   renderService();
   if (focus) view.querySelector('h1').focus();
-  window.addEventListener('online', syncSpotifyPlayer);
-  window.addEventListener('offline', syncSpotifyPlayer);
-  return () => {
-    window.removeEventListener('online', syncSpotifyPlayer);
-    window.removeEventListener('offline', syncSpotifyPlayer);
-  };
 }

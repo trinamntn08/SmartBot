@@ -7,6 +7,7 @@ import { escapeHtml, renderNews, renderNewsSettings, renderSavedNews, renderStor
 import { createPodcastPlayer } from './podcast-player.js';
 import { renderPodcasts } from './podcasts.js';
 import { listeningPage, renderMusic } from './listen.js';
+import { createSpotifyPlayer } from './spotify-player.js';
 import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
@@ -25,6 +26,7 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
 const statusLabels = { pending: 'Planned', started: 'In progress', completed: 'Done', skipped: 'Skipped' };
 let repository;
 let podcastPlayer;
+let spotifyPlayer;
 let routine;
 let displayedDate;
 let busy = false;
@@ -33,7 +35,7 @@ let loadActivity;
 let keepReadingPlanOpen = false;
 let stopMarkets;
 let stopNews;
-let stopListening;
+let stopPodcasts;
 
 async function recordActivity(entries) {
   if (!entries.length) return;
@@ -141,8 +143,8 @@ function render(focusHeading = false) {
   stopMarkets = undefined;
   stopNews?.();
   stopNews = undefined;
-  stopListening?.();
-  stopListening = undefined;
+  stopPodcasts?.();
+  stopPodcasts = undefined;
   track();
   if (focusHeading) window.scrollTo(0, 0);
   const route = location.hash.slice(1);
@@ -155,6 +157,7 @@ function render(focusHeading = false) {
   const page = isLibrary ? 'books' : listenPage ?? section?.id ?? (appPage ? route : 'workspace');
   view.dataset.page = page;
   podcastPlayer.setExpanded(page === 'podcasts');
+  spotifyPlayer.setExpanded(page === 'tracks');
   marketRepository.setOpen(page === 'markets');
   document.body.classList.toggle('reading-book', Number.isSafeInteger(bookId));
   nav.hidden = false;
@@ -183,11 +186,11 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'podcasts') {
-    stopListening = renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
+    stopPodcasts = renderPodcasts(view, repository.podcasts, podcastPlayer, focusHeading);
     return;
   }
   if (page === 'tracks') {
-    stopListening = renderMusic(view, podcastPlayer.pause, focusHeading);
+    renderMusic(view, spotifyPlayer, podcastPlayer.pause, focusHeading);
     return;
   }
   if (page === 'markets') {
@@ -338,7 +341,9 @@ if (hasNativePodcastPlayer) setInterval(() => { if (!document.hidden) void loadA
 
 try {
   repository = await openRepository();
-  podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'), recordAutomatically);
+  spotifyPlayer = createSpotifyPlayer(document.querySelector('#spotify-player'), view, () => podcastPlayer.pause());
+  podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'),
+    recordAutomatically, spotifyPlayer.close);
   if (!location.hash && marketRepository.wasOpen() && marketRepository.lastChart()?.symbol) {
     history.replaceState(null, '', '#markets');
   }

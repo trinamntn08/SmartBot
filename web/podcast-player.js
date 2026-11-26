@@ -9,7 +9,7 @@ function time(seconds) {
   return `${hours ? `${hours}:${pad(minutes)}` : minutes}:${pad(total % 60)}`;
 }
 
-export function createPodcastPlayer(repository, panel, recordActivity) {
+export function createPodcastPlayer(repository, panel, recordActivity, beforePlayback) {
   const title = panel.querySelector('[data-player-title]');
   const musicLink = panel.querySelector('.podcast-player-title');
   const publisher = panel.querySelector('[data-player-publisher]');
@@ -126,7 +126,9 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
       const state = await nativePodcast(action, args);
       if (request !== nativeRequest) return;
       if (current?.episode.id !== state?.episode?.id) seeking = false;
-      if (action === 'play' || (state?.playing && !current?.playing)) dismissedEpisode = undefined;
+      const startedPlaying = state?.playing && !current?.playing;
+      if (startedPlaying) beforePlayback();
+      if (action === 'play' || startedPlaying) dismissedEpisode = undefined;
       current = state?.active ? state : null;
       updateRecent(state?.episode ? state : null);
       render();
@@ -196,6 +198,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
   }
 
   function playAudio() {
+    beforePlayback();
     current.error = '';
     if (audio.error) {
       restorePosition = current.position;
@@ -217,6 +220,7 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
 
   async function play(episode) {
     if (hasNativePodcastPlayer) {
+      beforePlayback();
       await callNative('play', { episode });
       return;
     }
@@ -376,8 +380,8 @@ export function createPodcastPlayer(repository, panel, recordActivity) {
     play,
     pause() {
       ++startSequence;
-      if (audio) audio.pause();
-      else void callNative('pause').catch(error => { if (current) nativeFailure(error); });
+      if (current) void dismiss();
+      else if (!audio) void callNative('pause').catch(error => { if (current) nativeFailure(error); });
     },
     setExpanded(expanded) {
       panel.classList.toggle('is-compact', !expanded);

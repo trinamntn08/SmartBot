@@ -62,7 +62,7 @@ To update the bundled prices, run `python3 scripts/build-market-snapshot.py /pat
 
 Open **Workspace → Listen → Music** and save your preferred service. Use its shortcut to open the service on later visits, or choose **Change service** to update it.
 
-**Open Spotify** launches Spotify directly. To keep one playlist in SmartBot, expand **Add a Spotify playlist** and paste a playlist link from Spotify's web player. Open **Saved Spotify playlist** to show the player, or use **Change playlist** to replace or remove it. Playback requires internet, and Spotify may offer previews based on your session and device.
+**Open Spotify** launches Spotify directly. To keep one playlist in SmartBot, expand **Add a Spotify playlist** and paste a playlist link from Spotify's web player. Select **Saved Spotify playlist** to open the player. It stays active when you switch SmartBot screens and shrinks outside Music. Close the player to stop it, or use **Change playlist** to replace or remove the playlist. Playback requires internet, and Spotify may offer previews based on your session and device.
 
 ## Listen to podcasts
 
