@@ -34,6 +34,8 @@ November 25, 2026. Android 0.3.3 adds discovery to the default APK. Mobile-width
 
 November 26, 2026. Music uses smaller type, compact discovery, and a player with a timeline, two 10-second skip buttons, and a saved custom speed. Chromium verified search, follow, playback, keyboard scrubbing and speed entry, touch, invalid rates, reload and resume, retry, and elapsed activity at changed speeds with controlled feeds and audio. The layout fit widths from 320 to 1440 CSS pixels and 200% text size on mobile. All 26 web, 12 Python, and five podcast service tests passed. Android compilation and lint passed. Physical phone playback and lock-screen checks remain pending.
 
+The combined build at `fc52c82` passed all 27 web, 12 Python, and five podcast service tests. The local Chromium preview reopened the saved library offline and played a live franceinfo episode with both skips and a custom 1.37× rate. The Android debug APK passed signature and alignment verification and matched all 245 bundled web files. Lint reported zero errors and ten warnings in the Gradle configuration and manifest.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
