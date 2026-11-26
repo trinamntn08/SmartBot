@@ -102,6 +102,8 @@ Four text import tests covered encoding, line breaks, Unicode section boundaries
 
 ## Android APK verification
 
+The November 26 consolidated SmartBot 0.3.4 debug APK (version code 7) was rebuilt from `318b5fe` on `main`. All 25 live GitHub branch tips were already included, and there were no open pull requests. All 27 web, 12 Python, and seven podcast service tests passed. Gradle assemble and lint ran from scratch and reported zero lint errors and ten warnings. APK signing, signature continuity with the earlier local pilot, ZIP alignment, and byte-for-byte comparison of all 247 bundled web files passed. Android runtime verification remains pending because no phone or emulator was connected.
+
 The appearance APK built from `3be618e` on `main`. Gradle build, signing, ZIP alignment, and byte-for-byte checks of all 247 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium tested appearance selection and reload at the Android asset origin. A physical phone check remains pending.
 
 The SmartBot 0.3.4 debug APK gives the build a distinct Android version (code 7). Chromium loaded the APK's packaged web files at the Android asset origin and verified the floating gear, Books and Settings in the top bar, and NVIDIA candlesticks. Switching from the 0.3.3 bundle in the same profile kept the imported book and gear position. All 42 automated tests passed. Gradle build, APK alignment, the existing signing certificate, and all 245 packaged web files passed verification. Lint reported zero errors and six warnings. Physical phone verification remains pending.
