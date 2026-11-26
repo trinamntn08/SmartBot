@@ -165,8 +165,8 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
         ${external}
       </a>`}
       ${service === 'spotify' ? spotifyMarkup(showPlaylistForm) : ''}
-      <details class="music-service-settings">
-        <summary>Change service</summary>
+      <details class="music-service-settings"${service === 'youtube' ? ' data-youtube-settings' : ''}>
+        <summary>${service === 'youtube' ? 'Music settings' : 'Change service'}</summary>
         ${form}
       </details>` : `
       <section class="music-setup" aria-labelledby="music-setup-title">
@@ -177,7 +177,8 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
         </div>
       </section>`;
     const youtubeSearch = content.querySelector('.youtube-search');
-    if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer);
+    if (youtubeSearch) stopYouTubeSearch = renderYouTubeSearch(youtubeSearch, youtubePlayer,
+      content.querySelector('[data-youtube-settings]'));
     for (const link of content.querySelectorAll('.music-launch, .music-secondary-link, .youtube-source')) {
       if (location.origin !== 'https://appassets.androidplatform.net') link.target = '_blank';
       link.addEventListener('click', () => {

@@ -701,8 +701,8 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
 .listen-tool.youtube-icon:hover { background: var(--accent-soft); }
 .listen-tool.youtube-icon[aria-disabled="true"] { opacity: 0.55; cursor: default; background: transparent; }
 .youtube-approval { max-inline-size: 44rem; }
-.youtube-search form { margin-block-start: 0.65rem; max-width: 32rem; }
-.youtube-search form input { min-width: 0; max-width: none; margin: 0; }
+.youtube-search form, [data-youtube-setup] form { margin-block-start: 0.65rem; max-width: 32rem; }
+.youtube-search form input, [data-youtube-setup] form input { min-width: 0; max-width: none; margin: 0; }
 @container youtube-browse (max-width: 33rem) {
   .youtube-browse-header { gap: 0.25rem; }
   .youtube-browse-header:has(.youtube-browse-search:not([hidden])) h2 {
@@ -729,7 +729,7 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
   text-align: start;
 }
 .youtube-result:hover { border-color: transparent; background: var(--accent-soft); }
-.youtube-search-tools details p { overflow-wrap: anywhere; }
+[data-youtube-setup] p { overflow-wrap: anywhere; }
 .youtube-shelves { margin-block: 0.65rem 1.5rem; }
 .youtube-shelves:empty { display: none; }
 .youtube-shelf + .youtube-shelf { margin-block-start: 1.25rem; }

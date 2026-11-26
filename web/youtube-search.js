@@ -89,7 +89,7 @@ function showResults(list, items, player) {
   }
 }
 
-export function renderYouTubeSearch(root, player) {
+export function renderYouTubeSearch(root, player, settings) {
   const lifecycle = new AbortController();
   root.innerHTML = `<div class="youtube-browse-header">
     <h2 id="youtube-search-title">Browse music</h2>
@@ -120,7 +120,7 @@ export function renderYouTubeSearch(root, player) {
       <ul id="youtube-song-results" class="youtube-results" aria-label="YouTube video results"></ul>
       <p class="youtube-search-status" role="status"></p>
       <div class="youtube-shelves"></div>
-      <details class="music-service-settings" data-youtube-setup>
+      <details class="music-service-settings" data-youtube-setup hidden>
         <summary>YouTube search setup</summary>
         <form method="post" action="./api/youtube" data-youtube-key${bridge ? '' : ' hidden'}>
           <label for="youtube-key">YouTube Data API key</label>
@@ -130,6 +130,7 @@ export function renderYouTubeSearch(root, player) {
             <button type="submit">Save key</button>
           </div>
         </form>
+        <p class="youtube-search-status" role="status"></p>
         <p data-youtube-environment hidden>Set <code>SMARTBOT_YOUTUBE_API_KEY</code> in the preview environment and restart the preview.</p>
         <p><a href="https://console.cloud.google.com/apis/credentials">Google Cloud credentials</a></p>
         <p><a href="https://www.youtube.com/t/terms">YouTube terms</a> · <a href="https://policies.google.com/privacy">Google privacy policy</a></p>
@@ -141,6 +142,9 @@ export function renderYouTubeSearch(root, player) {
   const form = root.querySelector('#youtube-song-search');
   const input = form.elements.query;
   const setup = root.querySelector('[data-youtube-setup]');
+  const setupHeading = setup.querySelector('summary');
+  const setupStatus = setup.querySelector('[role="status"]');
+  const environmentNotice = setup.querySelector('[data-youtube-environment]');
   const keyForm = root.querySelector('[data-youtube-key]');
   const disable = root.querySelector('[data-disable-youtube]');
   const status = root.querySelector('.youtube-search-status');
@@ -177,6 +181,10 @@ export function renderYouTubeSearch(root, player) {
 
   function showBrowse(focus) {
     configured = true;
+    setup.open = false;
+    setupHeading.textContent = 'Manage YouTube key';
+    settings.append(setup);
+    setup.hidden = false;
     searchToggle.hidden = false;
     shelves.load();
     if (focus) searchToggle.focus();
@@ -187,15 +195,17 @@ export function renderYouTubeSearch(root, player) {
     tools.hidden = false;
     try {
       const result = await youtubeRequest('', lifecycle.signal);
+      if (lifecycle.signal.aborted) return;
       canSaveKey = Boolean(bridge || result.canSaveKey);
       keyForm.hidden = !canSaveKey;
-      root.querySelector('[data-youtube-environment]').hidden = canSaveKey;
+      environmentNotice.hidden = canSaveKey;
       disable.textContent = canSaveKey ? 'Disable YouTube search and remove key' : 'Disable YouTube search';
       if (result.configured) showBrowse(focus);
       else {
+        setup.hidden = false;
         setup.open = true;
         status.textContent = 'Set up a YouTube Data API key to browse music.';
-        if (focus) (canSaveKey ? keyForm.elements.key : setup.querySelector('summary')).focus();
+        if (focus) (canSaveKey ? keyForm.elements.key : setupHeading).focus();
       }
     } catch (error) {
       if (!lifecycle.signal.aborted) status.textContent = navigator.onLine ? error.message : 'Connect to the internet to browse music.';
@@ -219,6 +229,7 @@ export function renderYouTubeSearch(root, player) {
   disable.addEventListener('click', async event => {
     const button = event.currentTarget;
     button.disabled = true;
+    setupStatus.textContent = '';
     try {
       if (canSaveKey) await saveKey('', lifecycle.signal);
       player.close();
@@ -228,11 +239,15 @@ export function renderYouTubeSearch(root, player) {
       configured = false;
       enabled = false;
       try { localStorage.removeItem(approvalKey); } catch { /* Disable for this session. */ }
+      settings.open = false;
+      setup.hidden = true;
+      setupHeading.textContent = 'YouTube search setup';
+      tools.append(setup);
       tools.hidden = true;
       approval.hidden = false;
       approval.querySelector('button').focus();
     } catch (error) {
-      status.textContent = error.message;
+      setupStatus.textContent = error.message;
     } finally {
       button.disabled = false;
     }
@@ -243,9 +258,10 @@ export function renderYouTubeSearch(root, player) {
     const key = event.currentTarget.elements.key;
     const value = key.value.trim();
     if (!value) {
-      status.textContent = 'Enter a YouTube Data API key.';
+      setupStatus.textContent = 'Enter a YouTube Data API key.';
       return;
     }
+    setupStatus.textContent = '';
     const button = event.submitter;
     if (button) button.disabled = true;
     try {
@@ -253,11 +269,11 @@ export function renderYouTubeSearch(root, player) {
       key.value = '';
       if (!lifecycle.signal.aborted) {
         status.textContent = bridge ? 'YouTube search is ready.' : 'Key saved on this computer.';
-        setup.open = false;
+        settings.open = false;
         showBrowse(true);
       }
     } catch (error) {
-      if (!lifecycle.signal.aborted) status.textContent = error.message;
+      if (!lifecycle.signal.aborted) setupStatus.textContent = error.message;
     } finally {
       if (button) button.disabled = false;
     }

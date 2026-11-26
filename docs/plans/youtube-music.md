@@ -43,6 +43,8 @@ The final layout passed a second live check in Chrome at desktop and phone width
 
 Music search now opens inline with the Browse music toolbar. On narrow screens the field uses the heading's space until search closes. Chromium verified control alignment at six widths from 320 to 1440 CSS pixels at 100% and 200% text size, with keyboard focus, search submission, and Escape restoring the charts. All 27 web tests passed.
 
+Once a key is configured, Music moves the setup form under **Music settings → Manage YouTube key**. Setup still opens when an enabled device needs a key. The Chromium fixture verified the first save, reload, replacement, validation feedback, removal, and opening setup again after removal. All 27 web tests passed.
+
 ## Handoff
 
 Supply a YouTube Data API key through the [music setup](../../README.md#listen-to-music) to enable live search. Physical Android playback still needs verification.
