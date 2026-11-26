@@ -20,7 +20,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-The appearance update passed all 27 web, 12 Python, and seven podcast service tests. The lowest text contrast across the six palette and mode combinations was 5.27:1. Chromium exercised keyboard selection, system color mode changes, reload, two-tab sync, storage errors, and offline use with an imported book and bundled Markets data. Settings passed the no-overflow check at 320 CSS pixels and 200% text size after the Assistant provider field was constrained to the column. The latest spacing adjustment gives magnified Settings headings more room. Visual recheck is pending.
+Chromium verified the six appearance combinations at 320 CSS pixels and reviewed the desktop layout at 1440 CSS pixels. Settings fit the 320-pixel viewport at 200% text size. Checks covered keyboard selection, system color mode changes, reload, two-tab sync, storage errors, and offline use with an imported book and bundled Markets data. The lowest measured text contrast was 5.27:1. All 27 web, 12 Python, and seven podcast service tests passed.
 
 The Workspace home screen removes the visible heading, Books description, and separate library button. The Books title and image share one link, and Workspace retains a heading for screen readers. Chromium verified the layout at 320 and 1440 CSS pixels, keyboard and pointer entry into Books, keyboard focus on return, and offline reopening. All 26 web, 12 Python, and five podcast service tests passed.
 
@@ -101,6 +101,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The appearance APK built from `3be618e` on `main`. Gradle build, signing, ZIP alignment, and byte-for-byte checks of all 247 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium tested appearance selection and reload at the Android asset origin. A physical phone check remains pending.
 
 The SmartBot 0.3.4 debug APK gives the build a distinct Android version (code 7). Chromium loaded the APK's packaged web files at the Android asset origin and verified the floating gear, Books and Settings in the top bar, and NVIDIA candlesticks. Switching from the 0.3.3 bundle in the same profile kept the imported book and gear position. All 42 automated tests passed. Gradle build, APK alignment, the existing signing certificate, and all 245 packaged web files passed verification. Lint reported zero errors and six warnings. Physical phone verification remains pending.
 
