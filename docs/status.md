@@ -4,6 +4,7 @@ Last updated November 26, 2026.
 
 ## Current state
 
+- The Four Leaves mark appears in the SmartBot header and follows the active light or dark theme. The browser tab and iOS Home Screen shortcut use the same mark, and Android uses it for adaptive and themed launcher icons.
 - Press and hold a **Workspace** card, then drag it with the same touch to swap it. Drag any card immediately while swap mode is active. A translucent preview follows your finger or cursor, and both cards slide into place on release. With reduced motion enabled, the cards settle instantly. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.
 - **Settings → Appearance** applies a theme across SmartBot. Choose Grove, Ocean, or Clay and use System, Light, or Dark color mode. Changes apply immediately and are saved on this device for offline use. Existing installations start with Grove and follow the system color mode.
 - **Today** shows recorded activity time, pages read, and listening time by activity and topic. The app tracks foreground Books and News use, source pages in newly converted PDFs, and podcast playback. Use **Log activity** for music, paper books, and other activities, or **Reading plan** to start or edit the routine. [Today activity report](plans/today-activity.md)
@@ -21,6 +22,8 @@ Last updated November 26, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+The Four Leaves update passed all 27 web, 15 Python, and eight podcast-service tests. Android resource compilation and lint passed. Browser and APK checks from published `main` and physical launcher verification remain open.
 
 The Workspace drag preview now tracks touch contacts directly through the hold and drag. A Chromium regression check cancelled the pointer stream while keeping the touch active and reproduced the missing preview on the previous revision. The fix passed that check, plus first and repeat drags, quick scrolling swipes, cancelled touches, edge scrolling, mouse and keyboard swaps, and reduced-motion drops. WebKit passed simulated touch drags and drops. The preview from published `main` reopened the saved layout and restored a hidden card offline. All 50 automated tests passed after integration. Physical phone verification remains open.
 

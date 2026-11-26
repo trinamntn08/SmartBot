@@ -2,7 +2,7 @@ importScripts('./vendor/pdfjs/cache-files.js');
 
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v72'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v73'}`;
 const files = [
   'index.html', 'appearance.js', 'appearance.css', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'today.css', 'today.js', 'activity.js', 'activity-repository.js',
@@ -17,6 +17,7 @@ const files = [
   'podcasts.js', 'podcast-native.js', 'podcast-provider.js', 'podcast-rss.js', 'podcast-repository.js', 'podcast-player.js',
   'workspace.js', 'workspace-repository.js', 'assistant.js', 'assets/books.webp', 'assets/sections.webp', 'assets/podcast-studio.webp',
   'assets/dm-sans.woff2', 'assets/instrument-serif.woff2',
+  'assets/smartbot-favicon.svg', 'assets/smartbot-favicon-32.png', 'assets/smartbot-touch-icon.png',
 ];
 const urls = files.map((file) => new URL(file, self.registration.scope).href);
 

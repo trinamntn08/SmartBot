@@ -6,6 +6,9 @@
   <meta name="description" content="A personal workspace for reading, learning, entertainment, and your daily routine.">
   <meta name="smartbot-podcast-service" content="">
   <title>SmartBot</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/smartbot-favicon-32.png">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="./assets/smartbot-favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/smartbot-touch-icon.png">
   <script src="./appearance.js"></script>
   <link rel="stylesheet" href="./appearance.css">
   <link rel="stylesheet" href="./styles.css">
@@ -17,7 +20,18 @@
 <body>
   <header class="app-header">
     <div class="shell header-inner">
-      <a class="brand" href="#workspace"><span class="brand-mark" aria-hidden="true"></span>SmartBot</a>
+      <a class="brand" href="#workspace">
+        <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <defs>
+            <path id="smartbot-leaf" d="M43 39C34 42 24 39 17 32C12 27 10 19 11 13C11 11 12 10 14 10C24 10 34 14 40 22C44 27 46 33 45 37C45 38 44 39 43 39Z"/>
+          </defs>
+          <use class="brand-leaf-secondary" href="#smartbot-leaf"/>
+          <use href="#smartbot-leaf" transform="rotate(90 50 50)"/>
+          <use href="#smartbot-leaf" transform="rotate(180 50 50)"/>
+          <use href="#smartbot-leaf" transform="rotate(270 50 50)"/>
+        </svg>
+        SmartBot
+      </a>
       <nav class="header-nav" aria-label="Main" hidden>
         <a href="#books">Books</a>
         <a href="#news">News</a>
