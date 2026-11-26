@@ -20,6 +20,7 @@ Last updated November 26, 2026.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
 - Project-local Codex configuration defines five agent roles and two SmartBot workflows. The [design skill setup](codex-setup.md#design-skills) also installs pinned releases of Taste, Emil Kowalski's motion guidance, and Impeccable into the checkout.
 - The Git workflow requires a task tracking record in each completed step's commit, an immediate GitHub push, and verification that the change and record reached `main`. Verify the source against live GitHub `main` before generating or refreshing a browser preview or building a preview APK. Parallel writing sessions each use their own branch and worktree or clone. [Git session workflow](codex-setup.md#session-workflow) · [Preview verification steps](codex-setup.md#verify-main-before-generating-a-preview) · [GitHub repository](https://github.com/trinamntn08/SmartBot)
+- The repository owner grants standing approval for routine GitHub updates within requested SmartBot tasks, including publishing verified changes to `main`. [Agent instructions](../AGENTS.md#working-practices)
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
