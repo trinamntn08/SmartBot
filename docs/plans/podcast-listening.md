@@ -44,6 +44,8 @@ Desktop Chrome verified the same search through Music on the local preview, disp
 
 November 26, 2026. The player fits in a single 50-pixel row outside Music, closes on request, and uses one playback speed slider. Chromium checked keyboard and touch adjustment, focus return, dismissal, resume, and the saved rate and position at widths from 320 to 1440 CSS pixels, including 200% text. A simulated Android bridge verified that a dismissed player stays closed across native polls and reopens at the saved position and speed. All 27 web and 12 Python tests passed. Physical Android playback remains unverified.
 
+The combined build at `0a61e50` passed all 46 automated tests. Desktop Chrome opened **Tri Kỷ Cảm Xúc** and played a live franceinfo episode while verifying the speed slider, compact row, close, and resume. The Android debug APK passed signature and alignment checks and matched all 245 packaged web files. Lint reported zero errors and ten warnings.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
