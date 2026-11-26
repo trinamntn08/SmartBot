@@ -91,7 +91,7 @@ At 320 CSS pixels, Chromium loaded 20 live headlines through More without a Cana
 
 November 26, 2026. Refresh requests the selected feeds directly and updates the header to the latest successful refresh time. If a source fails, its cached headlines stay available without a feed warning. If every source fails, the last successful time stays visible. The bundled starter headlines have no refresh timestamp.
 
-All 31 Node and 12 Python tests passed. The regression test covers an older cached feed, a newly refreshed feed, and a newer feed outside the active selection. Mobile browser and physical phone checks are pending.
+All 31 Node and 12 Python tests passed. At 320 CSS pixels, Chromium received 15 live feed responses and displayed ten headlines after Refresh. A controlled check reproduced the November 24 timestamp, advanced it to November 26 when one feed succeeded, and kept the latest successful time during a complete failure and an offline reload. Physical phone verification is pending.
 
 ## Handoff
 
