@@ -91,32 +91,43 @@ function starterMatches(query) {
   return words.every(word => searchable(franceinfo.title).includes(word));
 }
 
+async function searchPodcastIndex(query, key, secret, fetcher) {
+  const date = String(Math.floor(Date.now() / 1000));
+  const signature = createHash('sha1').update(key + secret + date).digest('hex');
+  const url = new URL('https://api.podcastindex.org/api/1.0/search/byterm');
+  url.search = new URLSearchParams({ q: query, max: '15' });
+  const { body } = await fetcher(url.href, { headers: {
+    'X-Auth-Key': key, 'X-Auth-Date': date, Authorization: signature, Accept: 'application/json',
+  } });
+  const { feeds } = JSON.parse(body.toString('utf8'));
+  if (!Array.isArray(feeds)) throw new Error('Invalid Podcast Index response');
+  return feeds.map(feed => ({ url: feed?.url, title: feed?.title, publisher: feed?.author }));
+}
+
+async function searchApplePodcasts(query, fetcher) {
+  const url = new URL('https://itunes.apple.com/search');
+  url.search = new URLSearchParams({ term: query, country: 'US', media: 'podcast', entity: 'podcast', limit: '15' });
+  const { body } = await fetcher(url.href, { headers: { Accept: 'application/json' } });
+  const { results } = JSON.parse(body.toString('utf8'));
+  if (!Array.isArray(results)) throw new Error('Invalid Apple Podcasts response');
+  return results.map(show => ({ url: show?.feedUrl, title: show?.collectionName, publisher: show?.artistName }));
+}
+
 export async function searchCatalog(value, env = process.env, fetcher = fetchPublic) {
   const query = typeof value === 'string' ? value.trim() : '';
   if (!query || query.length > 120) throw new PodcastError(400, 'Enter a podcast name up to 120 characters.');
   const starter = starterMatches(query) ? [franceinfo] : [];
   const { PODCAST_INDEX_KEY: key, PODCAST_INDEX_SECRET: secret } = env;
-  if (!key || !secret) {
-    if (starter.length) return { shows: starter, limited: true };
-    throw new PodcastError(503, 'Podcast search is unavailable. You can still paste an RSS feed link.');
-  }
-
-  const date = String(Math.floor(Date.now() / 1000));
-  const signature = createHash('sha1').update(key + secret + date).digest('hex');
-  const url = new URL('https://api.podcastindex.org/api/1.0/search/byterm');
-  url.search = new URLSearchParams({ q: query, max: '15' });
   try {
-    const { body } = await fetcher(url.href, { headers: {
-      'X-Auth-Key': key, 'X-Auth-Date': date, Authorization: signature, Accept: 'application/json',
-    } });
-    const { feeds } = JSON.parse(body.toString('utf8'));
-    if (!Array.isArray(feeds)) throw new Error('Invalid catalog response');
+    const feeds = key && secret
+      ? await searchPodcastIndex(query, key, secret, fetcher)
+      : await searchApplePodcasts(query, fetcher);
     const shows = new Map(starter.map(show => [show.feedUrl, show]));
     for (const feed of feeds) {
-      const feedUrl = publicUrl(feed?.url)?.href;
-      const title = clean(feed?.title);
+      const feedUrl = publicUrl(feed.url)?.href;
+      const title = clean(feed.title);
       if (feedUrl && title && !shows.has(feedUrl)) {
-        shows.set(feedUrl, { feedUrl, title, publisher: clean(feed.author) || new URL(feedUrl).hostname });
+        shows.set(feedUrl, { feedUrl, title, publisher: clean(feed.publisher) || new URL(feedUrl).hostname });
       }
     }
     return { shows: [...shows.values()].slice(0, 15), limited: false };

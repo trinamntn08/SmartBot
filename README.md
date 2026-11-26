@@ -71,7 +71,7 @@ npm --prefix podcast-service ci
 npm --prefix podcast-service start
 ```
 
-Set `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` in the local service environment to enable full name search. The franceinfo suggestion and pasted feeds work independently of those credentials.
+The local service searches Apple Podcasts without API credentials. Set `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` in the service environment to use Podcast Index.
 
 On Android, the default APK searches Apple Podcasts and opens public HTTPS feeds directly. Set `SMARTBOT_PODCAST_API` at build time to use a hosted catalog and feed service. [Hosted podcast service setup](docs/plans/podcast-listening.md#optional-hosted-service)
 

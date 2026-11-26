@@ -8,9 +8,9 @@ Drag the timeline to a specific point or use the 10-second back and forward butt
 
 ## Optional hosted service
 
-The default Android APK searches the Apple Podcasts catalog and downloads public HTTPS RSS feeds on the device. It uses the device's country for search, with the United States as the default when the device has no region set. The existing hosted service remains available for deployments that use Podcast Index.
+The default Android APK searches the Apple Podcasts catalog and downloads public HTTPS RSS feeds on the device. It uses the device's country for search, with the United States as the default when the device has no region set. The browser's podcast service uses the United States Apple Podcasts catalog by default and can be configured to use Podcast Index.
 
-1. Create a [Vercel Hobby project](https://vercel.com/docs/plans/hobby) using the repository’s `podcast-service` root and Node.js 22. Add `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` as server environment variables for full name search.
+1. Create a [Vercel Hobby project](https://vercel.com/docs/plans/hobby) using the repository’s `podcast-service` root and Node.js 22. To use Podcast Index, add `PODCAST_INDEX_KEY` and `PODCAST_INDEX_SECRET` as server environment variables.
 2. Set a [Vercel firewall rate limit](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) of 60 requests per minute per IP for paths starting with `/api/podcasts/`. The service limits requests per instance as well. If using a published browser frontend, set its exact origin in `SMARTBOT_PODCAST_ORIGINS` and set the service’s HTTPS origin in the `smartbot-podcast-service` meta tag in `web/index.html`.
 3. Set `SMARTBOT_PODCAST_API` to the HTTPS service origin before building the Android app. The Gradle property `-PsmartbotPodcastApi=https://your-service.vercel.app` also sets it. Use the same signing key when updating an installed pilot build.
 
@@ -35,6 +35,8 @@ November 25, 2026. Android 0.3.3 adds discovery to the default APK. Mobile-width
 November 26, 2026. Music uses smaller type, compact discovery, and a player with a timeline, two 10-second skip buttons, and a saved custom speed. Chromium verified search, follow, playback, keyboard scrubbing and speed entry, touch, invalid rates, reload and resume, retry, and elapsed activity at changed speeds with controlled feeds and audio. The layout fit widths from 320 to 1440 CSS pixels and 200% text size on mobile. All 26 web, 12 Python, and five podcast service tests passed. Android compilation and lint passed. Physical phone playback and lock-screen checks remain pending.
 
 The combined build at `fc52c82` passed all 27 web, 12 Python, and five podcast service tests. The local Chromium preview reopened the saved library offline and played a live franceinfo episode with both skips and a custom 1.37× rate. The Android debug APK passed signature and alignment verification and matched all 245 bundled web files. Lint reported zero errors and ten warnings in the Gradle configuration and manifest.
+
+November 26, 2026. The desktop podcast service searches Apple Podcasts when Podcast Index credentials are absent. A live adapter check found **Tri Kỷ Cảm Xúc** by searching `tri ki cam xuc` and loaded 30 episodes from its publisher RSS feed. All 27 web, 12 Python, and seven podcast service tests passed. The service tests cover both catalogs and the unavailable-catalog fallback.
 
 ## Handoff
 
