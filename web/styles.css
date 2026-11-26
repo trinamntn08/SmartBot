@@ -578,10 +578,10 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-player {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, 1.4fr) auto auto;
-  grid-template-areas: "episode timeline speed dismiss" "episode transport speed dismiss";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto auto auto;
+  grid-template-areas: "episode timeline transport speed dismiss";
   align-items: center;
-  gap: 0 1.25rem;
+  column-gap: 0.75rem;
   margin-block-start: 0.75rem;
   padding: 0.75rem 1rem;
 }
@@ -764,6 +764,7 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-player [data-player-dismiss] {
   grid-area: dismiss;
   display: grid;
+  justify-self: end;
   place-items: center;
   width: 44px;
   height: 44px;
@@ -779,6 +780,13 @@ main[data-page="music"] { padding-block-start: 1.5rem; }
 .podcast-player-status { grid-column: 1 / -1; margin: 0.45rem 0 0; color: var(--muted); font-size: 0.8125rem; }
 .podcast-player:not([hidden]) + main[data-page="music"] { padding-block-start: 0.75rem; }
 .podcast-player:not([hidden]) + main .podcast-continue { display: none; }
+
+@media (max-width: 52rem) {
+  .podcast-player {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+    grid-template-areas: "episode timeline dismiss" "episode transport speed";
+  }
+}
 
 @media (max-width: 42rem) {
   .podcast-discovery { grid-template-areas: "title art" "tools tools"; align-items: center; gap: 0.6rem; }
