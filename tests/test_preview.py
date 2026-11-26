@@ -83,6 +83,14 @@ class PreviewTests(unittest.TestCase):
                     self.assertEqual(target, "https://www.bitstamp.net/api/v2/ohlc/dogeusd/"
                                      "?step=86400&limit=400&exclude_current_candle=true")
 
+                    response.read.return_value = b'{"last":"0.11","timestamp":"1795690674"}'
+                    request = Request(url + "symbol=DOGE-USD&source=bitstamp-ticker", headers=headers)
+                    with urlopen(request, timeout=2) as result:
+                        self.assertEqual(result.headers["Content-Type"], "application/json")
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result)["last"], "0.11")
+                    self.assertEqual(upstream.call_args.args[0].full_url, "https://www.bitstamp.net/api/v2/ticker/dogeusd/")
+
                     response.read.return_value = b"date_utc,open,high,low,close\n"
                     request = Request(url + "symbol=BTC-USD&source=archive", headers=headers)
                     with urlopen(request, timeout=2) as result:

@@ -1,6 +1,6 @@
 # SmartBot status
 
-Last updated November 25, 2026.
+Last updated November 26, 2026.
 
 ## Current state
 
@@ -9,7 +9,7 @@ Last updated November 25, 2026.
 - **News** opens to ten matching headlines from free-to-read sources and appends the next ten as you scroll to the end. **For you** uses recent article opens on the device to surface related, unread stories. **Settings → News** saves English, French, and Vietnamese language choices and topics, and offers controls to turn personalization off or reset it. NASA releases open in SmartBot. The header star opens Saved, including any previously saved Canada.ca releases. Earlier News plan records remain in Progress.
 - **Workspace** is the home screen. Its cards open Books, News, Music, Markets, and previews for Languages and Movies. **Music** opens podcast search, RSS import, and one suggested show. The default Android APK uses the Apple Podcasts catalog and opens public HTTPS feeds directly. Followed shows and resuming playback appear when available. [Podcast listening](plans/podcast-listening.md)
 - The top bar has direct links to **Books** and **News**. The three-dot menu opens the other sections and Settings. Tap **SmartBot** to return home.
-- **Markets** searches U.S. stocks and ETFs, Vietnamese stocks on HOSE, HNX, and UPCoM, and USD crypto pairs. Eight U.S. equities and BTC/USD ship with daily candles through November 24, 2026. Switch between the line and candlestick chart, choose one of six ranges, and reopen the last chart with cached prices. Markets checks for newer daily closes on entry, reload, and reconnection. Vietnamese charts use VND and load daily prices from DNSE. [Markets](../README.md#markets)
+- **Markets** searches U.S. stocks and ETFs, Vietnamese stocks on HOSE, HNX, and UPCoM, and USD crypto pairs. Eight U.S. equities and BTC/USD ship with daily candles through November 24, 2026. Switch between the line and candlestick chart, choose one of six ranges, and reopen the last chart with cached prices. Markets checks for newer daily closes on entry, reload, and reconnection. For crypto, it also shows the latest Bitstamp trade and refreshes it every five minutes while Markets is visible and online. Vietnamese charts use VND and load daily prices from DNSE. [Markets](../README.md#markets)
 - The first mobile-first web slice implements setup, an editable reading plan, the current book and page, completion and undo, and seven-day progress. A service worker caches the app after its initial load, and IndexedDB stores plans and reading progress on the device.
 - **Books** imports text and PDF files, resumes at the last section, and can convert selectable PDF text to EPUB. An open book shows its title, text, and reading navigation. PDF and EPUB downloads are available under **Download files** in the library.
 - A debug APK bundles the same web app for Android 8.0 and newer. It loads its packaged files without a local server, and reading progress is stored in the app's WebView.
@@ -18,6 +18,8 @@ Last updated November 25, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+Mobile-width Chromium verified Markets entry, re-entry, reload, five-minute crypto quote refresh, foreground return, and reconnection with controlled responses. Quote updates preserved the chart, ignored malformed or older data, and used saved daily closes on an offline reload. Stock charts requested fresh daily history on entry and reload. The local adapter returned live BTC/USD and ETH/USD ticker responses from Bitstamp. All 26 web, 12 Python, and five podcast service tests passed. Android compilation and lint passed with zero lint errors. Physical phone testing is pending.
 
 After merging the compact header and Ask SmartBot into `main`, Chromium verified the one-row header, offline navigation, Google Search, saved provider selection, tap-to-dismiss, and the Markets candlestick chart. All 25 web and 12 Python tests passed. The combined Android 0.3.4 APK passed signature and ZIP alignment checks, matched all 245 bundled web files, and reported zero lint errors and six warnings. Physical phone testing is pending.
 

@@ -3,17 +3,29 @@ import { hasCandle, validatePrices } from './market-provider.js';
 const archivedPairs = new Set(['BTC-USD', 'ETH-USD', 'SOL-USD', 'PAXG-USD']);
 const dayLength = 86400000;
 
-async function readHistory(symbol, source, signal) {
+async function readCrypto(symbol, source, signal) {
   const query = new URLSearchParams({ symbol, source });
   const response = await fetch(`./api/markets/crypto?${query}`, {
     signal, cache: 'no-store', headers: { 'X-SmartBot-Market': 'daily' },
   });
-  if (!response.ok) throw new Error('Cryptocurrency closing prices are unavailable.');
+  if (!response.ok) throw new Error('Cryptocurrency prices are unavailable.');
   return response;
 }
 
+export async function fetchCryptoQuote(symbol, signal) {
+  const response = await readCrypto(symbol, 'bitstamp-ticker', signal);
+  const { last, timestamp } = await response.json();
+  const price = typeof last === 'string' ? Number(last) : NaN;
+  const time = typeof timestamp === 'string' ? Number(timestamp) * 1000 : NaN;
+  if (!Number.isFinite(price) || price <= 0 || price > 1e9
+    || !Number.isSafeInteger(time) || time <= 0 || time > 8.64e15) {
+    throw new Error('The cryptocurrency quote was incomplete.');
+  }
+  return { price, time };
+}
+
 async function livePrices(symbol, signal) {
-  const response = await readHistory(symbol, 'bitstamp', signal);
+  const response = await readCrypto(symbol, 'bitstamp', signal);
   const { data } = await response.json();
   if (data?.pair?.replace('/', '-') !== symbol || !Array.isArray(data.ohlc)) {
     throw new Error('The cryptocurrency pair was not found.');
@@ -25,7 +37,7 @@ async function livePrices(symbol, signal) {
 }
 
 async function archivedPrices(symbol, signal) {
-  const response = await readHistory(symbol, 'archive', signal);
+  const response = await readCrypto(symbol, 'archive', signal);
   if (symbol === 'BTC-USD') {
     const [header, ...lines] = (await response.text()).trim().split(/\r?\n/);
     if (!header.startsWith('date_utc,open,high,low,close,')) throw new Error('Invalid Bitcoin archive.');

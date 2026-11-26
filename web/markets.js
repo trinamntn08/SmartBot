@@ -1,6 +1,7 @@
 import { fetchMarketHistory, fetchPrices, hasCandle } from './market-provider.js';
+import { fetchCryptoQuote } from './market-crypto.js';
 import { marketRepository } from './market-repository.js';
-import { renderPriceChart } from './market-chart.js';
+import { renderMarketQuote, renderPriceChart } from './market-chart.js';
 import { defaultMarkets, searchMarkets } from './market-symbols.js';
 
 const ranges = [
@@ -8,6 +9,7 @@ const ranges = [
   ['180', '6M', '6 months'], ['ytd', 'YTD', 'Year to date'], ['365', '1Y', '1 year'],
 ];
 const chartStyles = [['line', 'Line'], ['candles', 'Candles']];
+const cryptoRefreshInterval = 5 * 60 * 1000;
 const historySources = {
   archive: ['S&P 500 archive on GitHub', 'https://github.com/Johnbrick123/sp500-data'],
   dolthub: ['post-no-preference on DoltHub', 'https://www.dolthub.com/repositories/post-no-preference/stocks'],
@@ -46,8 +48,8 @@ export function renderMarkets(view, focusHeading) {
         <button type="button" class="market-remove" hidden>Remove</button>
       </header>
       <p class="market-status" role="status"></p>
+      <div class="market-quote" hidden></div>
       <div class="market-history" hidden>
-        <div class="market-quote"></div>
         <div class="market-chart-style" role="group" aria-label="Chart type">
           ${chartStyles.map(([value, label]) => `<button type="button" value="${value}"
             aria-pressed="${value === chartStyle}">${label}</button>`).join('')}
@@ -86,6 +88,7 @@ export function renderMarkets(view, focusHeading) {
   const remove = panel.querySelector('.market-remove');
   const styleControls = panel.querySelector('.market-chart-style');
   const period = panel.querySelector('.market-period');
+  const quote = panel.querySelector('.market-quote');
   const history = panel.querySelector('.market-history');
   const actions = panel.querySelector('.market-actions');
   const retry = panel.querySelector('.market-retry');
@@ -94,6 +97,9 @@ export function renderMarkets(view, focusHeading) {
   const link = panel.querySelector('.market-link');
   let prices;
   let request;
+  let quoteRequest;
+  let quoteTimer;
+  let trade;
   let searchRequest;
   let listings;
   let matches = [];
@@ -181,7 +187,29 @@ export function renderMarkets(view, focusHeading) {
     clearSearch();
     setListings(symbol);
     ticker.focus();
-    reload();
+    selectListing();
+  }
+
+  function drawQuote() {
+    const { currency } = listings[ticker.selectedIndex];
+    renderMarketQuote(quote, prices, trade, currency);
+  }
+
+  async function refreshQuote() {
+    const { market, symbol } = listings[ticker.selectedIndex];
+    if (market !== 'Crypto' || document.hidden || navigator.onLine === false || quoteRequest) return;
+    const controller = new AbortController();
+    quoteRequest = controller;
+    try {
+      const latest = await fetchCryptoQuote(symbol, controller.signal);
+      if (controller.signal.aborted || (trade && latest.time < trade.time)) return;
+      trade = latest;
+      drawQuote();
+    } catch {
+      // Keep the timestamped quote or the most recent available close.
+    } finally {
+      if (quoteRequest === controller) quoteRequest = undefined;
+    }
   }
 
   function drawChart() {
@@ -197,6 +225,7 @@ export function renderMarkets(view, focusHeading) {
     historyLink.href = url;
     status.textContent = message;
     history.hidden = false;
+    drawQuote();
     drawChart();
   }
 
@@ -217,7 +246,10 @@ export function renderMarkets(view, focusHeading) {
     link.href = `https://www.tradingview.com/symbols/${tradingView}/`;
     const online = navigator.onLine !== false;
     if (saved) showHistory(saved);
-    else status.textContent = `Loading ${label} chart…`;
+    else {
+      drawQuote();
+      status.textContent = `Loading ${label} chart…`;
+    }
     const bundled = await marketRepository.bundled(selected);
     if (signal.aborted) return;
     const bundledDate = bundled?.prices.at(-1).date;
@@ -263,11 +295,26 @@ export function renderMarkets(view, focusHeading) {
   }
 
   function reload() { void load(); }
-  function refresh() { void load(true); }
+  function refresh() {
+    void load(true);
+    void refreshQuote();
+  }
+
+  function selectListing(force = false) {
+    quoteRequest?.abort();
+    quoteRequest = undefined;
+    trade = undefined;
+    window.clearInterval(quoteTimer);
+    void load(force);
+    if (listings[ticker.selectedIndex].market === 'Crypto') {
+      void refreshQuote();
+      quoteTimer = window.setInterval(refreshQuote, cryptoRefreshInterval);
+    }
+  }
 
   ticker.addEventListener('change', () => {
     clearSearch();
-    reload();
+    selectListing();
   });
   searchInput.addEventListener('input', () => void updateSearch());
   search.addEventListener('submit', (event) => {
@@ -305,13 +352,17 @@ export function renderMarkets(view, focusHeading) {
   retry.addEventListener('click', refresh);
   window.addEventListener('online', refresh);
   window.addEventListener('offline', reload);
+  document.addEventListener('visibilitychange', refreshQuote);
   setListings(lastChart?.symbol);
   if (focusHeading) view.querySelector('h1').focus();
-  refresh();
+  selectListing(true);
   return () => {
     request?.abort();
+    quoteRequest?.abort();
+    window.clearInterval(quoteTimer);
     searchRequest?.abort();
     window.removeEventListener('online', refresh);
     window.removeEventListener('offline', reload);
+    document.removeEventListener('visibilitychange', refreshQuote);
   };
 }

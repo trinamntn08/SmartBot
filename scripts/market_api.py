@@ -1,4 +1,4 @@
-"""Read daily market prices for the local preview."""
+"""Read market prices for the local preview."""
 
 from datetime import date
 from http.client import HTTPException, HTTPSConnection
@@ -56,8 +56,11 @@ def market_archive(start, end):
 def crypto_history(symbol, source):
     if not re.fullmatch(r"[A-Z0-9]{2,12}-USD", symbol):
         raise MarketError(400, "Choose a valid cryptocurrency paired with USD.")
+    pair = symbol.replace("-", "").lower()
+    if source == "bitstamp-ticker":
+        url = f"https://www.bitstamp.net/api/v2/ticker/{pair}/"
+        return download_history(url, MAX_RESPONSE, "Cryptocurrency quote"), "application/json"
     if source == "bitstamp":
-        pair = symbol.replace("-", "").lower()
         url = f"https://www.bitstamp.net/api/v2/ohlc/{pair}/?step=86400&limit=400&exclude_current_candle=true"
         content_type, limit = "application/json", MAX_RESPONSE
     elif source == "archive" and symbol == "BTC-USD":

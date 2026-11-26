@@ -10,6 +10,7 @@ const dong = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'VN
 const signedDong = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'VND', signDisplay: 'exceptZero' });
 const percent = new Intl.NumberFormat(undefined, { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 2 });
 const dates = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
+const quoteTimes = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const shortDates = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 const axisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
 const smallAxisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 8 });
@@ -58,15 +59,28 @@ function chartPoints(prices, y) {
   });
 }
 
-function renderQuote(quote, latest, previous, currency) {
-  const change = previous ? latest.close - previous.close : 0;
+export function renderMarketQuote(quote, series, trade, currency) {
+  const latest = series?.at(-1);
+  const lastCloseTime = latest ? Date.parse(latest.date) + dayLength : 0;
+  const useTrade = trade && trade.time >= lastCloseTime;
+  quote.hidden = !latest && !useTrade;
+  if (quote.hidden) return;
+
+  const price = useTrade ? trade.price : latest.close;
+  const previous = useTrade
+    ? (trade.time < lastCloseTime + dayLength ? latest : undefined)
+    : series.at(-2);
+  const change = previous ? price - previous.close : 0;
   const dailyChange = previous ? `<span class="market-day-change" data-trend="${trend(change)}">
     ${formatPrice(change, currency, true)} (${percent.format(change / previous.close)})
   </span>` : '';
+  const time = useTrade
+    ? `Last trade <time datetime="${new Date(trade.time).toISOString()}">${quoteTimes.format(trade.time)}</time> · Bitstamp`
+    : `Closed <time datetime="${latest.date}">${dates.format(Date.parse(latest.date))}</time>`;
   quote.innerHTML = `<div class="market-price-row">
-      <strong>${formatPrice(latest.close, currency)}</strong>${dailyChange}
+      <strong>${formatPrice(price, currency)}</strong>${dailyChange}
     </div>
-    <p>Closed <time datetime="${latest.date}">${dates.format(Date.parse(latest.date))}</time> · ${currency}${previous ? ' · Change vs. prior close' : ''}</p>`;
+    <p>${time} · ${currency}${previous ? ' · Change vs. prior close' : ''}</p>`;
 }
 
 function candleShapes(points, y) {
@@ -182,7 +196,6 @@ export function renderPriceChart(view, series, range, style, currency) {
   const candles = style === 'candles' ? prices.filter(hasCandle) : [];
   const scale = chartScale(Math.min(low, ...candles.map(price => price.low)), Math.max(high, ...candles.map(price => price.high)));
   const format = price => formatPrice(price, currency);
-  renderQuote(view.querySelector('.market-quote'), latest, previous, currency);
   renderGraph(view.querySelector('.market-chart'), chartPoints(prices, scale.y), scale, change,
     range === '7' || range === '30' ? previous : null, style, currency);
   view.querySelector('.market-summary dl').innerHTML = `<div><dt>Previous close</dt><dd>${previous ? format(previous.close) : '—'}</dd></div>

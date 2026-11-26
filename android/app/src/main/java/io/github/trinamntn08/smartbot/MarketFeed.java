@@ -73,11 +73,15 @@ final class MarketFeed {
         String symbol = parameter(request, "symbol");
         String source = parameter(request, "source");
         if (!symbol.matches("[A-Z0-9]{2,12}-USD")) return error(400, "Invalid cryptocurrency pair");
+        String pair = symbol.replace("-", "").toLowerCase(java.util.Locale.ROOT);
+        if ("bitstamp-ticker".equals(source)) {
+            String url = "https://www.bitstamp.net/api/v2/ticker/" + pair + "/";
+            return downloadHistory(url, "application/json", MAX_HISTORY, "Cryptocurrency quote unavailable");
+        }
         String mimeType = "application/json";
         String url;
         int limit = MAX_RANGE;
         if ("bitstamp".equals(source)) {
-            String pair = symbol.replace("-", "").toLowerCase(java.util.Locale.ROOT);
             url = "https://www.bitstamp.net/api/v2/ohlc/" + pair + "/?step=86400&limit=400&exclude_current_candle=true";
             limit = MAX_HISTORY;
         } else if ("archive".equals(source) && "BTC-USD".equals(symbol)) {
