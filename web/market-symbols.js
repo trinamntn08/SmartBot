@@ -8,6 +8,8 @@ const starters = [
   ['NVDA', 'NVIDIA', 'NASDAQ'],
   ['TSLA', 'Tesla', 'NASDAQ'],
   ['BTC-USD', 'Bitcoin'],
+  ['HOSE:VNINDEX'],
+  ['XPAR:FR0003500008'],
 ];
 const cryptoNames = [
   ['ETH', 'Ethereum'], ['SOL', 'Solana'], ['XRP', 'XRP'], ['DOGE', 'Dogecoin'], ['ADA', 'Cardano'],
@@ -17,9 +19,40 @@ const cryptoNames = [
 const equitySymbol = /^[A-Z][A-Z0-9]{0,8}(?:-[A-Z])?$/;
 const cryptoSymbol = /^[A-Z0-9]{2,12}-USD$/;
 const vietnamSymbol = /^(HOSE|HNX|UPCOM):([A-Z0-9]{3})$/;
+const euronextVenues = { XPAR: 'Paris', XAMS: 'Amsterdam', XBRU: 'Brussels', XLIS: 'Lisbon' };
+const euronextListings = [
+  ['XPAR', 'FR0003500008', 'PX1', 'CAC 40', 'points', 'CAC40', '^FCHI'],
+  ['XPAR', 'FR0003999481', 'PX4', 'SBF 120', 'points', 'SBF120'],
+  ['XAMS', 'NL0000000107', 'AEX', 'AEX Index', 'points'],
+  ['XBRU', 'BE0389555039', 'BEL20', 'BEL 20', 'points'],
+  ['XLIS', 'PTING0200002', 'PSI20', 'PSI Index', 'points', 'PSI', 'PSI 20'],
+  ['XPAR', 'FR0013176526', 'FR', 'Valeo', 'EUR', 'FR.PA'],
+  ['XPAR', 'NL0000235190', 'AIR', 'Airbus', 'EUR', 'AIR.PA'],
+  ['XPAR', 'FR0000121014', 'MC', 'LVMH', 'EUR', 'MC.PA'],
+  ['XPAR', 'FR0000120578', 'SAN', 'Sanofi', 'EUR', 'SAN.PA'],
+  ['XPAR', 'FR0000120271', 'TTE', 'TotalEnergies', 'EUR', 'TTE.PA'],
+  ['XAMS', 'NL0010273215', 'ASML', 'ASML Holding', 'EUR', 'ASML.AS'],
+  ['XBRU', 'BE0974293251', 'ABI', 'AB InBev', 'EUR', 'ABI.BR', 'Anheuser-Busch InBev'],
+  ['XLIS', 'PTEDP0AM0009', 'EDP', 'EDP Energias de Portugal', 'EUR', 'EDP.LS'],
+].map(([venue, isin, label, name, currency, ...aliases]) => {
+  const euronextCode = `${isin}-${venue}`;
+  const type = currency === 'points' ? 'indices' : 'equities';
+  return {
+    symbol: `${venue}:${isin}`, label, name, currency,
+    market: `Euronext ${euronextVenues[venue]}`, tradingView: `EURONEXT-${label}`,
+    euronextCode, sourceUrl: `https://live.euronext.com/en/product/${type}/${euronextCode}`,
+    aliases: [isin, `${venue}:${label}`, euronextVenues[venue], ...aliases],
+  };
+});
+const vnIndex = {
+  symbol: 'HOSE:VNINDEX', label: 'VNINDEX', name: 'VN-Index', currency: 'points',
+  market: 'HOSE index', tradingView: 'HOSE-VNINDEX', aliases: ['VN Index', 'Vietnam Index'],
+};
+const regionalMarkets = new Map([vnIndex, ...euronextListings].map(listing => [listing.symbol, listing]));
 
 export function marketSymbol(symbol, name = symbol, exchange = '') {
   if (typeof symbol !== 'string' || typeof name !== 'string' || !name.trim() || name.length > 160) return null;
+  if (regionalMarkets.has(symbol)) return regionalMarkets.get(symbol);
   const crypto = cryptoSymbol.test(symbol);
   const vietnam = vietnamSymbol.exec(symbol);
   if (!crypto && !vietnam && !equitySymbol.test(symbol)) return null;
@@ -67,7 +100,7 @@ export async function searchMarkets(text, saved) {
     equityCatalog('market-catalog.json'), equityCatalog('market-vietnam-catalog.json'),
   ]);
   const savedBySymbol = new Map(saved.map(listing => [listing.symbol, listing]));
-  const available = [...defaultMarkets, ...knownCrypto, ...us, ...vietnam, ...saved];
+  const available = [...defaultMarkets, ...euronextListings, ...knownCrypto, ...us, ...vietnam, ...saved];
   const matches = [];
   const seen = new Set();
   for (const listing of available) {

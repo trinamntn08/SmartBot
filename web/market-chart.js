@@ -8,11 +8,16 @@ const signedSmallDollars = new Intl.NumberFormat(undefined, {
 });
 const dong = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'VND' });
 const signedDong = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'VND', signDisplay: 'exceptZero' });
+const euros = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', maximumFractionDigits: 4 });
+const signedEuros = new Intl.NumberFormat(undefined, {
+  style: 'currency', currency: 'EUR', signDisplay: 'exceptZero', maximumFractionDigits: 4,
+});
 const percent = new Intl.NumberFormat(undefined, { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 2 });
 const dates = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const quoteTimes = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 const shortDates = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' });
 const axisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 });
+const signedPoints = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, signDisplay: 'exceptZero' });
 const smallAxisPrices = new Intl.NumberFormat(undefined, { maximumFractionDigits: 8 });
 const dayLength = 86400000;
 const plotWidth = 720;
@@ -24,6 +29,8 @@ function trend(change) {
 }
 
 function formatPrice(price, currency, signed = false) {
+  if (currency === 'points') return (signed ? signedPoints : axisPrices).format(price);
+  if (currency === 'EUR') return (signed ? signedEuros : euros).format(price);
   if (currency === 'VND') return (signed ? signedDong : dong).format(price);
   if (Math.abs(price) < 0.01) return (signed ? signedSmallDollars : smallDollars).format(price);
   return (signed ? signedDollars : dollars).format(price);
@@ -202,7 +209,7 @@ export function renderPriceChart(view, series, range, style, currency) {
     <div><dt>Range change</dt><dd data-trend="${trend(change)}">${prices.length > 1 ? percent.format(change) : '—'}</dd></div>
     <div><dt>Lowest close</dt><dd>${format(low)}</dd></div>
     <div><dt>Highest close</dt><dd>${format(high)}</dd></div>`;
-  view.querySelector('.market-table-currency').textContent = `Closing price (${currency})`;
+  view.querySelector('.market-table-currency').textContent = currency === 'points' ? 'Closing level (points)' : `Closing price (${currency})`;
   view.querySelector('.market-table tbody').innerHTML = prices.slice().reverse().map(({ date, close }) => `<tr>
     <td><time datetime="${date}">${dates.format(Date.parse(date))}</time></td><td>${format(close)}</td></tr>`).join('');
 }

@@ -198,10 +198,46 @@ class PreviewTests(unittest.TestCase):
                     self.assertEqual(params["resolution"], ["1D"])
                     self.assertEqual(int(params["to"][0]) - int(params["from"][0]), 400 * 86400)
 
+                    with urlopen(request("VNINDEX"), timeout=2) as result:
+                        self.assertEqual(result.status, 200)
+                    target = urlsplit(upstream.call_args.args[0].full_url)
+                    self.assertEqual(target.path, "/chart-api/v2/ohlcs/index")
+                    self.assertEqual(parse_qs(target.query)["symbol"], ["VNINDEX"])
+
                     response.read.return_value = b"x" * (128 * 1024 + 1)
                     with self.assertRaises(HTTPError) as error:
                         urlopen(request("FPT"), timeout=2)
                     self.assertEqual(error.exception.code, 502)
+            finally:
+                server.shutdown()
+                thread.join(timeout=2)
+
+    def test_euronext_history_routes_only_supported_instrument_ids(self):
+        with PreviewServer(("127.0.0.1", 0), PreviewHandler) as server:
+            thread = Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01})
+            thread.start()
+            url = f"http://127.0.0.1:{server.server_port}/api/markets/euronext?symbol="
+
+            def request(query):
+                return Request(url + query, headers={"X-SmartBot-Market": "daily"})
+
+            try:
+                with patch("market_api.urlopen") as upstream:
+                    for invalid, status in ((url + "FR0013176526-XPAR", 403), (request("FR0013176526-XETR"), 400),
+                                            (request("../FR0013176526-XPAR"), 400),
+                                            (request("FR0013176526-XPAR&symbol=FR0003500008-XPAR"), 400)):
+                        with self.assertRaises(HTTPError) as error:
+                            urlopen(invalid, timeout=2)
+                        self.assertEqual(error.exception.code, status)
+                    upstream.assert_not_called()
+                    response = upstream.return_value.__enter__.return_value
+                    response.status = 200
+                    response.read.return_value = b'[{"time":"2026-11-26 01:00","price":11.065}]'
+                    with urlopen(request("FR0013176526-XPAR"), timeout=2) as result:
+                        self.assertEqual(result.headers["Cache-Control"], "no-store")
+                        self.assertEqual(json.load(result)[0]["price"], 11.065)
+                    self.assertEqual(upstream.call_args.args[0].full_url,
+                                     "https://live.euronext.com/en/ajax/getChartData/FR0013176526-XPAR/1Y")
             finally:
                 server.shutdown()
                 thread.join(timeout=2)

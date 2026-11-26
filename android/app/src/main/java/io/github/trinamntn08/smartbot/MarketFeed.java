@@ -22,7 +22,8 @@ final class MarketFeed {
             "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv";
     private static final String COINBASE_HISTORY =
             "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json";
-    private static final String DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock";
+    private static final String DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs/";
+    private static final String EURONEXT_HISTORY = "https://live.euronext.com/en/ajax/getChartData/";
 
     static WebResourceResponse read(WebResourceRequest request) {
         if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
@@ -98,11 +99,23 @@ final class MarketFeed {
     static WebResourceResponse vietnam(WebResourceRequest request) {
         if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
         String symbol = parameter(request, "symbol");
-        if (!symbol.matches("[A-Z0-9]{3}")) return error(400, "Invalid Vietnamese stock symbol");
+        boolean isIndex = "VNINDEX".equals(symbol);
+        if (!isIndex && !symbol.matches("[A-Z0-9]{3}")) return error(400, "Invalid Vietnamese market symbol");
 
         long end = System.currentTimeMillis() / 1000;
-        String url = DNSE_HISTORY + "?symbol=" + symbol + "&resolution=1D&from=" + (end - 400L * 86400) + "&to=" + end;
-        return downloadHistory(url, "application/json", MAX_HISTORY, "Vietnamese stock history unavailable");
+        String kind = isIndex ? "index" : "stock";
+        String url = DNSE_HISTORY + kind + "?symbol=" + symbol + "&resolution=1D&from=" + (end - 400L * 86400) + "&to=" + end;
+        return downloadHistory(url, "application/json", MAX_HISTORY, "Vietnamese market history unavailable");
+    }
+
+    static WebResourceResponse euronext(WebResourceRequest request) {
+        if (!"GET".equals(request.getMethod())) return error(403, "Forbidden");
+        String symbol = parameter(request, "symbol");
+        if (!symbol.matches("[A-Z]{2}[A-Z0-9]{9}[0-9]-(XPAR|XAMS|XBRU|XLIS)")) {
+            return error(400, "Invalid Euronext symbol");
+        }
+        return downloadHistory(EURONEXT_HISTORY + symbol + "/1Y", "application/json", MAX_HISTORY,
+                "Euronext market history unavailable");
     }
 
     private static WebResourceResponse downloadHistory(String url, String mimeType, int limit, String message) {

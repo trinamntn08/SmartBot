@@ -6,7 +6,7 @@ const cacheDuration = 4 * 60 * 60 * 1000;
 const watchlistKey = 'smartbot-market-watchlist';
 const chartKey = 'smartbot-market-chart';
 const openKey = 'smartbot-markets-open';
-const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitcoinArchive', 'coinbaseArchive', 'dnse']);
+const sources = new Set(['archive', 'dolthub', 'alphaVantage', 'bitstamp', 'bitcoinArchive', 'coinbaseArchive', 'dnse', 'euronext']);
 const defaults = new Set(defaultMarkets.map(({ symbol }) => symbol));
 let snapshot;
 

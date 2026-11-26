@@ -18,6 +18,7 @@ const historySources = {
   bitcoinArchive: ['Bitstamp daily candles on GitHub', 'https://github.com/daniegitx1/btc-price-history'],
   coinbaseArchive: ['Coinbase daily closes on GitHub', 'https://github.com/akpasz/btc-data'],
   dnse: ['DNSE', 'https://www.dnse.com.vn/'],
+  euronext: ['Euronext', 'https://live.euronext.com/en'],
 };
 
 export function renderMarkets(view, focusHeading) {
@@ -33,7 +34,7 @@ export function renderMarkets(view, focusHeading) {
     </div>
     <form class="market-search" role="search" aria-label="Market symbols">
       <label for="market-search-input" class="market-search-label">Search Markets</label>
-      <input id="market-search-input" type="search" placeholder="Symbol, company, or crypto"
+      <input id="market-search-input" type="search" placeholder="Symbol, company, index, or crypto"
         enterkeyhint="search" autocomplete="off" spellcheck="false" maxlength="100"
         aria-controls="market-search-results">
       <ul id="market-search-results" class="market-search-results" hidden></ul>
@@ -222,7 +223,7 @@ export function renderMarkets(view, focusHeading) {
     prices = record.prices;
     const [label, url] = historySources[record.source];
     historyLink.textContent = label;
-    historyLink.href = url;
+    historyLink.href = listings[ticker.selectedIndex].sourceUrl ?? url;
     status.textContent = message;
     history.hidden = false;
     drawQuote();
@@ -265,7 +266,7 @@ export function renderMarkets(view, focusHeading) {
       return;
     }
     if (!force && current?.fresh && current.source !== 'dolthub' && current.source !== 'alphaVantage'
-      && (chartStyle === 'line' || hasCandle(current.prices.at(-1)))) return;
+      && (chartStyle === 'line' || current.source === 'euronext' || hasCandle(current.prices.at(-1)))) return;
 
     try {
       const latest = await fetchMarketHistory(selected, signal);

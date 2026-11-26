@@ -16,7 +16,7 @@ One day might look like 5 minutes of news, 10 minutes of reading, and 10 minutes
 
 ## What the app feels like
 
-The app opens on **Workspace**, with cards for Books, News, Languages, Listen, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Listen** opens the last-used Music or Podcasts section. **Markets** opens stock, ETF, and crypto charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
+The app opens on **Workspace**, with cards for Books, News, Languages, Listen, Movies, and Markets. **Books** opens the offline library, **News** opens the news shortlist, and **Listen** opens the last-used Music or Podcasts section. **Markets** opens stock, index, ETF, and crypto charts. Languages and Movies open previews. **Today**, **Activities**, and **Progress** manage the daily routine, and Today guides first-time reading setup.
 
 | Screen | What you see and do |
 | --- | --- |
@@ -27,7 +27,7 @@ The app opens on **Workspace**, with cards for Books, News, Languages, Listen, M
 | Reader | Import a book, open it where you stopped, and ask about a passage when you choose to share it. |
 | Music | Browse regional YouTube music charts, search by song or artist, and play selected videos in a visible player. You can also open your preferred service or play a saved Spotify playlist. |
 | Podcasts | Resume an episode or play the latest from a followed show. Open Find podcasts to search or add an RSS feed. |
-| Markets | Search and save U.S. stocks and ETFs, Vietnamese stocks, and USD crypto pairs. Inspect closing-price lines or candlesticks, and reopen the last symbol, range, and chart type with downloaded prices offline. |
+| Markets | Search and save U.S. stocks and ETFs, Vietnamese stocks and VN-Index, selected Euronext stocks and indices, and USD crypto pairs. Inspect closing-price lines or candlesticks, and reopen the last symbol, range, and chart type with downloaded prices offline. |
 | Ask | Ask a general question or attach an excerpt, using text or a voice recording. Read the answer and optionally play it aloud. |
 | Progress | Review a seven-day history and simple totals such as articles read, book sessions, and new words studied. Show skipped or unfinished items neutrally. |
 | Settings | Change the daily budget, reminder time, and display preferences. Provide local export, restore, and data deletion controls. Add a connections area when the first account integration ships. |

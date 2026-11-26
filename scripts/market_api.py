@@ -16,7 +16,8 @@ MAX_ARCHIVE_RANGE = 2 * 1024 * 1024
 ARCHIVE_URL = "https://github.com/Johnbrick123/sp500-data/releases/download/data/prices.parquet"
 BITCOIN_CSV = "https://raw.githubusercontent.com/daniegitx1/btc-price-history/main/data/btc_usd_daily.csv"
 COINBASE_HISTORY = "https://raw.githubusercontent.com/akpasz/btc-data/main/data/relative.json"
-DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs/stock"
+DNSE_HISTORY = "https://services.entrade.com.vn/chart-api/v2/ohlcs"
+EURONEXT_HISTORY = "https://live.euronext.com/en/ajax/getChartData"
 
 
 class MarketError(Exception):
@@ -74,11 +75,18 @@ def crypto_history(symbol, source):
 
 
 def vietnam_history(symbol):
-    if not re.fullmatch(r"[A-Z0-9]{3}", symbol):
-        raise MarketError(400, "Choose a valid Vietnamese stock symbol.")
+    if symbol != "VNINDEX" and not re.fullmatch(r"[A-Z0-9]{3}", symbol):
+        raise MarketError(400, "Choose a valid Vietnamese market symbol.")
     end = int(time.time())
     query = urlencode({"symbol": symbol, "resolution": "1D", "from": end - 400 * 86400, "to": end})
-    return download_history(f"{DNSE_HISTORY}?{query}", MAX_RESPONSE, "Vietnamese stock prices")
+    kind = "index" if symbol == "VNINDEX" else "stock"
+    return download_history(f"{DNSE_HISTORY}/{kind}?{query}", MAX_RESPONSE, "Vietnamese market prices")
+
+
+def euronext_history(symbol):
+    if not re.fullmatch(r"[A-Z]{2}[A-Z0-9]{9}[0-9]-(XPAR|XAMS|XBRU|XLIS)", symbol):
+        raise MarketError(400, "Choose a supported Euronext symbol.")
+    return download_history(f"{EURONEXT_HISTORY}/{symbol}/1Y", MAX_RESPONSE, "Euronext closing prices")
 
 
 def download_history(url, limit, description):

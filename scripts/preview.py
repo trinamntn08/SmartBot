@@ -17,7 +17,7 @@ import webbrowser
 from assistant_api import (
     AssistantError, MAX_AUDIO, MAX_JSON, ask, configured_providers, transcribe, validated_messages,
 )
-from market_api import MarketError, crypto_history, daily_prices, market_archive, vietnam_history
+from market_api import MarketError, crypto_history, daily_prices, euronext_history, market_archive, vietnam_history
 from youtube_api import YouTubeError, key_status, popular_music, search_music, update_key
 
 
@@ -30,6 +30,7 @@ MARKET_API = "/api/markets/daily"
 MARKET_ARCHIVE_API = "/api/markets/archive"
 MARKET_CRYPTO_API = "/api/markets/crypto"
 MARKET_VIETNAM_API = "/api/markets/vietnam"
+MARKET_EURONEXT_API = "/api/markets/euronext"
 REFRESH = "/refresh"
 REFRESH_PAGE = Path(__file__).with_name("preview-refresh.html")
 WORKER = "/sw.js"
@@ -148,7 +149,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
             else:
                 self.send_json(200, result)
             return
-        if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_VIETNAM_API, MARKET_API):
+        if path in (MARKET_ARCHIVE_API, MARKET_CRYPTO_API, MARKET_VIETNAM_API, MARKET_EURONEXT_API, MARKET_API):
             if not self.local_request() or self.headers.get("X-SmartBot-Market") != "daily":
                 self.send_json(403, {"error": "Open SmartBot using its local preview address."})
                 return
@@ -178,6 +179,9 @@ class PreviewHandler(SimpleHTTPRequestHandler):
                 status, extra_headers = 200, {}
             elif path == MARKET_VIETNAM_API:
                 body, content_type = vietnam_history(parameter("symbol")), "application/json"
+                status, extra_headers = 200, {}
+            elif path == MARKET_EURONEXT_API:
+                body, content_type = euronext_history(parameter("symbol")), "application/json"
                 status, extra_headers = 200, {}
             else:
                 body, content_range, etag = market_archive(parameter("start"), parameter("end"))
