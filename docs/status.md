@@ -21,7 +21,7 @@ Last updated November 26, 2026.
 
 ## Web app verification
 
-Chromium verified that the first hold enters swap mode and later drags start before the hold threshold. The checks covered successive touch swaps, mouse dragging, taps to select cards, edge scrolling, cancellation, outside dismissal, and keyboard swaps at 320 and 1440 CSS pixels. All 46 automated tests passed.
+Chromium verified that the first hold enters swap mode and later drags start before the hold threshold. The checks covered successive touch swaps, mouse dragging, taps to select cards, edge scrolling, cancellation, outside dismissal, and keyboard swaps at 320 and 1440 CSS pixels. The published preview also reopened the saved layout and restored a hidden card offline. All 46 automated tests passed.
 
 Chromium verified direct dragging, the ghost and swap animation, cancelled drags, reduced motion, outside dismissal, and the smaller hide control at 320 and 1440 CSS pixels. The checks also covered normal taps and scrolling, keyboard reordering, hiding and restoring cards, and 200% text size. The published preview kept the new order and restored a hidden card offline. All 46 automated tests passed. A physical Android check remains open.
 
@@ -116,6 +116,8 @@ Chromium verified a fresh launch, an update with an older tab and unsent draft s
 Four text import tests covered encoding, line breaks, Unicode section boundaries, and invalid files. A Chrome check at 320 CSS pixels verified import and offline resume alongside the existing reading history.
 
 ## Android APK verification
+
+The repeated Workspace drag APK built from `5c4fbdb` on `main`. Gradle build, signature continuity, ZIP alignment, and comparison of all 252 web assets passed. Lint reported zero errors and ten warnings. Chromium verified immediate repeat drags with the bundled assets. A physical Android check remains open.
 
 The Workspace swap APK built from `6580d63` on `main`. Gradle build, signature continuity, ZIP alignment, and comparison of all 252 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium repeated the gesture and reduced-motion checks at the Android asset origin. No phone or emulator was connected for Android runtime verification.
 
