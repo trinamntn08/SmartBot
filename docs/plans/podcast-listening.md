@@ -70,6 +70,8 @@ The preview from `177d356` on `main` verified the shortcut and live Spotify prev
 
 November 26, 2026. The Spotify playlist player remains mounted across SmartBot screens and uses a compact layout outside Music. Closing the player stops it. Starting a podcast closes the Spotify player, and opening Spotify pauses and saves the current podcast. Chromium verified the same player instance and play state across Workspace, Books and Music with controlled responses, plus keyboard dismissal, offline recovery, saved playlist reload, and layout from 320 to 1440 CSS pixels at standard text size and at 200% on mobile. All 46 automated tests passed. Spotify controls preview length and full-track availability.
 
+The preview from `d47850f` on `main` confirmed the live Spotify preview kept playing through Workspace, Books and Music. The Android debug APK passed build, signature continuity, ZIP alignment, and comparison of all 252 bundled web files. Lint reported zero errors and six warnings. Phone and lock-screen playback remain unverified.
+
 ## Handoff
 
 Live catalog search, publisher playback, and lock-screen verification on a physical phone are pending.
