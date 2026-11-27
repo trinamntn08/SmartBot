@@ -6,7 +6,7 @@
 
 **Implementation.** The starter stations connect directly to their publisher streams. The radio player stays mounted across routes, stops when other SmartBot audio starts, and reconnects to the current broadcast on retry. Radio uses browser or Android WebView audio. [Radio France station endpoints](https://developers.radiofrance.fr/doc/en/tutorial-by-example/list-brands)
 
-**November 27, 2026.** Added three stations, custom station storage, and in-app playback with stop and retry. All 34 web, 16 Python, and eight podcast service tests passed. Each starter endpoint returned MP3 audio over HTTPS. Browser preview and Android packaging checks follow publication. Physical Android playback and lock-screen controls remain unverified.
+**November 27, 2026.** Added three stations, custom station storage, and in-app playback with stop and retry. All 34 web, 16 Python, and eight podcast service tests passed. Each starter endpoint returned MP3 audio over HTTPS. Chrome played all three live streams and verified navigation, station changes, stop, custom station validation and storage, and offline retry. The Listen tabs now wrap to address overflow found at 320 CSS pixels with 200% text. The layout check and Android packaging follow publication. Physical Android playback and lock-screen controls remain unverified.
 
 The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a service shortcut or a Spotify playlist on this device. Spotify's official player handles its playback availability. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
