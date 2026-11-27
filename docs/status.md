@@ -151,6 +151,8 @@ Chromium at 320 CSS pixels verified the icon-only Listen search, opening and clo
 
 Android Translate selection compiled successfully and lint reported zero errors and ten warnings. All 34 web tests passed. Mobile Chromium verified that a multiline sample containing an ampersand, accented text, and emoji reached Google Translate intact and produced an English-to-French result. Android selection-menu verification is pending.
 
+The Translate APK built from `3a5443c` on `main`. The APK signature matches the previous pilot, ZIP alignment passed, and all 266 bundled web files matched the checkout byte for byte. The packaged manifest and DEX include the Translate text-processing activity.
+
 The mobile Workspace swap APK built from `801c3ac` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte comparison of all 257 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium exercised the packaged assets at the Android asset origin, including the first hold and drag, repeat swaps, and reduced motion. A physical Android check remains open.
 
 The repeated Workspace drag APK built from `5c4fbdb` on `main`. Gradle build, signature continuity, ZIP alignment, and comparison of all 252 web assets passed. Lint reported zero errors and ten warnings. Chromium verified immediate repeat drags with the bundled assets. A physical Android check remains open.
