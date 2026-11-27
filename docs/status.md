@@ -149,9 +149,11 @@ Chromium at 320 CSS pixels verified the icon-only Listen search, opening and clo
 
 ## Android APK verification
 
-Android Translate selection compiled successfully and lint reported zero errors and ten warnings. All 34 web tests passed. Mobile Chromium verified that a multiline sample containing an ampersand, accented text, and emoji reached Google Translate intact and produced an English-to-French result. Android selection-menu verification is pending.
+Android Translate selection compiled successfully and lint reported zero errors and ten warnings. All 34 web and 16 Python tests passed. Mobile Chromium verified that a multiline sample containing an ampersand, accented text, and emoji reached Google Translate intact and produced an English-to-French result.
 
 The Translate APK built from `3a5443c` on `main`. The APK signature matches the previous pilot, ZIP alignment passed, and all 266 bundled web files matched the checkout byte for byte. The packaged manifest and DEX include the Translate text-processing activity.
+
+An Android 15 emulator displayed **Translate** beside Copy, Share, and Select all in an imported book. Selecting two French paragraphs and tapping Translate opened Google Translate with both paragraphs and accents intact, and the service returned an English translation. Android Back returned to the same page. The imported book also reopened after a cold start in airplane mode. Verification on a physical phone remains pending.
 
 The mobile Workspace swap APK built from `801c3ac` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte comparison of all 257 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium exercised the packaged assets at the Android asset origin, including the first hold and drag, repeat swaps, and reduced motion. A physical Android check remains open.
 
