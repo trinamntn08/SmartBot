@@ -1485,6 +1485,13 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
 }
 
 .book-list li + li { border-block-start: 1px solid var(--line); }
+.book-list li:has(> .book-options) {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding-inline-end: 0.35rem;
+}
 .book-list li:first-child .book-row { border-start-start-radius: 0.8rem; border-start-end-radius: 0.8rem; }
 .book-list li:last-child .book-row { border-end-start-radius: 0.8rem; border-end-end-radius: 0.8rem; }
 

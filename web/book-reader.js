@@ -48,7 +48,7 @@ function configureAppearance(panel, toggleSettings, reflow) {
   apply();
 }
 
-export function renderReader(panel, book, activity, { title, options, focus }) {
+export function renderReader(panel, book, activity, { title, focus }) {
   panel.className = 'book-reader';
   panel.innerHTML = `
     <header class="book-toolbar">
@@ -127,7 +127,6 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
         <div class="book-footer-center">
           <div class="book-location" role="status" aria-atomic="true">
             <span data-current-section></span>
-            <span data-current-page></span>
           </div>
           <button type="button" class="book-tool" data-show-controls hidden>Show controls</button>
         </div>
@@ -149,7 +148,6 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
   const content = panel.querySelector('.book-content');
   const measure = panel.querySelector('.book-measure');
   const sectionLabel = panel.querySelector('[data-current-section]');
-  const pageLabel = panel.querySelector('[data-current-page]');
   const progress = panel.querySelector('.book-progress-track span');
   const error = panel.querySelector('.book-error');
   const previous = panel.querySelector('[data-step="-1"]');
@@ -165,7 +163,6 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
 
   heading.textContent = title;
   page.setAttribute('aria-label', `Book text: ${title}`);
-  toolbar.querySelector('.book-tool-group').append(options);
 
   function toggleSettings(open, restoreFocus = false) {
     settings.hidden = !open;
@@ -189,7 +186,7 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
       if (!settings.contains(event.target) && !settingsButton.contains(event.target)) toggleSettings(false);
       return;
     }
-    if (!options.open && page.contains(event.target) && document.getSelection()?.isCollapsed) {
+    if (page.contains(event.target) && document.getSelection()?.isCollapsed) {
       setFullView(!toolbar.hidden, toolbar.contains(document.activeElement));
     }
   });
@@ -224,8 +221,6 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     if (content.textContent !== visibleText) content.textContent = visibleText;
     frame.scrollTop = 0;
     sectionLabel.textContent = `Section ${section + 1} of ${book.count}`;
-    pageLabel.hidden = starts.length === 1;
-    pageLabel.textContent = `Page ${pageIndex + 1} of ${starts.length}`;
     progress.style.inlineSize = `${100 * (section + (text ? end / text.length : 1)) / book.count}%`;
     previous.disabled = section === 0 && pageIndex === 0;
     const atEnd = section === book.count - 1 && pageIndex === starts.length - 1;
@@ -255,10 +250,8 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     if (progress) await activity.record([{ ...reading, ...progress, date: localDay().date }]);
   }
 
-  async function turnPage(event) {
+  async function turnPage(step, button) {
     if (savingProgress) return;
-    const button = event.currentTarget;
-    const step = Number(button.dataset.step);
     let targetPage = pageIndex + step;
     let targetSection = section;
     let targetStarts = starts;
@@ -280,7 +273,7 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
       if (panel.isConnected) {
         starts = starts === oldStarts ? targetStarts : paginate(section);
         renderPage();
-        if (button.hidden || button.disabled) page.focus({ preventScroll: true });
+        if (button && (button.hidden || button.disabled)) page.focus({ preventScroll: true });
       }
       if (targetSection > completed) await recordSection(completed).catch(() => {
         showError('Your place is saved. The activity report could not be updated.');
@@ -292,8 +285,45 @@ export function renderReader(panel, book, activity, { title, options, focus }) {
     }
   }
 
-  previous.addEventListener('click', turnPage);
-  next.addEventListener('click', turnPage);
+  previous.addEventListener('click', event => void turnPage(-1, event.currentTarget));
+  next.addEventListener('click', event => void turnPage(1, event.currentTarget));
+
+  let swipe;
+  page.addEventListener('touchstart', event => {
+    swipe = undefined;
+    if (event.touches.length !== 1 || !settings.hidden ||
+        !document.getSelection()?.isCollapsed || frame.scrollHeight > frame.clientHeight + 1) return;
+    const touch = event.touches[0];
+    const { left, right, width } = page.getBoundingClientRect();
+    const edgeWidth = Math.min(width / 4, 96);
+    const step = touch.clientX < left + edgeWidth ? -1 : touch.clientX > right - edgeWidth ? 1 : 0;
+    if (step) swipe = { id: touch.identifier, x: touch.clientX, y: touch.clientY, step };
+  }, { passive: true });
+  page.addEventListener('touchmove', event => {
+    if (!swipe) return;
+    const touch = event.touches[0];
+    if (event.touches.length !== 1 || touch.identifier !== swipe.id) {
+      swipe = undefined;
+      return;
+    }
+    const dx = Math.abs(touch.clientX - swipe.x);
+    const dy = Math.abs(touch.clientY - swipe.y);
+    if (dx > 12 && dx >= dy) swipe = undefined;
+    else if (dy > 8 && dy > 1.5 * dx && event.cancelable) event.preventDefault();
+  }, { passive: false });
+  page.addEventListener('touchend', event => {
+    if (!swipe) return;
+    const { id, x, y, step } = swipe;
+    swipe = undefined;
+    const touch = Array.from(event.changedTouches).find(item => item.identifier === id);
+    if (event.touches.length || !touch || !document.getSelection()?.isCollapsed) return;
+    const dx = Math.abs(touch.clientX - x);
+    const dy = Math.abs(touch.clientY - y);
+    if (dy < 48 || dy <= 1.5 * dx) return;
+    if (event.cancelable) event.preventDefault();
+    void turnPage(step);
+  }, { passive: false });
+  page.addEventListener('touchcancel', () => { swipe = undefined; }, { passive: true });
   finish.addEventListener('click', async () => {
     if (savingProgress) return;
     savingProgress = true;

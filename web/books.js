@@ -40,10 +40,12 @@ function bookRow(book) {
   link.href = `#book=${book.id}`;
   title.id = `book-title-${book.id}`;
   title.textContent = displayTitle(book);
+  link.title = title.textContent;
   detail.id = `book-detail-${book.id}`;
   detail.textContent = book.count ? `Section ${book.position + 1} of ${book.count}` : 'Ready to convert';
   link.setAttribute('aria-labelledby', title.id);
   link.setAttribute('aria-describedby', detail.id);
+  if (book.originalName) item.append(bookOptions(book, title.textContent));
   return item;
 }
 
@@ -114,6 +116,7 @@ function showLibrary(panel) {
   });
 
   loadBooks();
+  dismissBookOptions(panel);
   if (pendingImport) showImport(pendingImport, false);
 }
 
@@ -137,28 +140,35 @@ async function showReader(panel, id, activity) {
 
     const title = displayTitle(book);
     const heading = panel.querySelector('h1');
-    const options = bookOptions(book, title);
     rememberOpenedBook(id);
     if (!book.count) {
       heading.textContent = title;
-      heading.after(options);
-      if (book.originalName) configureConversion(panel, id, activity, error);
+      if (book.originalName) {
+        heading.after(bookOptions(book, title));
+        dismissBookOptions(panel);
+        configureConversion(panel, id, activity, error);
+      }
     } else {
-      renderReader(panel, book, activity, { title, options, focus: heading === document.activeElement });
+      renderReader(panel, book, activity, { title, focus: heading === document.activeElement });
     }
-
-    // Scope dismissal to this screen so leaving the reader removes its handlers.
-    panel.addEventListener('click', (event) => {
-      if (options.open && !options.contains(event.target)) options.open = false;
-    });
-    panel.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape' || !options.open) return;
-      options.open = false;
-      options.querySelector('summary').focus();
-    });
   } catch {
     showError(panel.querySelector(':scope > .book-error, .book-footer > .book-error'), 'Could not open this book.');
   }
+}
+
+function dismissBookOptions(panel) {
+  panel.addEventListener('click', event => {
+    for (const options of panel.querySelectorAll('.book-options[open]')) {
+      if (!options.contains(event.target)) options.open = false;
+    }
+  });
+  panel.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const options = panel.querySelector('.book-options[open]');
+    if (!options) return;
+    options.open = false;
+    options.querySelector('summary').focus();
+  });
 }
 
 function configureConversion(panel, id, activity, error) {
@@ -187,7 +197,7 @@ function configureConversion(panel, id, activity, error) {
 function bookOptions(book, title) {
   const options = document.createElement('details');
   options.className = 'book-options';
-  options.innerHTML = `<summary class="book-tool" aria-label="Book options"><span aria-hidden="true">⋯</span></summary>
+  options.innerHTML = `<summary class="book-tool" title="Book options"><span aria-hidden="true">⋯</span></summary>
     <div class="book-options-panel">
       <p class="book-full-title"></p>
       <dl class="book-file-name" hidden><dt>File name</dt><dd></dd></dl>
@@ -205,6 +215,7 @@ function bookOptions(book, title) {
   }
 
   const summary = options.querySelector('summary');
+  summary.setAttribute('aria-label', `Book options for ${title}`);
   const buttons = options.querySelectorAll('[data-save]');
   const error = options.querySelector('[role="alert"]');
   for (const button of buttons) button.addEventListener('click', async () => {

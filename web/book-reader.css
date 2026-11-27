@@ -121,8 +121,8 @@ body:has(.book-reader) #view {
 
 .book-options > summary::-webkit-details-marker { display: none; }
 .book-options[open] > summary { background: var(--page-active, var(--accent-soft)); }
-.book-entry .book-tool { color: var(--ink); }
-.book-entry .book-tool:hover { background: var(--accent-soft); }
+:is(.book-entry, .book-library) .book-tool { color: var(--ink); }
+:is(.book-entry, .book-library) .book-tool:hover { background: var(--accent-soft); }
 
 .book-options-panel {
   position: absolute;
@@ -142,7 +142,7 @@ body:has(.book-reader) #view {
   overflow-wrap: anywhere;
 }
 
-.book-entry .book-options-panel { inset-inline-end: 0; }
+:is(.book-entry, .book-library) .book-options-panel { inset-inline-end: 0; }
 .book-full-title { margin: 0; font-size: 0.95rem; font-weight: 650; }
 .book-file-name { margin: 0.35rem 0 0; color: var(--page-muted, var(--muted)); font-size: 0.8rem; }
 .book-file-name dd { margin: 0; }
@@ -236,7 +236,6 @@ body:has(.book-reader) #view {
 
 .book-footer-center { text-align: center; }
 .book-location { line-height: 1.25; }
-.book-location span { display: block; }
 .book-footer .book-tool { font-size: 0.75rem; }
 .book-footer-row > :first-child { justify-self: start; }
 .book-footer-row > :is([data-step="1"], [data-finish-section]) { justify-self: end; }
