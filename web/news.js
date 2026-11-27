@@ -6,8 +6,8 @@ import { newsRepository as store } from './news-repository.js';
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 const freshFor = 60 * 60 * 1000;
-const refreshPullDistance = 64;
-const refreshHoldTime = 400;
+const refreshPullDistance = 80;
+const refreshIndicatorHeight = 52;
 const mainTopicIds = ['world', 'business', 'tech', 'sports', 'culture', 'science'];
 const storyDate = value => dateFormat.format(new Date(value.length === 10 ? value + 'T12:00:00' : value));
 const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.9 6.5.9-4.7 4.6 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.7-4.6 6.5-.9Z"/></svg>';
@@ -171,7 +171,8 @@ export function renderNews(view, savedNews, focus, track) {
     `<button class="news-topic" type="button" data-topic="${id}" aria-pressed="${topic === id}">${escapeHtml(label)}</button>`).join('');
   const panel = document.createElement('section');
   view.replaceChildren(panel);
-  panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1>
+  panel.innerHTML = `<div class="news-refresh" aria-hidden="true"><span class="news-refresh-icon"></span></div>
+    <div class="news-heading"><h1 tabindex="-1">News</h1>
     <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a></div>
     <div class="news-edition" role="group" aria-label="News topics">
       <div class="news-topic-bar">
@@ -182,6 +183,7 @@ export function renderNews(view, savedNews, focus, track) {
     </div>
     <p class="news-info" role="status"></p><ul class="news-list" aria-label="Headlines"></ul>
     <div data-news-end aria-hidden="true" hidden></div>`;
+  const indicator = panel.querySelector('.news-refresh');
   const status = panel.querySelector('[role=status]');
   const topics = panel.querySelector('.news-edition');
   const strip = topics.querySelector('.news-topic-strip');
@@ -199,7 +201,7 @@ export function renderNews(view, savedNews, focus, track) {
   let request;
   let updating = false;
   let pullStart;
-  let holdTimer;
+  let pullDistance = 0;
 
   function draw(edition) {
     stories = shortlist(store.stories(), edition, affinity);
@@ -269,6 +271,7 @@ export function renderNews(view, savedNews, focus, track) {
 
   async function load(force = false) {
     request?.abort();
+    cancelPull();
     const controller = new AbortController();
     request = controller;
     affinity = personalized ? newsAffinity(store.opens()) : undefined;
@@ -282,6 +285,11 @@ export function renderNews(view, savedNews, focus, track) {
     const time = Date.now();
     updating = navigator.onLine && pending.length > 0;
     if (updating) {
+      if (force) {
+        indicator.classList.add('is-refreshing');
+        indicator.style.height = refreshIndicatorHeight + 'px';
+        list.setAttribute('aria-busy', 'true');
+      }
       showStatus('Updating…');
       const timeout = setTimeout(() => controller.abort(), 12000);
       await Promise.all(pending.map(async feed => {
@@ -295,6 +303,7 @@ export function renderNews(view, savedNews, focus, track) {
     if (request !== controller || !panel.isConnected) return;
     const available = updating ? draw(edition) : cachedCount;
     updating = false;
+    cancelPull();
     const latest = store.latestEditionTime(selected);
     const stamp = latest ? 'Updated ' + new Date(latest).toLocaleString(undefined, {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -305,41 +314,49 @@ export function renderNews(view, savedNews, focus, track) {
 
   function cancelPull() {
     pullStart = undefined;
-    clearTimeout(holdTimer);
-    holdTimer = undefined;
+    pullDistance = 0;
+    indicator.classList.remove('is-dragging', 'is-ready', 'is-refreshing');
+    indicator.style.removeProperty('height');
+    list.removeAttribute('aria-busy');
   }
 
   panel.addEventListener('touchstart', event => {
+    if (!request || updating) return;
     cancelPull();
-    if (!request || updating || !navigator.onLine || window.scrollY > 0 || event.touches.length !== 1) return;
+    if (!navigator.onLine || window.scrollY > 0 || event.touches.length !== 1) return;
     pullStart = event.touches[0];
   }, { passive: true });
   panel.addEventListener('touchmove', event => {
     if (!pullStart) return;
-    if (event.touches.length !== 1 || window.scrollY > 0) {
+    if (!event.cancelable || event.touches.length !== 1 || window.scrollY > 0) {
       cancelPull();
       return;
     }
     const touch = event.touches[0];
     const distance = touch.clientY - pullStart.clientY;
     const sideways = Math.abs(touch.clientX - pullStart.clientX);
-    if (distance < 0 || (sideways > 8 && sideways >= distance)) {
+    if (!pullDistance && (distance < 0 || (sideways > 6 && sideways >= distance))) {
       cancelPull();
       return;
     }
-    if (distance > sideways && event.cancelable) event.preventDefault();
-    if (distance < refreshPullDistance) {
-      clearTimeout(holdTimer);
-      holdTimer = undefined;
-    } else if (holdTimer === undefined) {
-      holdTimer = setTimeout(() => {
-        cancelPull();
-        if (panel.isConnected && window.scrollY <= 0 && navigator.onLine && !updating) load(true);
-      }, refreshHoldTime);
-    }
+    if (!pullDistance && distance <= sideways) return;
+
+    event.preventDefault();
+    pullDistance = Math.max(0, distance);
+    const progress = pullDistance / refreshPullDistance;
+    const height = refreshIndicatorHeight * Math.min(progress, 1) + 10 * Math.min(Math.max(progress - 1, 0), 1);
+    indicator.classList.add('is-dragging');
+    indicator.classList.toggle('is-ready', progress >= 1);
+    indicator.style.height = height + 'px';
   }, { passive: false });
-  panel.addEventListener('touchend', cancelPull, { passive: true });
-  panel.addEventListener('touchcancel', cancelPull, { passive: true });
+  panel.addEventListener('touchend', () => {
+    if (pullDistance >= refreshPullDistance && window.scrollY <= 0 && navigator.onLine && !updating) {
+      load(true);
+    } else if (pullStart) {
+      cancelPull();
+    }
+  }, { passive: true });
+  panel.addEventListener('touchcancel', () => { if (pullStart) cancelPull(); }, { passive: true });
   savedNews.urls().catch(() => []).then(urls => {
     if (!panel.isConnected) return;
     for (const url of urls) stars.add(url);
