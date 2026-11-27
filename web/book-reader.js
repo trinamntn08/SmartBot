@@ -53,9 +53,8 @@ export function renderReader(panel, book, activity, { title, focus }) {
   panel.innerHTML = `
     <header class="book-toolbar">
       <div class="book-toolbar-row">
-        <a href="#books" class="book-tool" aria-label="Back to books">
+        <a href="#books" class="book-tool" aria-label="Back to books" title="Back to books">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7"/></svg>
-          <span>Books</span>
         </a>
         <h1 tabindex="-1"></h1>
         <div class="book-tool-group">

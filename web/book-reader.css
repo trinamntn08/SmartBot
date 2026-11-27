@@ -355,7 +355,6 @@ body:has(.book-reader) #view {
 
 @media (max-width: 26em) {
   .book-toolbar-row { grid-template-columns: auto minmax(0, 1fr) auto; }
-  .book-toolbar-row > a span { display: none; }
   .book-tool[data-settings] { padding-inline: 0.3em; }
   .book-toolbar h1 { font-size: 1.2rem; }
 }
