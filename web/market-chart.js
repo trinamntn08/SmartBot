@@ -37,6 +37,8 @@ function formatPrice(price, currency, signed = false) {
 }
 
 function visiblePrices(series, range) {
+  if (range === '1d') return series.slice(-1);
+  if (range === '4h') return series.slice(-4);
   const lastDate = Date.parse(series.at(-1).date);
   const start = range === 'ytd'
     ? Date.UTC(new Date(lastDate).getUTCFullYear(), 0, 1)
@@ -204,7 +206,7 @@ export function renderPriceChart(view, series, range, style, currency) {
   const scale = chartScale(Math.min(low, ...candles.map(price => price.low)), Math.max(high, ...candles.map(price => price.high)));
   const format = price => formatPrice(price, currency);
   renderGraph(view.querySelector('.market-chart'), chartPoints(prices, scale.y), scale, change,
-    range === '7' || range === '30' ? previous : null, style, currency);
+    range === '1d' || range === '4h' || range === '7' || range === '30' ? previous : null, style, currency);
   view.querySelector('.market-summary dl').innerHTML = `<div><dt>Previous close</dt><dd>${previous ? format(previous.close) : '—'}</dd></div>
     <div><dt>Range change</dt><dd data-trend="${trend(change)}">${prices.length > 1 ? percent.format(change) : '—'}</dd></div>
     <div><dt>Lowest close</dt><dd>${format(low)}</dd></div>
