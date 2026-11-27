@@ -5,7 +5,7 @@ import { renderMarketQuote, renderPriceChart } from './market-chart.js';
 import { defaultMarkets, searchMarkets } from './market-symbols.js';
 
 const ranges = [
-  ['1d', '1D', '1 day'], ['4h', '4h', '4 hours'],
+  ['4h', '4h', '4 hours'], ['1d', '1D', '1 day'],
   ['7', '1W', '1 week'], ['30', '1M', '1 month'], ['90', '3M', '3 months'],
   ['180', '6M', '6 months'], ['ytd', 'YTD', 'Year to date'], ['365', '1Y', '1 year'],
 ];
