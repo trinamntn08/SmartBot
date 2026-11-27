@@ -620,6 +620,9 @@ main:is([data-page="podcasts"], [data-page="tracks"], [data-page="radio"]) { pad
   padding: 0.85rem;
   border-block-start: 1px solid var(--line);
 }
+@media (max-width: 32rem) {
+  .radio-add form { justify-items: start; }
+}
 .radio-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
