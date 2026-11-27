@@ -58,6 +58,14 @@
     </div>
   </header>
   <div class="shell">
+    <section id="radio-player" class="radio-player" aria-label="Live radio player" hidden>
+      <div class="radio-player-copy">
+        <a href="#radio" data-radio-title></a>
+        <p role="status"></p>
+      </div>
+      <button type="button" class="quiet" data-radio-retry hidden>Retry</button>
+      <button type="button" class="quiet" data-radio-stop>Stop radio</button>
+    </section>
     <section id="spotify-player" class="spotify-player" aria-label="Spotify player" tabindex="-1" hidden>
       <div class="embedded-player-toolbar">
         <a href="#tracks">Spotify playlist</a>

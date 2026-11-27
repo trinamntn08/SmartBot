@@ -1,5 +1,13 @@
 # Podcast listening
 
+## Live radio
+
+**Outcome.** Tune in to an ongoing broadcast under **Listen → Radio**, change stations, and manage custom HTTPS streams on this device.
+
+**Implementation.** The starter stations connect directly to their publisher streams. The radio player stays mounted across routes, stops when other SmartBot audio starts, and reconnects to the current broadcast on retry. Radio uses browser or Android WebView audio. [Radio France station endpoints](https://developers.radiofrance.fr/doc/en/tutorial-by-example/list-brands)
+
+**November 27, 2026.** Added three stations, custom station storage, and in-app playback with stop and retry. All 34 web, 16 Python, and eight podcast service tests passed. Each starter endpoint returned MP3 audio over HTTPS. Browser preview and Android packaging checks follow publication. Physical Android playback and lock-screen controls remain unverified.
+
 The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a service shortcut or a Spotify playlist on this device. Spotify's official player handles its playback availability. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
 Open **Podcasts** to resume an unfinished episode, play the latest from a followed show, or open the suggested show. **Find podcasts** reveals name search and **Add by RSS**. Opening a show brings its episodes into focus.

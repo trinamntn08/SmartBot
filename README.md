@@ -72,6 +72,12 @@ Choose **YouTube Music**, then **Enable YouTube search**, to browse popular musi
 
 Android users can play the **Music picks** included in the APK with an internet connection. Live charts and in-app search use one deployment secret managed by the app owner. Without the live catalog, search opens results in YouTube Music. [Android music service setup](docs/plans/youtube-music.md#android-music-service)
 
+## Listen to live radio
+
+Open **Workspace → Listen → Radio** and tap **franceinfo**, **France Inter**, or **France Culture** to tune in. The player stays open when you move between SmartBot screens. Select **Stop radio** to disconnect.
+
+Use **Add a station** to save a name and a direct HTTPS audio stream URL on this device. The station list is available offline. Listening requires internet access and a stream format your browser or Android WebView can play.
+
 ## Listen to podcasts
 
 Open **Workspace → Listen → Podcasts**. Use **Continue listening** to resume an episode, play the latest episode from a followed show, or open the suggested franceinfo show. Tap the magnifying glass to search by name in the Listen tab row. Use **Add by RSS** below the podcast list to open a public HTTPS feed.

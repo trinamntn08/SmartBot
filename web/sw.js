@@ -2,7 +2,7 @@ importScripts('./vendor/pdfjs/cache-files.js');
 
 // The local preview fingerprints the web files. Bump the fallback for static hosts.
 const cachePrefix = `smartbot:${self.registration.scope}:`;
-const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v79'}`;
+const cacheName = `${cachePrefix}${self.smartBotPreviewRevision ?? 'v80'}`;
 const files = [
   'index.html', 'appearance.js', 'appearance.css', 'styles.css', 'app.js', 'planner.js', 'repository.js',
   'today.css', 'today.js', 'activity.js', 'activity-repository.js',
@@ -15,6 +15,7 @@ const files = [
   'vendor/pdfjs/pdf.min.js', 'vendor/pdfjs/pdf.worker.min.js', 'vendor/jszip/jszip.min.js', ...pdfDataFiles,
   'news.js', 'news-provider.js', 'news-repository.js', 'news-preferences.js', 'news-rss.js', 'tuoitre.js',
   'listen.js', 'spotify-player.js', 'youtube-player.js', 'youtube-search.js', 'youtube-shelves.js',
+  'radio.js', 'radio-player.js', 'radio-provider.js', 'radio-repository.js',
   'assets/youtube-logo.svg', 'assets/youtube-logo-dark.svg',
   'podcasts.js', 'podcast-native.js', 'podcast-provider.js', 'podcast-rss.js', 'podcast-repository.js', 'podcast-player.js',
   'workspace.js', 'workspace-repository.js', 'assistant.js', 'assets/books.webp', 'assets/sections.webp', 'assets/podcast-studio.webp',

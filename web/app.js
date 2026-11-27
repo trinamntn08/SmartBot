@@ -9,6 +9,8 @@ import { renderPodcasts } from './podcasts.js';
 import { listeningPage, renderMusic } from './listen.js';
 import { createSpotifyPlayer } from './spotify-player.js';
 import { createYouTubePlayer } from './youtube-player.js';
+import { createRadioPlayer } from './radio-player.js';
+import { renderRadio } from './radio.js';
 import { trackForegroundActivity } from './activity.js';
 import { hasNativePodcastPlayer } from './podcast-native.js';
 import { renderToday } from './today.js';
@@ -29,6 +31,7 @@ let repository;
 let podcastPlayer;
 let spotifyPlayer;
 let youtubePlayer;
+let radioPlayer;
 let routine;
 let displayedDate;
 let busy = false;
@@ -39,6 +42,7 @@ let stopMarkets;
 let stopNews;
 let stopPodcasts;
 let stopMusic;
+let stopRadio;
 let stopWorkspace;
 
 async function recordActivity(entries) {
@@ -151,6 +155,8 @@ function render(focusHeading = false) {
   stopPodcasts = undefined;
   stopMusic?.();
   stopMusic = undefined;
+  stopRadio?.();
+  stopRadio = undefined;
   stopWorkspace?.();
   stopWorkspace = undefined;
   track();
@@ -199,7 +205,14 @@ function render(focusHeading = false) {
     return;
   }
   if (page === 'tracks') {
-    stopMusic = renderMusic(view, spotifyPlayer, youtubePlayer, podcastPlayer.pause, focusHeading);
+    stopMusic = renderMusic(view, spotifyPlayer, youtubePlayer, () => {
+      podcastPlayer.pause();
+      radioPlayer.close();
+    }, focusHeading);
+    return;
+  }
+  if (page === 'radio') {
+    stopRadio = renderRadio(view, radioPlayer, focusHeading);
     return;
   }
   if (page === 'markets') {
@@ -353,16 +366,24 @@ try {
   spotifyPlayer = createSpotifyPlayer(document.querySelector('#spotify-player'), view, () => {
     youtubePlayer.close();
     podcastPlayer.pause();
+    radioPlayer.close();
   });
   youtubePlayer = createYouTubePlayer(document.querySelector('#youtube-player'), view, () => {
     spotifyPlayer.close();
     podcastPlayer.pause();
+    radioPlayer.close();
   });
   podcastPlayer = createPodcastPlayer(repository.podcasts, document.querySelector('#podcast-player'),
     recordAutomatically, () => {
       spotifyPlayer.close();
       youtubePlayer.close();
+      radioPlayer.close();
     });
+  radioPlayer = createRadioPlayer(document.querySelector('#radio-player'), view, () => {
+    podcastPlayer.pause();
+    spotifyPlayer.close();
+    youtubePlayer.close();
+  });
   if (!location.hash && marketRepository.wasOpen()) {
     history.replaceState(null, '', '#markets');
   }

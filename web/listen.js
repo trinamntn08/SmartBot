@@ -50,10 +50,11 @@ function spotifyPlaylistId(value) {
 
 export function listeningPage(route) {
   if (route === 'music' || route === 'podcasts') return 'podcasts';
-  if (route === 'tracks') return 'tracks';
+  if (route === 'tracks' || route === 'radio') return route;
   if (route !== 'listen') return null;
   try {
-    return localStorage.getItem(sectionKey) === 'tracks' ? 'tracks' : 'podcasts';
+    const stored = localStorage.getItem(sectionKey);
+    return stored === 'tracks' || stored === 'radio' ? stored : 'podcasts';
   } catch {
     return 'podcasts';
   }
@@ -73,18 +74,19 @@ export function listenHeader(page, controls) {
       <nav class="listen-nav" aria-label="Listening sections">
         <a href="#tracks"${current('tracks')}>Music</a>
         <a href="#podcasts"${current('podcasts')}>Podcasts</a>
+        <a href="#radio"${current('radio')}>Radio</a>
       </nav>
+      ${controls ? `<button type="button" class="listen-tool listen-search-toggle" data-listen-search
+        aria-expanded="false" aria-controls="${controls}" aria-label="${searchLabel}" title="${searchLabel}" hidden>${listenSearchIcon}</button>
       <form id="${controls}" class="listen-search-form" hidden>
         <input name="query" type="search" enterkeyhint="search" maxlength="120"
           aria-label="${searchLabel}" placeholder="Search" required>
-      </form>
-      <button type="button" class="listen-tool listen-search-toggle" data-listen-search
-        aria-expanded="false" aria-controls="${controls}" aria-label="${searchLabel}" title="${searchLabel}" hidden>${listenSearchIcon}</button>
+      </form>` : ''}
     </div>
   </header>`;
 }
 
-export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, focus) {
+export function renderMusic(view, spotifyPlayer, youtubePlayer, stopOtherAudio, focus) {
   let service = readMusicService();
   let playlist = readSpotifyPlaylist();
   const musicNote = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
@@ -192,7 +194,7 @@ export function renderMusic(view, spotifyPlayer, youtubePlayer, pausePodcasts, f
       link.addEventListener('click', () => {
         spotifyPlayer.close();
         youtubePlayer.close();
-        pausePodcasts();
+        stopOtherAudio();
       });
     }
     content.querySelector('[data-open-spotify]')?.addEventListener('click', () => spotifyPlayer.open(playlist));
