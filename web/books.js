@@ -226,7 +226,7 @@ function bookOptions(book, title) {
     showError(error, '');
     try {
       const epub = format === 'EPUB';
-      const file = epub ? await makeEpub(book) : await getOriginal(book.id);
+      const file = epub ? await makeEpub(await getBook(book.id)) : await getOriginal(book.id);
       const name = epub ? `${book.title}.epub` : book.originalName;
       const type = epub ? 'application/epub+zip' : 'application/pdf';
       if (await saveBookFile(file, name, type) && options.open) {

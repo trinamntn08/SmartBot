@@ -27,7 +27,7 @@ Last updated November 27, 2026.
 
 ## Web app verification
 
-November 27, 2026. Removed the reader’s page count and three-dot menu and made PDF and EPUB downloads available in the Books library. Added vertical edge swipes that use the same saved page-turn action as Previous and Next. All 34 web tests passed. Browser and Android package checks follow publication.
+November 27, 2026. Removed the reader’s page count and three-dot menu and made PDF and EPUB downloads available in the Books library. Added vertical edge swipes that use the same saved page-turn action as Previous and Next. All 34 web tests passed. Chromium touch input passed in both directions, in full view, and after reopening offline. The library export now loads the full book on demand to address an EPUB failure caught in the browser check. Final export and Android package checks follow publication.
 
 A touch-event simulation verified drag feedback, the release threshold, retreating below the threshold, gesture cancellation, horizontal swipes, scrolling below the top, loading feedback, and prevention of duplicate refreshes. All 34 web tests passed. Physical Android verification remains open.
 
