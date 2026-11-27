@@ -4,6 +4,8 @@ Last updated November 27, 2026.
 
 ## Current state
 
+- Android adds **Translate** to the text selection menu in Books. It may appear under the menu’s three dots. Tapping it opens Google Translate with the selected text and the phone’s language as the initial target. You can change the target in Google Translate. The handoff uses Android’s standard text-processing action, which can also appear in other apps that support it.
+
 - **Listen → Radio** streams franceinfo, France Inter, and France Culture directly from Radio France. Use **Add a station** for a direct HTTPS audio link, the trash icon to remove any station, and **Restore default stations** to bring presets back. Playback continues across SmartBot screens until you select the square stop icon or start other audio. The station list stays available offline. [Live radio](plans/podcast-listening.md#live-radio)
 
 - The Four Leaves mark appears in the SmartBot header and follows the active light or dark theme. The browser tab and iOS Home Screen shortcut use the same mark, and Android uses it for adaptive and themed launcher icons.
@@ -146,6 +148,8 @@ At 320 CSS pixels, Chromium verified that both search fields expand between the 
 Chromium at 320 CSS pixels verified the icon-only Listen search, opening and closing Podcast search with RSS access, and both Android music search paths using a controlled catalog response. The web and Python checks passed, with one Python test skipped. Installation and the YouTube Music handoff on a physical device remain pending.
 
 ## Android APK verification
+
+Android Translate selection compiled successfully and lint reported zero errors and ten warnings. All 34 web tests passed. Mobile Chromium verified that a multiline sample containing an ampersand, accented text, and emoji reached Google Translate intact and produced an English-to-French result. Android selection-menu verification is pending.
 
 The mobile Workspace swap APK built from `801c3ac` on `main`. Gradle build, signature continuity, ZIP alignment, and byte-for-byte comparison of all 257 bundled web assets passed. Lint reported zero errors and ten warnings. Chromium exercised the packaged assets at the Android asset origin, including the first hold and drag, repeat swaps, and reduced motion. A physical Android check remains open.
 

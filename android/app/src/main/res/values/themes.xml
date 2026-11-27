@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SmartBot</string>
+    <string name="translate_selection">Translate</string>
+    <string name="translate_selection_too_long">Select up to 5,000 characters to translate.</string>
+    <string name="translate_selection_no_browser">No browser available to open Google Translate.</string>
     <style name="Theme.SmartBot.Base" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@android:color/white</item>
         <item name="android:statusBarColor">@android:color/white</item>
