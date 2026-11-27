@@ -1168,7 +1168,7 @@ body:has(dialog[open]) .youtube-video { visibility: hidden; }
 .podcast-player.is-compact .podcast-player-status { margin: 0 0.25rem 0.375rem; }
 .podcast-player.is-compact:not([hidden]) + main { padding-block-start: clamp(1rem, 2.4vw, 1.75rem); }
 
-.news-heading, .news-tools, .news-reader-tools {
+.news-heading, .news-reader-tools {
   display: flex;
   align-items: center;
   flex-wrap: wrap;

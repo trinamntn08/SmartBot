@@ -6,6 +6,8 @@ import { newsRepository as store } from './news-repository.js';
 
 const dateFormat = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 const freshFor = 60 * 60 * 1000;
+const refreshPullDistance = 64;
+const refreshHoldTime = 400;
 const mainTopicIds = ['world', 'business', 'tech', 'sports', 'culture', 'science'];
 const storyDate = value => dateFormat.format(new Date(value.length === 10 ? value + 'T12:00:00' : value));
 const starIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m12 3 2.8 5.9 6.5.9-4.7 4.6 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.7-4.6 6.5-.9Z"/></svg>';
@@ -169,9 +171,8 @@ export function renderNews(view, savedNews, focus, track) {
     `<button class="news-topic" type="button" data-topic="${id}" aria-pressed="${topic === id}">${escapeHtml(label)}</button>`).join('');
   const panel = document.createElement('section');
   view.replaceChildren(panel);
-  panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1><div class="news-tools">
-    <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a>
-    <button class="quiet" type="button" data-news-refresh>Refresh</button></div></div>
+  panel.innerHTML = `<div class="news-heading"><h1 tabindex="-1">News</h1>
+    <a class="news-star" href="#saved-news" aria-label="Saved articles">${starIcon}</a></div>
     <div class="news-edition" role="group" aria-label="News topics">
       <div class="news-topic-bar">
         <div class="news-topic-row news-topic-strip">${topicButtons(mainTopics)}</div>
@@ -181,7 +182,6 @@ export function renderNews(view, savedNews, focus, track) {
     </div>
     <p class="news-info" role="status"></p><ul class="news-list" aria-label="Headlines"></ul>
     <div data-news-end aria-hidden="true" hidden></div>`;
-  const refreshButton = panel.querySelector('[data-news-refresh]');
   const status = panel.querySelector('[role=status]');
   const topics = panel.querySelector('.news-edition');
   const strip = topics.querySelector('.news-topic-strip');
@@ -197,6 +197,9 @@ export function renderNews(view, savedNews, focus, track) {
   let stories = [];
   let affinity;
   let request;
+  let updating = false;
+  let pullStart;
+  let holdTimer;
 
   function draw(edition) {
     stories = shortlist(store.stories(), edition, affinity);
@@ -277,8 +280,7 @@ export function renderNews(view, savedNews, focus, track) {
     });
     const cachedCount = draw(edition);
     const time = Date.now();
-    const updating = navigator.onLine && pending.length > 0;
-    refreshButton.disabled = updating;
+    updating = navigator.onLine && pending.length > 0;
     if (updating) {
       showStatus('Updating…');
       const timeout = setTimeout(() => controller.abort(), 12000);
@@ -292,7 +294,7 @@ export function renderNews(view, savedNews, focus, track) {
     }
     if (request !== controller || !panel.isConnected) return;
     const available = updating ? draw(edition) : cachedCount;
-    refreshButton.disabled = false;
+    updating = false;
     const latest = store.latestEditionTime(selected);
     const stamp = latest ? 'Updated ' + new Date(latest).toLocaleString(undefined, {
       month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -301,14 +303,50 @@ export function renderNews(view, savedNews, focus, track) {
     else showStatus(topic ? 'No headlines for this topic.' : 'No headlines available.');
   }
 
-  refreshButton.disabled = true;
-  refreshButton.onclick = () => load(true);
+  function cancelPull() {
+    pullStart = undefined;
+    clearTimeout(holdTimer);
+    holdTimer = undefined;
+  }
+
+  panel.addEventListener('touchstart', event => {
+    cancelPull();
+    if (!request || updating || !navigator.onLine || window.scrollY > 0 || event.touches.length !== 1) return;
+    pullStart = event.touches[0];
+  }, { passive: true });
+  panel.addEventListener('touchmove', event => {
+    if (!pullStart) return;
+    if (event.touches.length !== 1 || window.scrollY > 0) {
+      cancelPull();
+      return;
+    }
+    const touch = event.touches[0];
+    const distance = touch.clientY - pullStart.clientY;
+    const sideways = Math.abs(touch.clientX - pullStart.clientX);
+    if (distance < 0 || (sideways > 8 && sideways >= distance)) {
+      cancelPull();
+      return;
+    }
+    if (distance > sideways && event.cancelable) event.preventDefault();
+    if (distance < refreshPullDistance) {
+      clearTimeout(holdTimer);
+      holdTimer = undefined;
+    } else if (holdTimer === undefined) {
+      holdTimer = setTimeout(() => {
+        cancelPull();
+        if (panel.isConnected && window.scrollY <= 0 && navigator.onLine && !updating) load(true);
+      }, refreshHoldTime);
+    }
+  }, { passive: false });
+  panel.addEventListener('touchend', cancelPull, { passive: true });
+  panel.addEventListener('touchcancel', cancelPull, { passive: true });
   savedNews.urls().catch(() => []).then(urls => {
     if (!panel.isConnected) return;
     for (const url of urls) stars.add(url);
     load();
   });
   return () => {
+    cancelPull();
     observer.disconnect();
     request?.abort();
   };
