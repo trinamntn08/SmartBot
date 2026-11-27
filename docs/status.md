@@ -29,7 +29,7 @@ Last updated November 27, 2026.
 
 ## Web app verification
 
-The Books reader now uses a back arrow at every width. The link retains its accessible name and adds a tooltip. All 34 web tests, the JavaScript syntax check, and the Impeccable detector passed.
+The Books reader now uses a back arrow at every width. The link retains its accessible name and adds a tooltip. All 34 web tests, the JavaScript syntax check, and the Impeccable detector passed. Chromium verified the arrow at 360, 646, and 1440 CSS pixels, keyboard and touch return to the library, and offline reload at the open book.
 
 November 27, 2026. Removed the reader’s page count and three-dot menu and made PDF and EPUB downloads available in the Books library. Vertical edge swipes use the same saved page-turn action as Previous and Next. All 34 web tests passed. Chromium at 360 CSS pixels verified right and left swipes, ignored short, center, horizontal and cancelled swipes, checked full view and offline resume, and verified both downloads offline from the library. The Android APK from `aca6419` passed build, lint, signature and ZIP alignment checks, and all 266 web files matched. Lint reported zero errors and nine warnings. Physical phone testing remains open.
 
@@ -150,6 +150,8 @@ At 320 CSS pixels, Chromium verified that both search fields expand between the 
 Chromium at 320 CSS pixels verified the icon-only Listen search, opening and closing Podcast search with RSS access, and both Android music search paths using a controlled catalog response. The web and Python checks passed, with one Python test skipped. Installation and the YouTube Music handoff on a physical device remain pending.
 
 ## Android APK verification
+
+The back-arrow APK built from `fb12134` on `main`. Build, signature continuity, ZIP alignment, and byte-for-byte checks of all 266 web assets passed. Lint reported zero errors and ten warnings. The APK updated the previous build in place on an Android 15 emulator. The imported book reopened and tapping the arrow returned to the library. A physical phone check remains pending.
 
 Android Translate selection compiled successfully and lint reported zero errors and ten warnings. All 34 web and 16 Python tests passed. Mobile Chromium verified that a multiline sample containing an ampersand, accented text, and emoji reached Google Translate intact and produced an English-to-French result.
 
