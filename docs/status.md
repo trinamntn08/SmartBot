@@ -4,7 +4,7 @@ Last updated November 27, 2026.
 
 ## Current state
 
-- **Listen → Radio** streams franceinfo, France Inter, and France Culture directly from Radio France. Add or remove custom stations using their HTTPS audio stream addresses. Playback continues across SmartBot screens, and the station list stays available offline. [Live radio](plans/podcast-listening.md#live-radio)
+- **Listen → Radio** streams franceinfo, France Inter, and France Culture directly from Radio France. Use **Add a station** for a direct HTTPS audio link, the trash icon to remove any station, and **Restore default stations** to bring presets back. Playback continues across SmartBot screens until you select the square stop icon or start other audio. The station list stays available offline. [Live radio](plans/podcast-listening.md#live-radio)
 
 - The Four Leaves mark appears in the SmartBot header and follows the active light or dark theme. The browser tab and iOS Home Screen shortcut use the same mark, and Android uses it for adaptive and themed launcher icons.
 - Press and hold a **Workspace** card, then drag it with the same touch to swap it. Drag any card immediately while swap mode is active. A translucent preview follows your finger or cursor, and both cards slide into place on release. With reduced motion enabled, the cards settle instantly. Tap outside the cards to finish editing. Use the small minus button to hide a card. **Settings → Workspace sections** restores hidden cards and opens the keyboard reorder controls. The order and visibility are saved on this device.

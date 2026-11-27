@@ -74,9 +74,9 @@ Android users can play the **Music picks** included in the APK with an internet 
 
 ## Listen to live radio
 
-Open **Workspace → Listen → Radio** and tap **franceinfo**, **France Inter**, or **France Culture** to tune in. The player stays open when you move between SmartBot screens. Select **Stop radio** to disconnect.
+Open **Workspace → Listen → Radio** and tap **franceinfo**, **France Inter**, or **France Culture** to tune in. The player stays open when you move between SmartBot screens. Select the square stop icon to disconnect.
 
-Use **Add a station** to save a name and a direct HTTPS audio stream URL on this device. The station list is available offline. Listening requires internet access and a stream format your browser or Android WebView can play.
+Use **Add a station** to save a name and a direct HTTPS audio stream URL on this device. Select the trash icon beside any station to remove it. **Restore default stations** brings back the built-in stations. The station list is available offline. Listening requires internet access and a stream format your browser or Android WebView can play.
 
 ## Listen to podcasts
 

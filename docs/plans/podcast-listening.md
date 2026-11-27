@@ -10,6 +10,8 @@
 
 Android debug build and lint passed from `16cf354` with zero lint errors and ten warnings. The APK passed signature and ZIP alignment checks and all 266 bundled web assets matched the checkout. Physical Android playback and lock-screen behavior remain unverified.
 
+**November 27, 2026.** Replaced the radio stop label with a square icon and added a trash icon for every station. Removing a preset persists on the device, with a restore action for defaults. Refined the add form with a compact disclosure, aligned fields, and stream guidance. All 34 web tests passed. A local storage check covered the earlier custom-station format, saving hidden presets, and continuing when persistent storage is unavailable. Browser and APK checks follow publication.
+
 The Listen card opens distinct Music and Podcasts sections and remembers the one you used last. Music saves a service shortcut or a Spotify playlist on this device. Spotify's official player handles its playback availability. Podcasts streams public episodes in SmartBot. The browser uses HTML audio. The Android app uses a Media3 foreground service, with device-local progress and system media controls.
 
 Open **Podcasts** to resume an unfinished episode, play the latest from a followed show, or open the suggested show. **Find podcasts** reveals name search and **Add by RSS**. Opening a show brings its episodes into focus.

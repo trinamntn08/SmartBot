@@ -64,7 +64,11 @@
         <p role="status"></p>
       </div>
       <button type="button" class="quiet" data-radio-retry hidden>Retry</button>
-      <button type="button" class="quiet" data-radio-stop>Stop radio</button>
+      <button type="button" class="quiet radio-icon" data-radio-stop aria-label="Stop radio" title="Stop radio">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <rect x="5" y="5" width="14" height="14" rx="2"/>
+        </svg>
+      </button>
     </section>
     <section id="spotify-player" class="spotify-player" aria-label="Spotify player" tabindex="-1" hidden>
       <div class="embedded-player-toolbar">
