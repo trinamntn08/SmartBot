@@ -310,11 +310,20 @@ public final class MainActivity extends Activity {
                 || "www.alphavantage.co".equals(uri.getAuthority());
     }
 
+    private static boolean isRadioFranceStream(Uri uri) {
+        if (!"https".equals(uri.getScheme()) || !"icecast.radiofrance.fr".equals(uri.getEncodedAuthority())
+                || uri.getEncodedQuery() != null || uri.getEncodedFragment() != null) return false;
+        String path = uri.getEncodedPath();
+        return "/franceinfo-midfi.mp3".equals(path) || "/franceinter-midfi.mp3".equals(path)
+                || "/franceculture-midfi.mp3".equals(path);
+    }
+
     private static WebResourceResponse appAsset(WebViewAssetLoader assetLoader, NewsFeed newsFeed, YouTubeSearch youtubeSearch,
             WebResourceRequest request) {
         Uri uri = request.getUrl();
         if (!isAppAsset(uri)) {
-            if (PodcastDiscovery.isHostedRequest(uri) || isYouTubeResource(uri)) return null;
+            if (PodcastDiscovery.isHostedRequest(uri) || isYouTubeResource(uri)
+                    || ("GET".equals(request.getMethod()) && isRadioFranceStream(uri))) return null;
             String host = uri.getAuthority();
             if ("https".equals(uri.getScheme()) && ("www.canada.ca".equals(host) || "www.nasa.gov".equals(host)
                     || "science.nasa.gov".equals(host))) return null;
