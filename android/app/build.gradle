@@ -15,8 +15,8 @@ android {
         applicationId 'io.github.trinamntn08.smartbot'
         minSdk 26
         targetSdk 35
-        versionCode 7
-        versionName '0.3.4'
+        versionCode 8
+        versionName '0.3.5'
         buildConfigField 'String', 'PODCAST_API', groovy.json.JsonOutput.toJson(podcastApi)
         buildConfigField 'String', 'YOUTUBE_API', groovy.json.JsonOutput.toJson(youtubeApi)
     }
@@ -34,6 +34,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.media3:media3-exoplayer:1.6.1'
     implementation 'androidx.media3:media3-session:1.6.1'

@@ -32,6 +32,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -40,15 +43,17 @@ import java.util.Collections;
 public final class MainActivity extends Activity {
     private static final int OPEN_BOOK = 1;
     private static final int SAVE_BOOK = 2;
-    private static final int MAX_EXPORT_LENGTH = 28 * 1024 * 1024;
+    private static final int MAX_EXPORT_MESSAGE_LENGTH = 300 * 1024;
     private static final String ASSET_PATH = "/assets/";
     private static final String APP_ORIGIN = "https://" + WebViewAssetLoader.DEFAULT_DOMAIN;
     private static final String APP_URL = APP_ORIGIN + ASSET_PATH + "index.html";
 
     private WebView webView;
     private PodcastBridge podcasts;
+    private BookOcr bookOcr;
     private ValueCallback<Uri[]> selectedBook;
-    private String pendingExport;
+    private File pendingExport;
+    private Intent exportIntent;
     private JavaScriptReplyProxy exportReply;
 
     @Override
@@ -81,6 +86,7 @@ public final class MainActivity extends Activity {
 
         webView = new WebView(this);
         podcasts = new PodcastBridge(this, webView, APP_ORIGIN);
+        bookOcr = new BookOcr(webView, APP_ORIGIN);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -202,62 +208,85 @@ public final class MainActivity extends Activity {
 
     @SuppressWarnings("deprecation")
     private void chooseExport(String payload, JavaScriptReplyProxy reply) {
-        if (exportReply != null || payload == null || payload.length() > MAX_EXPORT_LENGTH) {
-            reportExport(reply, "failed");
+        if (exportReply != null || payload == null || payload.length() > MAX_EXPORT_MESSAGE_LENGTH) {
+            reply.postMessage("failed");
             return;
         }
         try {
-            JSONObject export = new JSONObject(payload);
-            String type = export.getString("type");
-            if (!"application/pdf".equals(type) && !"application/epub+zip".equals(type)) {
-                reportExport(reply, "failed");
-                return;
+            JSONObject message = new JSONObject(payload);
+            switch (message.getString("action")) {
+                case "begin":
+                    clearPendingExport();
+                    String type = message.getString("type");
+                    if (!"application/pdf".equals(type) && !"application/epub+zip".equals(type)) {
+                        throw new JSONException("Unsupported export format");
+                    }
+                    pendingExport = File.createTempFile("book-export-", ".tmp", getCacheDir());
+                    exportIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                            .addCategory(Intent.CATEGORY_OPENABLE)
+                            .setType(type)
+                            .putExtra(Intent.EXTRA_TITLE, message.getString("name"));
+                    break;
+                case "append":
+                    if (pendingExport == null) throw new IOException("Missing export");
+                    try (OutputStream output = new FileOutputStream(pendingExport, true)) {
+                        output.write(Base64.decode(message.getString("data"), Base64.DEFAULT));
+                    }
+                    break;
+                case "save":
+                    if (exportIntent == null) throw new IOException("Missing export");
+                    startActivityForResult(exportIntent, SAVE_BOOK);
+                    exportReply = reply;
+                    return;
+                case "abort":
+                    clearPendingExport();
+                    return;
+                default:
+                    throw new JSONException("Unknown export action");
             }
-            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
-                    .addCategory(Intent.CATEGORY_OPENABLE)
-                    .setType(type)
-                    .putExtra(Intent.EXTRA_TITLE, export.getString("name"));
-            pendingExport = export.getString("data");
-            exportReply = reply;
-            startActivityForResult(intent, SAVE_BOOK);
-        } catch (JSONException | ActivityNotFoundException error) {
-            pendingExport = null;
-            exportReply = null;
-            reportExport(reply, "failed");
+            reply.postMessage("ready");
+        } catch (JSONException | IOException | IllegalArgumentException | ActivityNotFoundException error) {
+            clearPendingExport();
+            reply.postMessage("failed");
         }
     }
 
-    private static void reportExport(JavaScriptReplyProxy reply, String result) {
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
-            reply.postMessage(result);
-        }
+    private void clearPendingExport() {
+        if (pendingExport != null) pendingExport.delete();
+        pendingExport = null;
+        exportIntent = null;
     }
 
     private void finishExport(int resultCode, Intent data) {
         if (exportReply == null) return;
         Uri file = resultCode == RESULT_OK && data != null ? data.getData() : null;
         JavaScriptReplyProxy reply = exportReply;
-        String encoded = pendingExport;
-        pendingExport = null;
         if (file == null || !"content".equals(file.getScheme())) {
+            clearPendingExport();
             exportReply = null;
-            reportExport(reply, "cancelled");
+            reply.postMessage("cancelled");
             return;
         }
+        File source = pendingExport;
+        pendingExport = null;
+        exportIntent = null;
         new Thread(() -> {
-            String outcome = "failed";
-            try (OutputStream output = getContentResolver().openOutputStream(file, "wt")) {
-                if (output != null) {
-                    output.write(Base64.decode(encoded, Base64.DEFAULT));
-                    outcome = "saved";
-                }
-            } catch (IOException | IllegalArgumentException | SecurityException error) {
+            String outcome = "saved";
+            try (FileInputStream input = new FileInputStream(source);
+                 OutputStream output = getContentResolver().openOutputStream(file, "wt")) {
+                if (output == null) throw new IOException("Could not open destination");
+                byte[] buffer = new byte[64 * 1024];
+                int count;
+                while ((count = input.read(buffer)) != -1) output.write(buffer, 0, count);
+            } catch (IOException | SecurityException error) {
                 outcome = "failed";
+            } finally {
+                source.delete();
             }
             String result = outcome;
             runOnUiThread(() -> {
                 exportReply = null;
-                if (!isDestroyed()) reportExport(reply, result);
+                if (!isDestroyed()) reply.postMessage(result);
             });
         }, "book-export").start();
     }
@@ -380,6 +409,8 @@ public final class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         podcasts.close();
+        bookOcr.close();
+        clearPendingExport();
         if (selectedBook != null) selectedBook.onReceiveValue(null);
         ((FrameLayout) webView.getParent()).removeView(webView);
         webView.destroy();

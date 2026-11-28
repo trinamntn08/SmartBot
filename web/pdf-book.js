@@ -63,7 +63,40 @@ function pageText(items) {
   return text.join('').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
 }
 
-export async function convertPdf(file) {
+async function recognizePage(page, bridge) {
+  // Bound the rendered page so memory use stays independent of the PDF's length.
+  const original = page.getViewport({ scale: 1 });
+  const viewport = page.getViewport({ scale: 2300 / Math.max(original.width, original.height) });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  try {
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    const image = canvas.toDataURL('image/jpeg', 0.85).split(',', 2)[1];
+    return await new Promise((resolve, reject) => {
+      bridge.onmessage = ({ data }) => {
+        bridge.onmessage = null;
+        try {
+          const text = JSON.parse(data);
+          if (typeof text !== 'string') throw new Error('Text recognition failed');
+          resolve(text.trim());
+        } catch (error) {
+          reject(error);
+        }
+      };
+      try {
+        bridge.postMessage(image);
+      } catch (error) {
+        bridge.onmessage = null;
+        reject(error);
+      }
+    });
+  } finally {
+    canvas.width = canvas.height = 0;
+  }
+}
+
+export async function convertPdf(file, onProgress = () => {}) {
   const { task, PasswordResponses } = await openPdf(file);
 
   try {
@@ -71,9 +104,18 @@ export async function convertPdf(file) {
     const sections = [];
     const pageEnds = {};
     let readablePages = 0;
+    const ocr = globalThis.SmartBotBookOcr;
     for (let number = 1; number <= pdf.numPages; number += 1) {
       const page = await pdf.getPage(number);
-      const text = pageText((await page.getTextContent()).items);
+      let text = pageText((await page.getTextContent()).items);
+      if (!text && ocr) {
+        onProgress(number, pdf.numPages);
+        try {
+          text = await recognizePage(page, ocr);
+        } catch {
+          throw new BookImportError(`Could not recognize text on page ${number}. Try converting the PDF again.`);
+        }
+      }
       if (text) {
         sections.push(...readingSections(text));
         pageEnds[sections.length - 1] = number;
@@ -82,6 +124,9 @@ export async function convertPdf(file) {
       page.cleanup();
     }
     if (!readablePages) {
+      if (ocr) {
+        throw new BookImportError('No readable text was found in this PDF.');
+      }
       throw new BookImportError('This PDF has no selectable text. Run OCR on it, then import the resulting PDF.');
     }
     const metadataTitle = await readPdfTitle(pdf).catch(() => undefined);

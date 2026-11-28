@@ -8,6 +8,7 @@ import { renderReader } from './book-reader.js';
 
 let pendingImport;
 let savingFile = false;
+let convertingPdf = false;
 
 function showError(alert, message) {
   alert.textContent = message;
@@ -175,11 +176,15 @@ function configureConversion(panel, id, activity, error) {
   const convert = panel.querySelector('[data-convert]');
   convert.hidden = false;
   convert.addEventListener('click', async () => {
+    if (convertingPdf) return;
+    convertingPdf = true;
     convert.disabled = true;
     convert.textContent = 'Converting…';
     showError(error, '');
     try {
-      const result = await convertPdf(await getOriginal(id));
+      const result = await convertPdf(await getOriginal(id), (page, total) => {
+        convert.textContent = `Recognizing page ${page} of ${total}…`;
+      });
       await saveConversion(id, result);
       if (panel.isConnected) {
         // Replace the entry panel and its handlers when the converted reader opens.
@@ -188,6 +193,7 @@ function configureConversion(panel, id, activity, error) {
     } catch (cause) {
       showError(error, cause instanceof BookImportError ? cause.message : 'Could not convert this PDF.');
     } finally {
+      convertingPdf = false;
       convert.disabled = false;
       convert.textContent = 'Convert to EPUB';
     }

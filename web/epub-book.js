@@ -54,22 +54,38 @@ ${manifest.join('\n')}</manifest>
 }
 
 export async function saveBookFile(file, name, type) {
-  if (globalThis.SmartBotFiles) {
-    const data = await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result.split(',', 2)[1]);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-    return new Promise((resolve, reject) => {
-      const bridge = globalThis.SmartBotFiles;
-      bridge.onmessage = ({ data: result }) => {
+  const bridge = globalThis.SmartBotFiles;
+  if (bridge) {
+    const exchange = (message) => new Promise((resolve, reject) => {
+      bridge.onmessage = ({ data }) => {
         bridge.onmessage = null;
-        if (result === 'saved' || result === 'cancelled') resolve(result === 'saved');
-        else reject(new Error('Could not save the file.'));
+        if (data === 'failed') reject(new Error('Could not save the file.'));
+        else resolve(data);
       };
-      bridge.postMessage(JSON.stringify({ name, type, data }));
+      try {
+        bridge.postMessage(JSON.stringify(message));
+      } catch (error) {
+        bridge.onmessage = null;
+        reject(error);
+      }
     });
+    await exchange({ action: 'begin', name, type });
+    try {
+      const chunkSize = 192 * 1024;
+      for (let offset = 0; offset < file.size; offset += chunkSize) {
+        const data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',', 2)[1]);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file.slice(offset, offset + chunkSize));
+        });
+        await exchange({ action: 'append', data });
+      }
+      return await exchange({ action: 'save' }) === 'saved';
+    } catch (error) {
+      bridge.postMessage(JSON.stringify({ action: 'abort' }));
+      throw error;
+    }
   }
 
   const url = URL.createObjectURL(file);

@@ -1,6 +1,6 @@
 # SmartBot status
 
-Last updated November 27, 2026.
+Last updated November 28, 2026.
 
 ## Current state
 
@@ -29,6 +29,8 @@ Last updated November 27, 2026.
 - The [personal workspace plan](plans/personal-workspace.md) expands the scope to in-app reading, GPT questions by text and voice, and news. The daily plan remains available as part of the workspace.
 
 ## Web app verification
+
+November 28, 2026. Android 0.3.5 adds bundled, offline Latin-script OCR for PDF pages without selectable text and transfers original PDF and EPUB exports to Android in bounded chunks before opening the system file picker. Chromium verified a synthetic scanned PDF renders for OCR and produces readable EPUB text using a simulated recognizer. A simulated Android file bridge verified byte-for-byte export of a file over 24 MiB, picker cancellation, and failed-transfer cleanup. The JavaScript suite, Android build, Android lint, and diff checks passed. The native recognizer and system picker still need a physical-device check.
 
 November 28, 2026. Removed the Books import size caps for PDF and plain text files and refreshed the offline cache version. All 34 web tests, JavaScript syntax checks, and `git diff --check` passed. Local checks imported and converted a PDF over 21 MiB and verified an imported text file over 20 MiB retained its contents. Browser persistence and Android device testing remain unverified.
 

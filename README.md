@@ -25,7 +25,7 @@ The web app needs an initial online load at a given address to cache its files f
 Tap **+** beside **Books** to pick a PDF or text file. On Android, select **Drive** in the system file picker if it appears. In a browser, you can download a file from Drive first and then select it from your downloads.
 
 - For a PDF, tap **Convert to EPUB** to read the reflowed text. In the Books library, open the **⋯** menu beside a PDF to save the original or download its EPUB after conversion.
-- For a scan, run optical character recognition (OCR) before importing. Conversion uses the PDF’s selectable text, so complex layouts may read better in the original.
+- On Android, conversion uses offline optical character recognition (OCR) for pages without selectable text. It recognizes Latin-script text. In a browser, run OCR on a scan before importing it. Complex layouts may read better in the original.
 - For a text file, use UTF-8 or UTF-16 with a byte order mark. Book imports have no fixed size limit in SmartBot. Very large files depend on available device memory and storage.
 
 SmartBot shows your most recently opened book first. Tap its row to resume at your saved place. Read one screen at a time and use **Previous** and **Next** below the text. On a phone, swipe vertically near the right side of the page to go forward or near the left side to go back. Conversion and reading work offline after import and the app’s initial load.
