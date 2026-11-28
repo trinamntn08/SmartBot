@@ -139,6 +139,14 @@ Verify the preview source before rebuilding the Android debug APK for preview. U
 
 Open `android/` as a project if you prefer Android Studio. The [Android APK plan](docs/plans/android-apk-preview.md) records the packaging and checks.
 
+### Build and upload an APK on request
+
+In Codex, ask **Build the SmartBot APK and upload it to Drive**. Verify the current `main` checkout using the preview steps above, then run `bash scripts/build-apk.sh` with the Android build environment configured. Use the previous APK's debug signing key to update an existing installation.
+
+Authorize a Google Drive remote named `smartbot-drive` once using `rclone config` in the build environment. Sign in with an account that can add files to the destination folder. For a headless build environment, follow rclone's browser authorization instructions. Keep the rclone configuration outside the checkout.
+
+The command builds and verifies the debug APK, then uploads it with the source commit in its filename. It reuses an identical upload and refuses to overwrite a different file with the same name. To build locally, use `bash scripts/build-apk.sh --build-only`. [SmartBot APK folder](https://drive.google.com/drive/folders/1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg) · [rclone Google Drive setup](https://rclone.org/drive/)
+
 - See [current status](docs/status.md) and the [first web implementation plan](docs/plans/first-web-slice.md) for what works and the next milestone.
 - See the [Codex setup guide](docs/codex-setup.md) and [AGENTS.md](AGENTS.md) for project roles and working instructions.
 - The [documentation index](docs/README.md) links to all current guides.

@@ -37,3 +37,5 @@ The APK is `android/app/build/outputs/apk/debug/app-debug.apk` relative to the r
 ## Step record
 
 The Android preview was implemented and verified on `android-apk-preview` on November 22, 2026. The release build and launcher widget remain future work.
+
+November 28, 2026. Added an [on-request build and Drive upload command](../../README.md#build-and-upload-an-apk-on-request). The command checks the live source revision, runs Gradle build and lint, and verifies signing and alignment before copying the commit-named APK. Shell syntax and argument checks passed. Drive upload verification requires one-time Google authorization.
