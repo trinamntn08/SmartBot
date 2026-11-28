@@ -1,6 +1,5 @@
 import { BookImportError, readingSections } from './text-book.js';
 
-const maxPdfBytes = 20 * 1024 * 1024;
 const pdfAssets = new URL('./vendor/pdfjs/', import.meta.url);
 
 async function openPdf(file) {
@@ -26,7 +25,6 @@ async function readPdfTitle(pdf) {
 }
 
 export async function importPdf(file) {
-  if (file.size > maxPdfBytes) throw new BookImportError('Choose a PDF up to 20 MB.');
   const header = await file.slice(0, 1024).text();
   if (!header.includes('%PDF-')) throw new BookImportError('This file is not a valid PDF.');
 

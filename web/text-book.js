@@ -1,4 +1,3 @@
-const maxBookBytes = 8 * 1024 * 1024;
 const maxSectionLength = 5000;
 
 export class BookImportError extends Error {}
@@ -21,7 +20,6 @@ export function readingSections(text) {
 
 export async function readTextBook(file) {
   if (!/\.txt$/i.test(file.name)) throw new BookImportError('Choose a plain text (.txt) file.');
-  if (file.size > maxBookBytes) throw new BookImportError('Choose a text file under 8 MB.');
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   let encoding = 'utf-8';

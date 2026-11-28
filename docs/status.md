@@ -30,6 +30,8 @@ Last updated November 27, 2026.
 
 ## Web app verification
 
+November 28, 2026. Removed the Books import size caps for PDF and plain text files and refreshed the offline cache version. All 34 web tests, JavaScript syntax checks, and `git diff --check` passed. Local checks imported and converted a PDF over 21 MiB and verified an imported text file over 20 MiB retained its contents. Browser persistence and Android device testing remain unverified.
+
 The Books reader now uses a back arrow at every width. The link retains its accessible name and adds a tooltip. All 34 web tests, the JavaScript syntax check, and the Impeccable detector passed. Chromium verified the arrow at 360, 646, and 1440 CSS pixels, keyboard and touch return to the library, and offline reload at the open book.
 
 November 27, 2026. Removed the reader’s page count and three-dot menu and made PDF and EPUB downloads available in the Books library. Vertical edge swipes use the same saved page-turn action as Previous and Next. All 34 web tests passed. Chromium at 360 CSS pixels verified right and left swipes, ignored short, center, horizontal and cancelled swipes, checked full view and offline resume, and verified both downloads offline from the library. The Android APK from `aca6419` passed build, lint, signature and ZIP alignment checks, and all 266 web files matched. Lint reported zero errors and nine warnings. Physical phone testing remains open.
