@@ -143,7 +143,7 @@ Open `android/` as a project if you prefer Android Studio. The [Android APK plan
 
 In Codex, ask **Build the SmartBot APK and upload it to Drive**. Verify the current `main` checkout using the preview steps above, then run `bash scripts/build-apk.sh` with the Android build environment configured. Use the previous APK's debug signing key to update an existing installation.
 
-Authorize a Google Drive remote named `smartbot-drive` once using `rclone config` in the build environment. Sign in with an account that can add files to the destination folder. For a headless build environment, follow rclone's browser authorization instructions. Keep the rclone configuration outside the checkout.
+Follow the [SmartBot Google Drive setup](docs/codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive) and verify read access in a fresh Cloud chat. For an actual upload, use a Google account that can add files to the folder.
 
 The command builds and verifies the debug APK, then uploads it with the source commit and an APK fingerprint in its filename. Different APK contents from the same commit get different filenames. To build locally, use `bash scripts/build-apk.sh --build-only`. [SmartBot APK folder](https://drive.google.com/drive/folders/1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg) · [rclone Google Drive setup](https://rclone.org/drive/)
 

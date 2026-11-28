@@ -38,4 +38,6 @@ The APK is `android/app/build/outputs/apk/debug/app-debug.apk` relative to the r
 
 The Android preview was implemented and verified on `android-apk-preview` on November 22, 2026. The release build and launcher widget remain future work.
 
-November 28, 2026. Added an [on-request build and Drive upload command](../../README.md#build-and-upload-an-apk-on-request). The command checks the live source revision, runs Gradle build and lint, and verifies signing and alignment before copying the commit-named APK. Shell syntax and argument checks passed. Drive upload verification requires one-time Google authorization.
+November 28, 2026. Added an [on-request build and Drive upload command](../../README.md#build-and-upload-an-apk-on-request). The command checks the live source revision, runs Gradle build and lint, and verifies signing and alignment before copying the commit-named APK. Shell syntax and argument checks passed. Drive upload verification requires [one-time Google authorization](../codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive).
+
+November 28, 2026. Documented Windows approval, Cloud environment variables, and read-only verification. The APK helper selects `smartbot_drive:` when its Cloud type variable is set and continues to support the existing `smartbot-drive:` configuration. The Cloud read-only listing exited with code 0 and returned zero visible entries.

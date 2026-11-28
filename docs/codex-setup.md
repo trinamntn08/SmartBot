@@ -44,6 +44,30 @@ For a custom Codex installation, pass `--installer` with the path to `install-sk
 
 Apply the guidance to SmartBot's mobile-first layout and offline web app. Emil's web motion skill links to `pick-ui-library`, which the setup also installs for reference. Keep bundled example images and design tools out of the web assets. Taste's browser tools use Node and a local Chromium browser. Impeccable's launcher can fetch its platform engine on first use. The optional design hooks are separate from this setup.
 
+## Connect the SmartBot APK folder in Google Drive
+
+1. Install [rclone for Windows](https://rclone.org/downloads/). Open PowerShell in the extracted folder and run `.\rclone.exe authorize drive`. Approve rclone in the browser on that same PC with the Google account that can access the SmartBot Drive folder. The local callback URL only works on the machine running rclone.
+2. Copy the entire JSON object printed between the rclone output markers, including both braces and the `refresh_token` field. Paste it straight into the value field in step 3. Keep it out of chat, screenshots, repository files and Git.
+3. Open **Settings → Codex Cloud → Environments → SmartBot → Edit → Environment variables → Manage**. Set the values below. Rclone reads the JSON directly from the running process, so use the environment-variable panel. Save the dialog, then publish if the editor shows unpublished changes.
+
+   | Key | Value |
+   | --- | --- |
+   | `RCLONE_CONFIG_SMARTBOT_DRIVE_TYPE` | `drive` |
+   | `RCLONE_CONFIG_SMARTBOT_DRIVE_TOKEN` | The complete rclone JSON object, with no extra quotes or code fences |
+
+4. If public internet access is restricted, check **Additional allowed domains** for `www.googleapis.com` and `oauth2.googleapis.com`. The first serves Drive requests and the second refreshes credentials.
+5. Start a fresh Cloud chat with **SmartBot** selected. With rclone available, run this read-only check. It suppresses file names.
+
+   ```bash
+   rclone lsf smartbot_drive: --drive-root-folder-id 1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg >/dev/null
+   ```
+
+   Exit code `0` means the listing request succeeded. An empty listing can mean no entries are visible. Verify the folder ID against the Drive link and the account's folder access separately before relying on an empty result. A listing alone cannot confirm upload permission.
+
+If rclone cannot find the remote, check the exact `TYPE` key and remote name, then verify the token variable is present without displaying it. A token decoding error means the saved value needs to be checked for complete JSON. If Google returns HTTP `401`, reauthorize on Windows and replace the token value, then repeat the test in a fresh Cloud chat.
+
+[rclone browser authorization](https://rclone.org/remote_setup/) · [Codex Cloud environment variables](https://learn.chatgpt.com/docs/environments/cloud-environments#configure-environment-variables-and-network-secrets)
+
 ## Session workflow
 
 1. At the start of a session, read [current status](status.md) and the relevant product requirements. Before editing, building, or launching a preview, [check every remote branch](#check-every-remote-branch). Start from the fetched integration branch or the branch requested for the task. On a clean branch that is only behind its upstream, update with `git merge --ff-only '@{upstream}'`.

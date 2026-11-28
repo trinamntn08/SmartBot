@@ -26,6 +26,9 @@ fi
 if $upload; then
   folder_id=1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg
   drive_remote=smartbot-drive:
+  if [[ ${RCLONE_CONFIG_SMARTBOT_DRIVE_TYPE:-} == drive ]]; then
+    drive_remote=smartbot_drive:
+  fi
   # Check access before spending time on the build.
   rclone lsf "$drive_remote" --drive-root-folder-id "$folder_id" >/dev/null
 fi
