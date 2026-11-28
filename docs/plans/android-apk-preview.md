@@ -19,6 +19,8 @@ The package ID is `io.github.trinamntn08.smartbot`. It targets Android 15 and su
 
 ## Build and install
 
+For the current workflow, see the [build and Drive setup](../../README.md#build-and-upload-an-apk-on-request) and [phone installation steps](../../README.md#install-on-android).
+
 Use a JDK 17 or 21 and an Android SDK with Platform 35 and Build Tools 35.0.0. Set `JAVA_HOME` and `ANDROID_HOME` for the build shell. The Gradle wrapper selects Gradle 8.14.3.
 
 ```powershell
@@ -38,6 +40,8 @@ The APK is `android/app/build/outputs/apk/debug/app-debug.apk` relative to the r
 
 The Android preview was implemented and verified on `android-apk-preview` on November 22, 2026. The release build and launcher widget remain future work.
 
-November 28, 2026. Added an [on-request build and Drive upload command](../../README.md#build-and-upload-an-apk-on-request). The command checks the live source revision, runs Gradle build and lint, and verifies signing and alignment before copying the commit-named APK. Shell syntax and argument checks passed. Drive upload verification requires [one-time Google authorization](../codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive).
+November 28, 2026. Added an [on-request build and Drive upload command](../../README.md#build-and-upload-an-apk-on-request). The command checks the live source revision, runs Gradle build and lint, and verifies signing and alignment before copying the commit-named APK. Shell syntax and argument checks passed.
 
-November 28, 2026. Documented Windows approval, Cloud environment variables, and read-only verification. The APK helper selects `smartbot_drive:` when its Cloud type variable is set and continues to support the existing `smartbot-drive:` configuration. The Cloud read-only listing exited with code 0 and returned zero visible entries.
+November 28, 2026. Ran the build and Drive workflow from published `main` at `8b0bae4` for SmartBot 0.3.5. The Gradle build passed with zero lint errors and ten warnings. ZIP alignment passed, the signature matched the previous workspace APK, and all 266 bundled web files matched the checkout. Drive reported the same checksum as the local APK. All 34 web and eight podcast service tests passed. The Python suite passed with one Windows-only check skipped. The README now covers Drive authorization, the build toolchain, and installing updates with the original signing key. Physical Android testing remains pending. [Uploaded APK](https://drive.google.com/file/d/1hgiV-DhGF18SBLKO_5I9BZK3qzLWqhy9/view)
+
+November 28, 2026. Documented [Windows authorization and Cloud environment variables](../codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive). The APK helper selects `smartbot_drive:` when its Cloud type variable is set and also supports `smartbot-drive:` from a saved rclone config. Shell syntax and eight focused Node tests passed. The read-only Cloud check exited with code 0 and returned zero visible entries.

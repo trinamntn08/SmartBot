@@ -112,9 +112,11 @@ GPT and Gemini require the Python preview server and outbound HTTPS to `api.open
 
 ## Install on Android
 
-The debug APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`. Copy it to a phone running Android 8.0 or newer, tap the file, and follow the installation prompt. If Android asks for permission to install the APK, follow the phone's prompt for the app that opened it. [Android installation help](https://support.google.com/pixelphone/answer/7391672)
+1. On a phone running Android 8.0 or newer, download the `SmartBot-debug-*.apk` for the build you want. For a local build, transfer `android/app/build/outputs/apk/debug/app-debug.apk` to the phone. [SmartBot APK folder](https://drive.google.com/drive/folders/1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg)
+2. Open the APK from Downloads and tap **Install** or **Update**. If Android prompts for permission, allow **Install unknown apps** for the app that opened the file, then return to the installer. [Android installation help](https://support.google.com/pixelphone/answer/7391672)
+3. Open **SmartBot** from the launcher. To check offline use, download or copy a `.txt` book to the phone, turn on airplane mode, import the book in **Books**, then advance a page and reopen SmartBot to check that it resumes there.
 
-Open SmartBot from the launcher. To check offline use, turn on airplane mode, import a `.txt` book, move to the next section, then close and reopen SmartBot to check that it resumes there. The APK bundles the web app and keeps its own local progress.
+Install updates over the existing app to keep local books and progress. Android requires the same signing certificate for updates. If the installer reports a conflict with the installed package, get an APK signed with the original key. Uninstalling SmartBot clears its local data.
 
 ## Development
 
@@ -141,11 +143,19 @@ Open `android/` as a project if you prefer Android Studio. The [Android APK plan
 
 ### Build and upload an APK on request
 
-In Codex, ask **Build the SmartBot APK and upload it to Drive**. Verify the current `main` checkout using the preview steps above, then run `bash scripts/build-apk.sh` with the Android build environment configured. Use the previous APK's debug signing key to update an existing installation.
+In Codex, ask **Build the SmartBot APK and upload it to Drive**. To run the same workflow yourself, use the repository root in a Bash environment on Linux, macOS, or WSL with its own JDK and Android SDK.
 
-Follow the [SmartBot Google Drive setup](docs/codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive) and verify read access in a fresh Cloud chat. For an actual upload, use a Google account that can add files to the folder.
+1. Install a JDK 17 or 21, Android SDK Platform 35, Build Tools 35.0.0, and rclone. Set `JAVA_HOME` and `ANDROID_HOME` to the installed directories. For updates, reuse the original debug keystore in `ANDROID_USER_HOME` (usually `~/.android` if the variable is unset).
+2. In Codex Cloud, follow the [SmartBot Google Drive setup](docs/codex-setup.md#connect-the-smartbot-apk-folder-in-google-drive). For a local Bash build with a saved rclone config, create the legacy `smartbot-drive` remote with `rclone config`. Choose the `drive` scope and use an account that can add files to the folder. Keep the rclone configuration and keystore outside the repository.
+3. Verify the clean checkout against live GitHub `main`, then run the script. [Preview verification steps](docs/codex-setup.md#verify-main-before-generating-a-preview)
 
-The command builds and verifies the debug APK, then uploads it with the source commit and an APK fingerprint in its filename. Different APK contents from the same commit get different filenames. To build locally, use `bash scripts/build-apk.sh --build-only`. [SmartBot APK folder](https://drive.google.com/drive/folders/1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg) · [rclone Google Drive setup](https://rclone.org/drive/)
+```bash
+bash scripts/build-apk.sh
+```
+
+The script runs Gradle build and lint, checks the APK signature and ZIP alignment, and uploads `SmartBot-debug-<commit>-<fingerprint>.apk`. Use the filename printed at the end to find the matching build in Drive. [SmartBot APK folder](https://drive.google.com/drive/folders/1fsFrBfhXqu2BNwO7lFyNC0tZbvt5eqeg)
+
+For a local build without Drive authorization, run `bash scripts/build-apk.sh --build-only`. In native Windows, use the PowerShell Gradle command above and upload the generated `app-debug.apk` through Drive if needed.
 
 - See [current status](docs/status.md) and the [first web implementation plan](docs/plans/first-web-slice.md) for what works and the next milestone.
 - See the [Codex setup guide](docs/codex-setup.md) and [AGENTS.md](AGENTS.md) for project roles and working instructions.
