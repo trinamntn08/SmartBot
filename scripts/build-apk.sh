@@ -37,7 +37,8 @@ apk=android/app/build/outputs/apk/debug/app-debug.apk
 printf 'Built %s from %s\n' "$PWD/$apk" "$commit"
 
 if $upload; then
-  filename="SmartBot-debug-${commit:0:12}.apk"
+  apk_hash=$(git hash-object "$apk")
+  filename="SmartBot-debug-${commit:0:12}-${apk_hash:0:12}.apk"
   rclone copyto "$apk" "$drive_remote$filename" --drive-root-folder-id "$folder_id" --checksum --immutable
   printf 'Uploaded %s to https://drive.google.com/drive/folders/%s\n' "$filename" "$folder_id"
 fi
